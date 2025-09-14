@@ -23,19 +23,15 @@
 }
 
 .section-header {
-  margin: 32rpx 4rpx 8rpx;
+  display: none;
 }
 
 .section-title {
-  font-size: 32rpx;
-  font-weight: 600;
-  color: #1f2937;
+  display: none;
 }
 
 .section-subtitle {
-  margin-top: 6rpx;
-  font-size: 24rpx;
-  color: #6b7280;
+  display: none;
 }
 
 .product-list .van-card {

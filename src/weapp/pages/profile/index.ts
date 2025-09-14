@@ -2,6 +2,7 @@ Page({
   onShow() {
     const tabBar = (this as any).getTabBar?.();
     // @ts-ignore: WeChat runtime API
-    tabBar?.setActiveByRoute?.('/pages/index/index');
+    tabBar?.setActiveByRoute?.('/pages/profile/index');
   },
-})
+});
+

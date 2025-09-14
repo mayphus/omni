@@ -1,0 +1,21 @@
+<view class="page">
+  <van-cell-group inset>
+    <van-cell use-icon-slot title="Guest" label="Welcome back" border="false">
+      <van-image slot="icon" class="avatar" round fit="cover" src="https://img.yzcdn.cn/vant/cat.jpeg" />
+    </van-cell>
+  </van-cell-group>
+
+  <van-cell-group inset>
+    <van-cell title="My Orders" is-link />
+    <van-cell title="Addresses" is-link />
+    <van-cell title="Coupons" is-link />
+    <van-cell title="Settings" is-link />
+  </van-cell-group>
+
+  <van-cell-group inset>
+    <van-cell title="Sign In" is-link />
+    <van-cell title="Register" is-link />
+  </van-cell-group>
+
+  <view class="bottom-space" />
+</view>

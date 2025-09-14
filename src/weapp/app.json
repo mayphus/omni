@@ -1,15 +1,26 @@
 {
   "pages": [
-    "pages/index/index"
+    "pages/index/index",
+    "pages/profile/index"
   ],
   "window": {
-    "navigationBarTitleText": "Children's Dream Planet",
+    "navigationBarTitleText": "Shop",
     "navigationBarBackgroundColor": "#ffffff",
     "navigationBarTextStyle": "black",
     "backgroundTextStyle": "light"
+  },
+  "tabBar": {
+    "custom": true,
+    "color": "#7d7e80",
+    "selectedColor": "#1989fa",
+    "borderStyle": "black",
+    "backgroundColor": "#ffffff",
+    "list": [
+      { "pagePath": "pages/index/index", "text": "Home" },
+      { "pagePath": "pages/profile/index", "text": "Profile" }
+    ]
   },
   "cloud": true,
   "sitemapLocation": "sitemap.json",
   "usingComponents": {}
 }
-

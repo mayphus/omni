@@ -1,0 +1,13 @@
+.page {
+  min-height: 100vh;
+  background: #f7f8fa;
+  padding: 24rpx 24rpx 48rpx;
+  box-sizing: border-box;
+}
+
+.avatar {
+  width: 140rpx;
+  height: 140rpx;
+}
+
+.bottom-space { height: 48rpx; }

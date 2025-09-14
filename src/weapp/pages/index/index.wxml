@@ -27,10 +27,9 @@
   </view>
 
   <!-- Featured products -->
-  <view class="section-header">
-    <view class="section-title">Featured</view>
-    <view class="section-subtitle">Handpicked for you</view>
-  </view>
+  <van-cell-group inset>
+    <van-cell title="Featured" label="Handpicked for you" border="false" />
+  </van-cell-group>
   <view class="product-list">
     <van-card
       num="1"
