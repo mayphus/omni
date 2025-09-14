@@ -54,3 +54,12 @@
 </van-card>
 
 <van-divider>End of List</van-divider>
+
+<!-- Quick Links for testing -->
+<van-cell-group inset>
+  <van-cell title="Quick Links" border="false" />
+</van-cell-group>
+<van-cell title="Product Detail" is-link url="/pages/product/detail" link-type="navigateTo" />
+<van-cell title="Search Results" is-link url="/pages/search/index" link-type="navigateTo" />
+<van-cell title="Orders" is-link url="/pages/orders/index" link-type="navigateTo" />
+<van-cell title="Checkout" is-link url="/pages/checkout/index" link-type="navigateTo" />

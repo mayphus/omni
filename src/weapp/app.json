@@ -3,7 +3,11 @@
     "pages/index/index",
     "pages/category/index",
     "pages/cart/index",
-    "pages/profile/index"
+    "pages/profile/index",
+    "pages/product/detail",
+    "pages/search/index",
+    "pages/orders/index",
+    "pages/checkout/index"
   ],
   "window": {
     "navigationBarTitleText": "Shop",
@@ -18,10 +22,10 @@
     "borderStyle": "black",
     "backgroundColor": "#ffffff",
     "list": [
-      { "pagePath": "pages/index/index", "text": "Home", "iconPath": "", "selectedIconPath": "" },
-      { "pagePath": "pages/category/index", "text": "Categories", "iconPath": "", "selectedIconPath": "" },
-      { "pagePath": "pages/cart/index", "text": "Cart", "iconPath": "", "selectedIconPath": "" },
-      { "pagePath": "pages/profile/index", "text": "Profile", "iconPath": "", "selectedIconPath": "" }
+      { "pagePath": "pages/index/index", "text": "Home" },
+      { "pagePath": "pages/category/index", "text": "Categories" },
+      { "pagePath": "pages/cart/index", "text": "Cart" },
+      { "pagePath": "pages/profile/index", "text": "Profile" }
     ]
   },
   "cloud": true,

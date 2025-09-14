@@ -1,0 +1,13 @@
+<van-cell-group inset>
+  <van-cell title="Checkout" label="Confirm your order" border="false" />
+  <van-cell title="Items" value="2" />
+  <van-cell title="Subtotal" value="¥228.00" />
+  <van-cell title="Shipping" value="¥0.00" />
+  <van-cell title="Coupon" value="None" is-link />
+</van-cell-group>
+
+<van-cell-group inset>
+  <van-cell title="Payment" value="WeChat Pay" is-link />
+</van-cell-group>
+
+<van-submit-bar price="22800" button-text="Pay Now" />
