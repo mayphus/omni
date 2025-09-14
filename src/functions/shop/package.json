@@ -1,0 +1,8 @@
+{
+  "name": "shop-cloud-function",
+  "version": "0.1.0",
+  "main": "index.js",
+  "type": "commonjs",
+  "private": true,
+  "dependencies": {}
+}

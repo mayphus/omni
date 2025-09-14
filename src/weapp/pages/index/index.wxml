@@ -1,0 +1,18 @@
+<view class="page">
+  <van-notice-bar mode="link" background="#fff7e6" color="#fa8c16">
+    Welcome — explore and have fun!
+  </van-notice-bar>
+
+  <view class="hero card">
+    <van-icon name="fire-o" size="64rpx" color="#7c3aed" />
+    <view class="title">{{message}}</view>
+    <view class="subtitle">{{subtitle}}</view>
+
+    <view class="actions">
+      <van-button type="primary" block bind:click="onClick">Get Started</van-button>
+      <van-button type="default" plain block class="mt" bind:click="onSecondary">Learn More</van-button>
+    </view>
+  </view>
+
+  <view class="footer">v0.2 • Children’s Dream Planet</view>
+</view>

@@ -1,0 +1,14 @@
+{
+  "envId": "cloud1-1g4nt4micf670d3d",
+  "functionRoot": "./functions",
+  "functions": [
+    {
+      "name": "shop",
+      "runtime": "Nodejs18.15",
+      "timeout": 60,
+      "memorySize": 256,
+      "installDependency": true,
+      "ignore": []
+    }
+  ]
+}

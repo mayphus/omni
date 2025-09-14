@@ -1,0 +1,5 @@
+#!/usr/bin/env sh
+# lightweight pre-commit without husky bootstrap
+set -e
+npm run typecheck
+npm run test:ci

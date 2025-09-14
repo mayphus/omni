@@ -1,0 +1,47 @@
+## OS
+.DS_Store
+Thumbs.db
+
+## Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+*.log
+.eslintcache
+
+## Generic build output
+dist/
+build/
+tmp/
+temp/
+
+## App build outputs (generated – do not track)
+/admin/
+/functions/
+/weapp/
+/miniprogram_npm/
+
+## WeChat DevTools / CI artifacts
+compiled-result.json
+qrcode*.png
+qrcode*.jpg
+
+## Env & secrets (keep .env.example tracked)
+.env
+.env.*
+!.env.example
+*.private.key
+.private*.key
+project.private.config.json
+
+## TypeScript
+*.tsbuildinfo
+
+## IDE
+.vscode/
+.idea/
+
+## Coverage
+coverage/
