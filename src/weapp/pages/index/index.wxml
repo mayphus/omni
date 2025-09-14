@@ -1,18 +1,61 @@
 <view class="page">
-  <van-notice-bar mode="link" background="#fff7e6" color="#fa8c16">
-    Welcome — explore and have fun!
-  </van-notice-bar>
-
-  <view class="hero card">
-    <van-icon name="fire-o" size="64rpx" color="#7c3aed" />
-    <view class="title">{{message}}</view>
-    <view class="subtitle">{{subtitle}}</view>
-
-    <view class="actions">
-      <van-button type="primary" block bind:click="onClick">Get Started</van-button>
-      <van-button type="default" plain block class="mt" bind:click="onSecondary">Learn More</van-button>
-    </view>
+  <!-- Top search and promo -->
+  <view class="top">
+    <van-search placeholder="Search products" shape="round" disabled background="#ffffff" />
+    <van-notice-bar mode="link" background="#fff7e6" color="#fa8c16">
+      Free shipping over ¥99 · New arrivals weekly
+    </van-notice-bar>
   </view>
 
-  <view class="footer">v0.2 • Children’s Dream Planet</view>
+  <!-- Banner -->
+  <view class="section">
+    <van-image class="banner" fit="cover" src="https://fastly.picsum.photos/id/4/5000/3333.jpg?hmac=ghf06FdmgiD0-G4c9DdNM8RnBIN7BO0-ZGEw47khHP4" />
+  </view>
+
+  <!-- Quick categories -->
+  <view class="section">
+    <van-grid column-num="4" clickable>
+      <van-grid-item icon="shop-o" text="Categories" />
+      <van-grid-item icon="hot-o" text="Hot" />
+      <van-grid-item icon="new-o" text="New" />
+      <van-grid-item icon="coupon-o" text="Coupons" />
+      <van-grid-item icon="like-o" text="Favorites" />
+      <van-grid-item icon="cart-o" text="Cart" />
+      <van-grid-item icon="gift-o" text="Gifts" />
+      <van-grid-item icon="service-o" text="Support" />
+    </van-grid>
+  </view>
+
+  <!-- Featured products -->
+  <view class="section-header">
+    <view class="section-title">Featured</view>
+    <view class="section-subtitle">Handpicked for you</view>
+  </view>
+  <view class="product-list">
+    <van-card
+      num="1"
+      price="99.00"
+      desc="High quality product"
+      title="Sample Product A"
+      thumb="https://img.yzcdn.cn/vant/ipad.jpeg"
+      currency="¥"
+    >
+      <view slot="tags"><van-tag type="danger" plain>NEW</van-tag></view>
+    </van-card>
+
+    <van-card
+      num="1"
+      price="129.00"
+      desc="Comfortable and durable"
+      title="Sample Product B"
+      thumb="https://img.yzcdn.cn/vant/ipad.jpeg"
+      currency="¥"
+    >
+      <view slot="tags"><van-tag type="primary" plain>HOT</van-tag></view>
+    </van-card>
+  </view>
+
+  <van-divider>End of List</van-divider>
+
+  <view class="bottom-space" />
 </view>
