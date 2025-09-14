@@ -1,0 +1,23 @@
+<van-cell-group inset>
+  <van-cell title="My Cart" border="false" />
+</van-cell-group>
+
+<van-swipe-cell>
+  <van-card
+    num="1"
+    price="129.00"
+    desc="Comfortable and durable"
+    title="Sample Product B"
+    thumb="https://img.yzcdn.cn/vant/ipad.jpeg"
+    currency="¥"
+  >
+    <view slot="tags"><van-tag type="primary" plain>HOT</van-tag></view>
+  </van-card>
+  <view slot="right">
+    <van-button square type="danger" text="Delete" />
+  </view>
+</van-swipe-cell>
+
+<van-divider />
+
+<van-submit-bar price="0" button-text="Checkout" disabled safe-area-inset-bottom />

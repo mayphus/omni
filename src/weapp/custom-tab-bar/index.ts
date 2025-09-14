@@ -3,6 +3,8 @@ Component({
     active: 0,
     routes: [
       '/pages/index/index',
+      '/pages/category/index',
+      '/pages/cart/index',
       '/pages/profile/index',
     ],
   },
@@ -34,4 +36,3 @@ Component({
     },
   },
 });
-
