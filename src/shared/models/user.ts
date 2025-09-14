@@ -15,12 +15,12 @@ export type Wallet = z.infer<typeof zWallet>
 export const zUserProfile = z.object({
   nickname: z.string().min(1),
   avatarUrl: z.string().url().optional().or(z.literal('')).optional(),
+  phone: z.string().optional(),
 })
 export type UserProfile = z.infer<typeof zUserProfile>
 
 export const zUser = z
   .object({
-    provider: z.literal('wechat'),
     openid: z.string().min(1),
     unionid: z.string().optional(),
     roles: z.array(zUserRole).default(['user']),

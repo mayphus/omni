@@ -5,7 +5,6 @@ describe('shared models', () => {
   it('validates a user and maps ids', () => {
     const base = { createdAt: nowMs(), updatedAt: nowMs() }
     const sample: User = {
-      provider: 'wechat',
       openid: 'OPENID',
       unionid: undefined,
       roles: ['user'],

@@ -12,13 +12,25 @@ export const zProduct = z
     title: z.string().min(1),
     subtitle: z.string().optional(),
     description: z.string().optional(),
+    richDescription: z.string().optional(),
     images: z.array(z.string().url()).default([]),
     categoryId: z.string().optional(),
-    sku: z.string().optional(),
+    spuId: z.string().optional(),
     price: zPrice,
     stock: z.number().int().min(0).default(0),
     isActive: z.boolean().default(true),
     attributes: z.record(z.string(), z.union([z.string(), z.number(), z.boolean()])).optional(),
+    skus: z
+      .array(
+        z.object({
+          skuId: z.string().min(1),
+          priceYuan: zYuan.min(0),
+          stock: z.number().int().min(0).default(0),
+          attributes: z.record(z.string(), z.union([z.string(), z.number(), z.boolean()])).optional(),
+          isActive: z.boolean().default(true),
+        }),
+      )
+      .optional(),
   })
   .merge(zBaseDoc)
 

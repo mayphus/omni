@@ -11,11 +11,15 @@ Guidelines
 - Include `createdAt`/`updatedAt` (ms since epoch). Avoid auto-added fields; set explicitly.
 - Client shape uses `id`; database records may use `_id`. Use mappers in `base.ts`.
 
-Collections (initial)
-- users, products, orders, carts, transactions, referrals, audit_logs, settings
+Collections (minimal)
+- users, products, orders, system
+- Optional later: audit_logs, transactions, referrals, settings
+
+System collection
+- Single collection to hold structured items: categories, coupons, banners.
 
 Files
 - `base.ts` – shared primitives, base doc, id mappers.
 - `collections.ts` – canonical collection name constants.
 - `money.ts` – yuan schema and helpers (`zYuan`, `yuanToCents`, `centsToYuan`, `formatCNY`).
-- `models/*.ts` – entity models (User, Product, Order, Cart, Transaction, Referral, Audit, Settings).
+- `models/*.ts` – entity models (User, Product, Order, System).
