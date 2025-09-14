@@ -1,60 +1,56 @@
-<view class="page">
-  <!-- Top search and promo -->
-  <view class="top">
-    <van-search placeholder="Search products" shape="round" disabled background="#ffffff" />
-    <van-notice-bar mode="link" background="#fff7e6" color="#fa8c16">
-      Free shipping over ¥99 · New arrivals weekly
-    </van-notice-bar>
-  </view>
+<!-- Top search and promo -->
+<van-search placeholder="Search products" shape="round" disabled background="#ffffff" />
+<van-notice-bar mode="link" background="#fff7e6" color="#fa8c16">
+  Free shipping over ¥99 · New arrivals weekly
+</van-notice-bar>
 
-  <!-- Banner -->
-  <view class="section">
-    <van-image class="banner" fit="cover" src="https://fastly.picsum.photos/id/4/5000/3333.jpg?hmac=ghf06FdmgiD0-G4c9DdNM8RnBIN7BO0-ZGEw47khHP4" />
-  </view>
+<!-- Banner -->
+<van-image
+  fit="cover"
+  width="750rpx"
+  height="320rpx"
+  src="https://fastly.picsum.photos/id/4/5000/3333.jpg?hmac=ghf06FdmgiD0-G4c9DdNM8RnBIN7BO0-ZGEw47khHP4"
+/>
 
-  <!-- Quick categories -->
-  <view class="section">
-    <van-grid column-num="4" clickable>
-      <van-grid-item icon="shop-o" text="Categories" />
-      <van-grid-item icon="hot-o" text="Hot" />
-      <van-grid-item icon="new-o" text="New" />
-      <van-grid-item icon="coupon-o" text="Coupons" />
-      <van-grid-item icon="like-o" text="Favorites" />
-      <van-grid-item icon="cart-o" text="Cart" />
-      <van-grid-item icon="gift-o" text="Gifts" />
-      <van-grid-item icon="service-o" text="Support" />
-    </van-grid>
-  </view>
+<!-- Quick categories -->
+<van-grid column-num="4" clickable>
+  <van-grid-item icon="shop-o" text="Categories" />
+  <van-grid-item icon="hot-o" text="Hot" />
+  <van-grid-item icon="new-o" text="New" />
+  <van-grid-item icon="coupon-o" text="Coupons" />
+  <van-grid-item icon="like-o" text="Favorites" />
+  <van-grid-item icon="cart-o" text="Cart" />
+  <van-grid-item icon="gift-o" text="Gifts" />
+  <van-grid-item icon="service-o" text="Support" />
+</van-grid>
 
-  <!-- Featured products -->
-  <van-cell-group inset>
-    <van-cell title="Featured" label="Handpicked for you" border="false" />
-  </van-cell-group>
-  <view class="product-list">
-    <van-card
-      num="1"
-      price="99.00"
-      desc="High quality product"
-      title="Sample Product A"
-      thumb="https://img.yzcdn.cn/vant/ipad.jpeg"
-      currency="¥"
-    >
-      <view slot="tags"><van-tag type="danger" plain>NEW</van-tag></view>
-    </van-card>
+<!-- Featured products -->
+<van-cell-group inset>
+  <van-cell title="Featured" label="Handpicked for you" border="false" />
+</van-cell-group>
 
-    <van-card
-      num="1"
-      price="129.00"
-      desc="Comfortable and durable"
-      title="Sample Product B"
-      thumb="https://img.yzcdn.cn/vant/ipad.jpeg"
-      currency="¥"
-    >
-      <view slot="tags"><van-tag type="primary" plain>HOT</van-tag></view>
-    </van-card>
-  </view>
+<van-card
+  num="1"
+  price="99.00"
+  desc="High quality product"
+  title="Sample Product A"
+  thumb="https://img.yzcdn.cn/vant/ipad.jpeg"
+  currency="¥"
+>
+  <view slot="tags"><van-tag type="danger" plain>NEW</van-tag></view>
+</van-card>
 
-  <van-divider>End of List</van-divider>
+<van-divider />
 
-  <view class="bottom-space" />
-</view>
+<van-card
+  num="1"
+  price="129.00"
+  desc="Comfortable and durable"
+  title="Sample Product B"
+  thumb="https://img.yzcdn.cn/vant/ipad.jpeg"
+  currency="¥"
+>
+  <view slot="tags"><van-tag type="primary" plain>HOT</van-tag></view>
+</van-card>
+
+<van-divider>End of List</van-divider>
