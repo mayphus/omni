@@ -1,4 +1,4 @@
-<van-tabs sticky>
+<van-tabs sticky active="{{active}}" bind:change="onTabChange">
   <van-tab title="All">
     <van-cell title="Order #1001" label="2 items · ¥228.00" is-link />
     <van-cell title="Order #1000" label="1 item · ¥99.00" is-link />
@@ -11,5 +11,8 @@
   </van-tab>
   <van-tab title="To Receive">
     <van-cell title="Order #0998" label="In transit" is-link />
+  </van-tab>
+  <van-tab title="After-sales">
+    <van-cell title="Order #0997" label="Refund processing" is-link />
   </van-tab>
 </van-tabs>
