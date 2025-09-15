@@ -1,22 +1,98 @@
+<!-- Profile Header -->
+<view class="profile-header">
+  <van-skeleton title row="1" loading="{{ loading }}">
+    <van-cell
+      center
+      size="large"
+      clickable
+      is-link="{{ !isLoggedIn }}"
+      bind:click="{{ isLoggedIn ? 'onEditProfile' : 'onSignIn' }}"
+      title="{{ isLoggedIn ? nickname : 'Tap to sign in' }}"
+      title-style="font-weight:600"
+      label="{{ isLoggedIn ? 'View and edit your profile' : 'Visitor mode' }}"
+    >
+      <van-image
+        slot="icon"
+        round
+        width="96rpx"
+        height="96rpx"
+        fit="cover"
+        lazy-load
+        src="{{ avatarUrl }}"
+        show-loading
+        use-loading-slot
+        show-error
+        use-error-slot
+      >
+        <van-loading slot="loading" size="18" />
+        <van-icon slot="error" name="user-circle-o" size="40" color="#c0c4cc" />
+      </van-image>
+
+      <view slot="right-icon" wx:if="{{ isLoggedIn }}">
+        <van-tag type="danger" size="mini" plain wx:if="{{ isVIP }}">VIP</van-tag>
+      </view>
+    </van-cell>
+  </van-skeleton>
+</view>
+
+<!-- Quick Entries -->
+<van-divider content-position="left">Quick Entries</van-divider>
+<van-cell-group inset>
+  <van-grid column-num="3" clickable border="{{ false }}" icon-size="28">
+    <van-grid-item icon="coupon-o"   text="Coupons"   url="/pages/coupon/index"    link-type="navigateTo" />
+    <van-grid-item icon="star-o"     text="Favorites" url="/pages/fav/goods"       link-type="navigateTo" />
+    <van-grid-item icon="underway-o" text="History"   url="/pages/history/index"   link-type="navigateTo" />
+  </van-grid>
+</van-cell-group>
+
+<!-- Orders -->
+<van-divider content-position="center">Orders</van-divider>
 <van-cell-group inset>
   <van-cell
-    use-icon-slot
-    title="{{ (user && user.profile && user.profile.nickname) || 'Guest' }}"
-    label="Welcome back"
-    border="false"
-  >
-    <van-image slot="icon" width="140rpx" height="140rpx" round fit="cover" src="https://img.yzcdn.cn/vant/cat.jpeg" />
-  </van-cell>
+    title="My Orders"
+    is-link
+    clickable
+    value="All Orders"
+    url="/pages/orders/index"
+    link-type="navigateTo"
+  />
+  <van-grid column-num="4" clickable border="{{ false }}" icon-size="26">
+    <van-grid-item url="/pages/orders/index?active=0" link-type="navigateTo">
+      <van-icon slot="icon" name="pending-payment" size="26" info="{{ orderCounts.toPay || '' }}" />
+      <view slot="text">To Pay</view>
+    </van-grid-item>
+    <van-grid-item url="/pages/orders/index?active=1" link-type="navigateTo">
+      <van-icon slot="icon" name="tosend" size="26" info="{{ orderCounts.toShip || '' }}" />
+      <view slot="text">To Ship</view>
+    </van-grid-item>
+    <van-grid-item url="/pages/orders/index?active=2" link-type="navigateTo">
+      <van-icon slot="icon" name="logistics" size="26" info="{{ orderCounts.toReceive || '' }}" />
+      <view slot="text">To Receive</view>
+    </van-grid-item>
+    <van-grid-item url="/pages/orders/index?active=5" link-type="navigateTo">
+      <van-icon slot="icon" name="after-sale" size="26" info="{{ orderCounts.afterSale || '' }}" />
+      <view slot="text">After-sale</view>
+    </van-grid-item>
+  </van-grid>
 </van-cell-group>
 
+<!-- Tools -->
+<van-divider content-position="center">More</van-divider>
 <van-cell-group inset>
-  <van-cell title="My Orders" is-link />
-  <van-cell title="Addresses" is-link />
-  <van-cell title="Coupons" is-link />
-  <van-cell title="Settings" is-link />
+  <van-grid column-num="4" clickable border="{{ false }}" icon-size="26">
+    <van-grid-item url="/pages/wallet/index" link-type="navigateTo">
+      <van-badge slot="icon" content="Hot">
+        <van-icon name="balance-o" size="26" />
+      </van-badge>
+      <view slot="text">Wallet</view>
+    </van-grid-item>
+    <van-grid-item icon="service-o"  text="Support"  url="/pages/support/index"  link-type="navigateTo" />
+  </van-grid>
 </van-cell-group>
 
+<!-- Settings & About -->
+<van-divider></van-divider>
 <van-cell-group inset>
-  <van-cell title="Sign In" is-link bind:click="onSignIn" />
-  <van-cell title="Update Profile" is-link bind:click="onUpdateProfile" />
+  <van-cell title="Settings" is-link clickable bind:click="onOpenSettings" />
+  <van-cell title="About"    is-link clickable url="/pages/about/index" link-type="navigateTo" />
 </van-cell-group>

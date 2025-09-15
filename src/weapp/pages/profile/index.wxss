@@ -1,0 +1,9 @@
+/* Reserve space for the custom tab bar (fixed outside page DOM) */
+page {
+  box-sizing: border-box;
+  /* Older iOS/WeChat fallback */
+  padding-bottom: calc(constant(safe-area-inset-bottom) + 50px);
+  /* Modern engines */
+  padding-bottom: calc(env(safe-area-inset-bottom) + 50px);
+}
+
