@@ -1,8 +1,5 @@
-<!-- Top search and promo -->
+<!-- Top search -->
 <van-search placeholder="Search products" shape="round" disabled background="#ffffff" />
-<van-notice-bar mode="link" background="#fff7e6" color="#fa8c16">
-  Free shipping over ¥99 · New arrivals weekly
-</van-notice-bar>
 
 <!-- Banner -->
 <van-image
