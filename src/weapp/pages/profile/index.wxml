@@ -1,5 +1,10 @@
 <van-cell-group inset>
-  <van-cell use-icon-slot title="Guest" label="Welcome back" border="false">
+  <van-cell
+    use-icon-slot
+    title="{{ (user && user.profile && user.profile.nickname) || 'Guest' }}"
+    label="Welcome back"
+    border="false"
+  >
     <van-image slot="icon" width="140rpx" height="140rpx" round fit="cover" src="https://img.yzcdn.cn/vant/cat.jpeg" />
   </van-cell>
 </van-cell-group>
@@ -12,6 +17,6 @@
 </van-cell-group>
 
 <van-cell-group inset>
-  <van-cell title="Sign In" is-link />
-  <van-cell title="Register" is-link />
+  <van-cell title="Sign In" is-link bind:click="onSignIn" />
+  <van-cell title="Update Profile" is-link bind:click="onUpdateProfile" />
 </van-cell-group>
