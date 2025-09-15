@@ -1,4 +1,5 @@
 /** Minimal WeApp App */
+import { VITE_TCB_ENV_ID } from './config/cloud'
 
 App({
   onLaunch() {
@@ -6,7 +7,6 @@ App({
       console.error('Please use base library 2.2.3 or above.')
       return
     }
-    wx.cloud.init({ traceUser: true })
+    wx.cloud.init({ env: VITE_TCB_ENV_ID, traceUser: true })
   },
 })
-
