@@ -32,8 +32,8 @@ export default defineConfig(({ mode }) => {
   }
 
   if (mode === 'functions') {
-    // For cloud functions, we need simple transpilation, not bundling
-    // Using Vite in library mode with all node modules as external
+    // For cloud functions, we need simple transpilation, not full bundling.
+    // Use Vite in library mode and keep key runtime deps external (CloudBase provides them).
     return {
       plugins: [
         {

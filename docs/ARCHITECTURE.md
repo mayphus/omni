@@ -12,7 +12,7 @@ src/
 weapp/             # WeChat DevTools project root
 functions/         # Deployed functions (CloudBase)
 admin/             # Static web assets for console
-archive/           # Historical snapshots
+archive/           # Optional: historical snapshots (if present)
 ```
 
 Build pipeline

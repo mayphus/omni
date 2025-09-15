@@ -5,8 +5,8 @@ Top‑level source is organized by runtime. Keep implementations minimal and sha
 - `weapp/` – WeChat Mini Program source (weapp‑vite). Output → `./weapp/`.
 - `functions/` – CloudBase functions source (Node 18, CJS). Output → `./functions/`.
 - `admin/` – Admin console source (React). Output → `./admin/`.
-- `shared/` – Small cross‑runtime utilities (pure TS) shared across targets.
-- `types/` – Central TypeScript interfaces and schema definitions.
+- `shared/` – Cross‑runtime, runtime‑agnostic TS (types + Zod schemas + helpers) shared across targets.
+- `types/` – Ambient `.d.ts` only (e.g., WeApp API typings). No domain models here.
 
 Notes
 - WeChat‑only for miniapp. UI library: Vant Weapp. English UI for now.

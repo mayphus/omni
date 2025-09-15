@@ -19,7 +19,7 @@ Variables
 - `VITE_APP_NAME` – product label visible in UI.
 - `VITE_ENV` – optional flag for UI/debug (e.g., `development`, `production`).
 - `VITE_TCB_ENV_ID` – CloudBase environment ID used by Mini Program (`wx.cloud.init`).
-- `WECHAT_APP_ID`, `WECHAT_PRIVATE_KEY` – used by miniprogram-ci locally.
+- `WECHAT_APP_ID`, `WECHAT_PRIVATE_KEY_PATH` – used by miniprogram-ci locally.
 - `TCB_ENV_ID`, `TCB_PRIVATE_KEY` – used by `tcb` CLI locally.
 
 Why

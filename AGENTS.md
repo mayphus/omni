@@ -19,7 +19,7 @@ tests/        # Vitest unit/integration tests
 
 - `npm run dev:weapp` / `build:weapp` – develop/build the mini program.
 - `npm run dev:admin` / `build:admin` – develop/build the admin app.
-- `npm run build:functions:watch` / `build:functions` – watch/build CloudBase function (`shop`).
+- `npm run build:functions` – build the CloudBase function (`shop`). A watch/dev task is not implemented yet.
 - `npm run deploy:functions` – build and deploy `shop` via `tcb`.
 - `npm run typecheck` / `test` / `verify` – TS check, run tests, full pipeline.
 

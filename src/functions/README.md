@@ -4,8 +4,7 @@
 - Packaging: build from `src/functions/*` → `./functions/*`.
 - Pattern: single function `shop` with action router (e.g., `v1.system.ping`).
 
-MVP Checklist (later)
-- `v1.system.ping` responds with `{ success: true }`.
-- Minimal auth flow using WeChat OpenID; store a user copy for custom needs.
-- Collections to be defined later (best practice, minimal).
-
+MVP Checklist (current)
+- `v1.system.ping` responds with `{ success: true, message: 'pong' }`.
+- Basic auth flow using WeChat OPENID/UNIONID: `v1.auth.login`, `v1.auth.profile.update`.
+- Collections are kept minimal (users, products, orders, system) and modeled via `src/shared`.

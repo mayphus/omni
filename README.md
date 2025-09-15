@@ -20,7 +20,7 @@ src/
 weapp/             # built mini app for DevTools
 functions/         # built cloud function(s)
 admin/             # built admin web app
-archive/           # previous codebase snapshots
+archive/           # optional: previous codebase snapshots (if present)
 ```
 
 ## Commands
@@ -32,12 +32,13 @@ archive/           # previous codebase snapshots
   - `npm run deploy:weapp` – build + npm pack + upload via miniprogram‑ci
 - Functions
   - `npm run build:functions` – build `shop` to `./functions/shop` (CJS, Node 18)
-  - `npm run build:functions:watch` – watch and rebuild on change
+  - Note: a watch/dev task is not implemented yet.
 - Admin
   - `npm run dev:admin` – Vite dev (Hello World)
   - `npm run build:admin` – build to `./admin`
 - All builds
   - `npm run build:all` – build weapp (+npm), functions, and admin
+    - Requires pnpm in PATH because the script chains internal tasks with `pnpm run`. If you only have npm, run each build task individually.
 - Quality
   - `npm run typecheck` / `npm run test:ci` / `npm run verify`
 
@@ -50,7 +51,7 @@ archive/           # previous codebase snapshots
 ## Hello World status
 
 - WeApp: minimal index page using Vant components. Build with `npm run build:weapp`, run `npm run build:weapp:npm`, then open via WeChat DevTools.
-- Functions: `shop` function provides `v1.system.ping`. Build with `npm run build:functions`; deploy via `npm run deploy:functions` (requires TCB CLI auth).
+- Functions: `shop` function provides `v1.system.ping` and basic auth endpoints `v1.auth.login`, `v1.auth.profile.update`. Build with `npm run build:functions`; deploy via `npm run deploy:functions` (requires TCB CLI auth).
 - Admin: minimal React page renders “Hello, Admin”. Run `npm run dev:admin` or build with `npm run build:admin`.
 
 ## Environment
@@ -62,5 +63,5 @@ archive/           # previous codebase snapshots
 
 ## Commit hooks
 
-- Pre-commit: runs `npm run test:ci` via Husky; blocks commits if tests fail.
-- Optional: run `npm run verify` before pushing, or add a pre-push hook to automate.
+- Pre-commit: runs `typecheck` + `test:ci` (see `.husky/pre-commit`).
+- Pre-push: runs `verify` (typecheck, tests, and builds) — see `.husky/pre-push`.

@@ -3,7 +3,7 @@
 Quickstart
 - Install deps: `npm i` (root)
 - Miniapp dev: `npm run dev:weapp` → open `./project.config.json` in WeChat DevTools
-- Admin dev: `npm run dev:admin` (install web deps first if missing)
+- Admin dev: `npm run dev:admin`
 - Cloud build: `npm run build:functions` (deploy with `tcb` CLI when ready)
 
 WeApp (Miniapp)
@@ -28,8 +28,12 @@ Admin
 
 Env & secrets
 - Optional: create `.env.local` later if build-time values are truly needed
-- Use these names if you do: `WECHAT_APP_ID`, `WECHAT_APP_SECRET` (path to .private.key), `TCB_ENV`, `TENCENT_SECRET_KEY` (path to .private-tcb.key)
-- Real keys live as files: `.private.key`, `.private-tcb.key` (both git-ignored)
+- Recommended names:
+  - `WECHAT_APP_ID`
+  - `WECHAT_PRIVATE_KEY_PATH` – path to the local mini program CI private key file
+  - `TCB_ENV_ID`
+  - `TCB_PRIVATE_KEY` – path to the local CloudBase CLI private key file
+- Real keys live as files: `.private-wx.key`, `.private-tcb.key` (both git-ignored)
 
-CI hooks (optional)
-– Keep `verify` green: typecheck, tests, and builds for all targets.
+CI hooks
+- Keep `verify` green: typecheck, tests, and builds for all targets.
