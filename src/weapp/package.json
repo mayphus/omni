@@ -1,0 +1,8 @@
+{
+  "name": "tongmeng-plant-weapp",
+  "version": "0.2.0",
+  "description": "WeChat Mini Program for Tongmeng Plant",
+  "dependencies": {
+    "@vant/weapp": "^1.11.7"
+  }
+}

@@ -1,6 +1,8 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { fileURLToPath, URL } from 'node:url'
+import fs from 'node:fs'
+import path from 'node:path'
 
 export default defineConfig(({ mode }) => {
   const alias = {
@@ -24,7 +26,24 @@ export default defineConfig(({ mode }) => {
     // For cloud functions, we need simple transpilation, not bundling
     // Using Vite in library mode with all node modules as external
     return {
-      plugins: [],
+      plugins: [
+        {
+          name: 'copy-functions-meta',
+          writeBundle() {
+            const src = path.resolve('./src/functions/shop/package.json')
+            const dest = path.resolve('./functions/shop/package.json')
+            const destDir = path.dirname(dest)
+
+            if (fs.existsSync(src)) {
+              if (!fs.existsSync(destDir)) {
+                fs.mkdirSync(destDir, { recursive: true })
+              }
+              fs.copyFileSync(src, dest)
+              console.log('✔ Copied package.json to functions/shop/')
+            }
+          }
+        }
+      ],
       resolve: { alias },
       build: {
         outDir: 'functions/shop',

@@ -4,21 +4,20 @@
   "version": "0.2.0",
   "description": "Children's Dream Planet (clean baseline): weapp + functions + admin + shared",
   "scripts": {
-    "dev:weapp": "weapp-vite dev",
-    "open:weapp": "weapp-vite open",
     "dev:admin": "vite --config vite.config.main.ts --mode admin",
-    "build:functions:watch": "vite build --config vite.config.main.ts --mode functions --watch",
+    "dev:functions": "echo 'Function watch not implemented yet'",
+    "dev:weapp": "weapp-vite dev",
 
-    "build:weapp": "weapp-vite build",
-    "build:weapp:npm": "weapp-vite npm",
     "build:admin": "vite build --config vite.config.main.ts --mode admin",
-    "build:functions": "vite build --config vite.config.main.ts --mode functions && node scripts/copy-functions-meta.js",
-
+    "build:functions": "vite build --config vite.config.main.ts --mode functions",
+    "build:weapp": "weapp-vite build && node scripts/ensure-weapp-npm.js",
+    "build:weapp:npm": "weapp-vite npm",
     "build:all": "npm run build:weapp && npm run build:weapp:npm && npm run build:functions && npm run build:admin",
 
-    "deploy:weapp": "npm run build:weapp && npm run build:weapp:npm && node scripts/weapp-ci-deploy.js",
+    "deploy:admin": "echo 'Admin deployment not implemented yet'",
     "deploy:functions": "npm run build:functions && tcb fn deploy shop --force",
-    "deploy": "npm run build:weapp && npm run build:weapp:npm && npm run build:functions && npm run build:admin",
+    "deploy:weapp": "npm run build:weapp && npm run build:weapp:npm && node scripts/weapp-ci-deploy.js",
+    "deploy:all": "npm run build:weapp && npm run build:weapp:npm && npm run build:functions && npm run build:admin",
 
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run",

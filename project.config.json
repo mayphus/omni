@@ -16,9 +16,8 @@
     "uploadWithSourceMap": true,
     "packNpmRelationList": [
       {
-        "packageJsonPath": "package.json",
-        "nodeModulesPath": "node_modules",
-        "miniprogramNpmDistDir": "weapp/miniprogram_npm"
+        "packageJsonPath": "./package.json",
+        "miniprogramNpmDistDir": "./weapp/"
       }
     ],
     "minifyWXSS": true,
