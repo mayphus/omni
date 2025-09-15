@@ -1,0 +1,7 @@
+/* Reserve space for custom tab bar */
+page {
+  box-sizing: border-box;
+  padding-bottom: calc(constant(safe-area-inset-bottom) + 50px);
+  padding-bottom: calc(env(safe-area-inset-bottom) + 50px);
+}
+

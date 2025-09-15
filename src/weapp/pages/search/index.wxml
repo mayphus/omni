@@ -1,5 +1,7 @@
 <van-search placeholder="Search products" shape="round" background="#ffffff" />
 
+<van-divider content-position="left">Results</van-divider>
+
 <van-cell-group inset>
   <van-cell title="Results" label="Showing sample items" border="false" />
 </van-cell-group>

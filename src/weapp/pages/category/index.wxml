@@ -1,24 +1,30 @@
 <van-search placeholder="Search categories" shape="round" disabled background="#ffffff" />
 
-<van-cell-group inset>
-  <van-cell title="Categories" label="Browse by type" border="false" />
-</van-cell-group>
+<!-- Category Tabs -->
+<van-tabs
+  sticky
+  swipeable
+  animated
+  active="{{ active }}"
+  bind:change="onTabChange"
+>
+  <van-tab
+    wx:for="{{ categories }}"
+    wx:key="id"
+    title="{{ item.name }}"
+    name="{{ item.id }}"
+  >
+    <van-cell-group inset>
+      <van-cell title="{{ item.name }}" label="Browse {{ item.name }}" border="false" />
+    </van-cell-group>
 
-<van-grid column-num="4" clickable>
-  <van-grid-item icon="shop-o" text="All" />
-  <van-grid-item icon="hot-o" text="Hot" />
-  <van-grid-item icon="new-o" text="New" />
-  <van-grid-item icon="coupon-o" text="Deals" />
-  <van-grid-item icon="like-o" text="Favorites" />
-  <van-grid-item icon="cart-o" text="Essentials" />
-  <van-grid-item icon="gift-o" text="Gifts" />
-  <van-grid-item icon="service-o" text="Support" />
-</van-grid>
-
-<van-cell-group inset>
-  <van-cell title="Popular" label="Trending categories" border="false" />
-</van-cell-group>
-
-<van-cell title="Sample Category A" is-link />
-<van-cell title="Sample Category B" is-link />
-<van-cell title="Sample Category C" is-link />
+    <van-grid column-num="4" clickable>
+      <van-grid-item
+        wx:for="{{ item.children }}"
+        wx:key="id"
+        icon="{{ child.icon || 'apps-o' }}"
+        text="{{ child.name }}"
+      />
+    </van-grid>
+  </van-tab>
+</van-tabs>

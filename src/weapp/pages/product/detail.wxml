@@ -5,12 +5,14 @@
   src="https://img.yzcdn.cn/vant/ipad.jpeg"
 />
 
+<van-divider content-position="left">Product</van-divider>
 <van-cell-group inset>
   <van-cell title="Sample Product" label="Short description" border="false" />
   <van-cell title="Price" value="¥129.00" />
   <van-cell title="Rating" value="4.5" />
 </van-cell-group>
 
+<van-divider content-position="left">Options</van-divider>
 <van-cell-group inset>
   <van-cell title="Options" border="false" />
   <van-cell title="Color" value="Red" is-link />
@@ -32,7 +34,7 @@
   </van-tab>
 </van-tabs>
 
-<van-goods-action>
+<van-goods-action safe-area-inset-bottom>
   <van-goods-action-icon icon="chat-o" text="Service" />
   <van-goods-action-icon icon="cart-o" text="Cart" link-type="switchTab" url="/pages/cart/index" />
   <van-goods-action-button type="warning" text="Add to Cart" />

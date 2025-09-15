@@ -10,7 +10,8 @@
 />
 
 <!-- Quick categories -->
-<van-grid column-num="4" clickable>
+<van-divider content-position="left">Quick Categories</van-divider>
+<van-grid column-num="4" clickable border="{{ false }}">
   <van-grid-item icon="shop-o" text="Categories" />
   <van-grid-item icon="hot-o" text="Hot" />
   <van-grid-item icon="new-o" text="New" />
@@ -22,6 +23,7 @@
 </van-grid>
 
 <!-- Featured products -->
+<van-divider content-position="left">Featured</van-divider>
 <van-cell-group inset>
   <van-cell title="Featured" label="Handpicked for you" border="false" />
 </van-cell-group>
@@ -50,13 +52,4 @@
   <view slot="tags"><van-tag type="primary" plain>HOT</van-tag></view>
 </van-card>
 
-<van-divider>End of List</van-divider>
-
-<!-- Quick Links for testing -->
-<van-cell-group inset>
-  <van-cell title="Quick Links" border="false" />
-</van-cell-group>
-<van-cell title="Product Detail" is-link url="/pages/product/detail" link-type="navigateTo" />
-<van-cell title="Search Results" is-link url="/pages/search/index" link-type="navigateTo" />
-<van-cell title="Orders" is-link url="/pages/orders/index" link-type="navigateTo" />
-<van-cell title="Checkout" is-link url="/pages/checkout/index" link-type="navigateTo" />
+<van-divider content-position="center">End</van-divider>

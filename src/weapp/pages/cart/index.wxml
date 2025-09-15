@@ -1,7 +1,4 @@
-<van-cell-group inset>
-  <van-cell title="My Cart" border="false" />
-</van-cell-group>
-
+<van-divider content-position="left">Cart Items</van-divider>
 <van-swipe-cell>
   <van-card
     num="1"
