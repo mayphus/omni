@@ -61,6 +61,15 @@ function createQuery(state: QueryState, store: Record<string, Doc[]>) {
       }
       return { stats: { updated: docs.length } }
     },
+    async remove() {
+      const docs = getDocs(state, store)
+      const ids = new Set(docs.map((doc) => doc._id))
+      const original = store[state.name]
+      const next = original.filter((doc) => !ids.has(doc._id))
+      const removed = original.length - next.length
+      store[state.name] = next
+      return { stats: { removed } }
+    },
   }
 }
 

@@ -13,7 +13,7 @@ const fail = (error: string, data: any = {}): ApiResponse => ({ success: false, 
 // Shared schemas and helpers
 import type { User, UserProfile } from '@shared/models/user'
 import { zUser, zUserProfile } from '@shared/models/user'
-import type { Product } from '@shared/models/product'
+import type { Product, ProductInput } from '@shared/models/product'
 import { zProduct, zProductInput } from '@shared/models/product'
 import { Collections } from '@shared/collections'
 import { fromServer, nowMs } from '@shared/base'
@@ -46,6 +46,28 @@ function getWX() {
 // Utilities — DB helpers kept tiny and explicit
 const usersCol = () => db.collection(Collections.Users)
 const productsCol = () => db.collection(Collections.Products)
+
+function sanitizeSkus(skus: ProductInput['skus']) {
+  const normalized = skus
+    ?.map((sku) => ({
+      ...sku,
+      skuId: sku.skuId.trim(),
+      isActive: sku.isActive ?? true,
+    }))
+    .filter((sku) => !!sku.skuId)
+  return normalized && normalized.length ? normalized : undefined
+}
+
+function buildProductFromInput(input: ProductInput, now: number, existing?: Product) {
+  const updatedAt = existing ? Math.max(now, existing.updatedAt + 1) : now
+  const base: Product = {
+    ...input,
+    skus: sanitizeSkus(input.skus),
+    createdAt: existing?.createdAt ?? now,
+    updatedAt,
+  }
+  return zProduct.parse(base)
+}
 
 function getAdminContext() {
   const ctx = getWX() as any
@@ -163,22 +185,52 @@ const handlers: Record<string, (event: any) => Promise<ApiResponse> | ApiRespons
     const input = zProductInput.safeParse(event?.product)
     if (!input.success) return fail('Invalid product payload', { issues: input.error.issues })
     const now = nowMs()
-    const sanitizedSkus = input.data.skus
-      ?.map((sku) => ({
-        ...sku,
-        skuId: sku.skuId.trim(),
-        isActive: sku.isActive ?? true,
-      }))
-      .filter((sku) => !!sku.skuId)
-    const base: Product = {
-      ...input.data,
-      skus: sanitizedSkus && sanitizedSkus.length ? sanitizedSkus : undefined,
-      createdAt: now,
-      updatedAt: now,
-    }
-    const next = zProduct.parse(base)
+    const next = buildProductFromInput(input.data, now)
     const res = await productsCol().add({ data: next })
     return ok({ product: { ...next, id: res._id } })
+  },
+
+  /**
+   * v1.admin.products.update
+   * Input: { productId, product }
+   * Output: { product }
+   */
+  'v1.admin.products.update': async (event: any) => {
+    if (!getAdminContext()) return fail('Not authenticated')
+    const productId = typeof event?.productId === 'string' ? event.productId.trim() : ''
+    if (!productId) return fail('Missing productId')
+    const input = zProductInput.safeParse(event?.product)
+    if (!input.success) return fail('Invalid product payload', { issues: input.error.issues })
+
+    const existingSnap = await productsCol().where({ _id: productId }).limit(1).get()
+    const existingDoc = existingSnap.data?.[0]
+    if (!existingDoc) return fail('Product not found')
+    const { _id: _ignored, ...rest } = existingDoc as any
+    const existing = zProduct.safeParse(rest)
+    if (!existing.success) return fail('Stored product invalid', { issues: existing.error.issues })
+
+    const now = nowMs()
+    const next = buildProductFromInput(input.data, now, existing.data)
+    await productsCol().where({ _id: productId }).update({ data: next })
+    return ok({ product: { ...next, id: productId } })
+  },
+
+  /**
+   * v1.admin.products.delete
+   * Input: { productId }
+   * Output: { productId }
+   */
+  'v1.admin.products.delete': async (event: any) => {
+    if (!getAdminContext()) return fail('Not authenticated')
+    const productId = typeof event?.productId === 'string' ? event.productId.trim() : ''
+    if (!productId) return fail('Missing productId')
+
+    const existingSnap = await productsCol().where({ _id: productId }).limit(1).get()
+    const existingDoc = existingSnap.data?.[0]
+    if (!existingDoc) return fail('Product not found')
+
+    await productsCol().where({ _id: productId }).remove()
+    return ok({ productId })
   },
 }
 

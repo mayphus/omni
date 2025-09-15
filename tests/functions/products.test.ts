@@ -63,6 +63,76 @@ describe('functions: products admin', () => {
     expect(list.products[0].id).toBe(second.product.id)
   })
 
+  it('updates an existing product', async () => {
+    const create = await main({
+      action: 'v1.admin.products.create',
+      product: {
+        title: 'Rocket',
+        subtitle: 'V1',
+        price: { currency: 'CNY', priceYuan: 15.75 },
+        stock: 50,
+        isActive: true,
+        images: ['https://example.com/rocket.png'],
+      },
+    })
+    if (!create.success) throw new Error(`create failed: ${create.error}`)
+    const { product } = create
+    const update = await main({
+      action: 'v1.admin.products.update',
+      productId: product.id,
+      product: {
+        title: 'Rocket Mk II',
+        subtitle: 'V2',
+        description: 'Upgraded model',
+        richDescription: '<p>Now with boosters</p>',
+        price: { currency: 'CNY', priceYuan: 18.5 },
+        stock: 45,
+        isActive: false,
+        images: ['https://example.com/rocket-new.png', 'https://example.com/rocket-detail.png'],
+        skus: [
+          { skuId: '  rocket-std  ', priceYuan: 18.5, stock: 10, isActive: true },
+          { skuId: 'rocket-deluxe', priceYuan: 22.5, stock: 5, isActive: false },
+        ],
+      },
+    })
+    if (!update.success) throw new Error(`update failed: ${update.error}`)
+    expect(update.product.title).toBe('Rocket Mk II')
+    expect(update.product.isActive).toBe(false)
+    expect(update.product.skus).toBeDefined()
+    expect(update.product.skus).toHaveLength(2)
+    expect(update.product.skus?.[0].skuId).toBe('rocket-std')
+    expect(update.product.createdAt).toBe(product.createdAt)
+    expect(update.product.updatedAt).toBeGreaterThan(product.updatedAt)
+
+    const list = await main({ action: 'v1.admin.products.list' })
+    if (!list.success) throw new Error(`list failed: ${list.error}`)
+    expect(list.products[0].id).toBe(product.id)
+    expect(list.products[0].title).toBe('Rocket Mk II')
+    expect(list.products[0].images).toHaveLength(2)
+  })
+
+  it('deletes a product', async () => {
+    const create = await main({
+      action: 'v1.admin.products.create',
+      product: {
+        title: 'Disposable',
+        price: { currency: 'CNY', priceYuan: 9.99 },
+        stock: 2,
+        isActive: true,
+      },
+    })
+    if (!create.success) throw new Error(`create failed: ${create.error}`)
+    const productId = create.product.id
+
+    const deletion = await main({ action: 'v1.admin.products.delete', productId })
+    expect(deletion.success).toBe(true)
+    expect(deletion).toHaveProperty('productId', productId)
+
+    const list = await main({ action: 'v1.admin.products.list' })
+    if (!list.success) throw new Error(`list failed: ${list.error}`)
+    expect(list.products.find((item) => item.id === productId)).toBeUndefined()
+  })
+
   it('validates bad payloads', async () => {
     await expect(
       main({
