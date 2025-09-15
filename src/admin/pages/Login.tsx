@@ -3,9 +3,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Label } from '../components/ui/label'
 import { Input } from '../components/ui/input'
 import { Button } from '../components/ui/button'
-import { getEnvId, signInWithUsernamePassword } from '../lib/cloudbase'
+import { getEnvId, signInWithUsernamePassword, isValidAdminLogin, type CloudbaseUser } from '../lib/cloudbase'
 
-export function Login({ onSuccess }: { onSuccess: () => void }) {
+export function Login({ onSuccess }: { onSuccess: (user: CloudbaseUser) => void }) {
   const [username, setUsername] = React.useState('')
   const [password, setPassword] = React.useState('')
   const [loading, setLoading] = React.useState(false)
@@ -21,8 +21,12 @@ export function Login({ onSuccess }: { onSuccess: () => void }) {
       if (!username || !password) {
         throw new Error('Please enter username and password')
       }
-      await signInWithUsernamePassword(username, password)
-      onSuccess()
+      const state = await signInWithUsernamePassword(username, password)
+      const user = state?.user
+      if (!isValidAdminLogin(user)) {
+        throw new Error('Account is missing admin access')
+      }
+      onSuccess(user)
     } catch (err: any) {
       const msg = err?.message || err?.code || 'Login failed'
       setError(typeof msg === 'string' ? msg : 'Login failed')
@@ -73,5 +77,5 @@ export function Login({ onSuccess }: { onSuccess: () => void }) {
         </CardContent>
       </Card>
     </div>
-  )}
-
+  )
+}

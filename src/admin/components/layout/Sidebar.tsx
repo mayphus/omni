@@ -1,6 +1,13 @@
 import { type Route } from '../../lib/router'
+import { Button } from '../ui/button'
 
-export function Sidebar({ current }: { current: Route }) {
+interface SidebarProps {
+  current: Route
+  userName: string
+  onSignOut: () => void
+}
+
+export function Sidebar({ current, userName, onSignOut }: SidebarProps) {
   const items: { key: Route; label: string }[] = [
     { key: 'dashboard', label: 'Dashboard' },
     { key: 'products', label: 'Products' },
@@ -9,9 +16,9 @@ export function Sidebar({ current }: { current: Route }) {
     { key: 'system', label: 'System' },
   ]
   return (
-    <aside className="hidden w-56 shrink-0 border-r bg-background md:block">
+    <aside className="hidden w-56 shrink-0 border-r bg-background md:flex md:flex-col">
       <div className="p-3 text-sm font-semibold">Admin</div>
-      <nav className="px-2 text-sm">
+      <nav className="flex-1 px-2 text-sm">
         {items.map((item) => {
           const active = current === item.key
           return (
@@ -28,6 +35,12 @@ export function Sidebar({ current }: { current: Route }) {
           )
         })}
       </nav>
+      <div className="border-t p-3 text-xs text-muted-foreground">
+        <div className="mb-2 truncate text-foreground" title={userName}>{userName}</div>
+        <Button variant="ghost" size="sm" className="w-full justify-start" onClick={onSignOut}>
+          Sign out
+        </Button>
+      </div>
     </aside>
   )
 }

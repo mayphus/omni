@@ -13,6 +13,8 @@ const fail = (error: string, data: any = {}): ApiResponse => ({ success: false, 
 // Shared schemas and helpers
 import type { User, UserProfile } from '@shared/models/user'
 import { zUser, zUserProfile } from '@shared/models/user'
+import type { Product } from '@shared/models/product'
+import { zProduct, zProductInput } from '@shared/models/product'
 import { Collections } from '@shared/collections'
 import { fromServer, nowMs } from '@shared/base'
 
@@ -24,17 +26,39 @@ cloud.init({
   env: cloud.DYNAMIC_CURRENT_ENV
 })
 
-const db = cloud.database()
+const overrides = (globalThis as any).__SHOP_TEST_OVERRIDES__ as
+  | undefined
+  | {
+      database?: () => ReturnType<typeof cloud.database>
+      getWXContext?: () => Record<string, any>
+    }
+
+const db = overrides?.database ? overrides.database() : cloud.database()
 
 /**
  * getWX — get WeChat context (OPENID/UNIONID)
  */
 function getWX() {
+  if (overrides?.getWXContext) return overrides.getWXContext()
   return cloud.getWXContext()
 }
 
 // Utilities — DB helpers kept tiny and explicit
 const usersCol = () => db.collection(Collections.Users)
+const productsCol = () => db.collection(Collections.Products)
+
+function getAdminContext() {
+  const ctx = getWX() as any
+  if (ctx?.TCB_UUID || ctx?.OPENID) return ctx
+
+  const envUuid = process.env.TCB_UUID || process.env.TCB_CUSTOM_USER_ID
+  const envOpenid = process.env.OPENID || process.env.TCB_OPENID
+  if (envUuid || envOpenid) {
+    return { ...ctx, TCB_UUID: envUuid, OPENID: envOpenid }
+  }
+
+  return null
+}
 
 /**
  * ensureUserByOpenid
@@ -107,6 +131,54 @@ const handlers: Record<string, (event: any) => Promise<ApiResponse> | ApiRespons
     if (!input.success) return fail('Invalid profile payload', { issues: input.error.issues })
     const user = await updateUserProfile(OPENID, input.data)
     return ok({ user })
+  },
+
+  /**
+   * v1.admin.products.list
+   * Input: none
+   * Output: { products }
+   */
+  'v1.admin.products.list': async () => {
+    if (!getAdminContext()) return fail('Not authenticated')
+    const snapshot = await productsCol().orderBy('updatedAt', 'desc').limit(200).get()
+    const products: Array<Product & { id: string }> = []
+    for (const doc of snapshot.data) {
+      const { _id, ...rest } = doc as any
+      const parsed = zProduct.safeParse(rest)
+      if (!parsed.success) {
+        return fail('Invalid product data', { issues: parsed.error.issues })
+      }
+      products.push({ ...parsed.data, id: _id })
+    }
+    return ok({ products })
+  },
+
+  /**
+   * v1.admin.products.create
+   * Input: { product }
+   * Output: { product }
+   */
+  'v1.admin.products.create': async (event: any) => {
+    if (!getAdminContext()) return fail('Not authenticated')
+    const input = zProductInput.safeParse(event?.product)
+    if (!input.success) return fail('Invalid product payload', { issues: input.error.issues })
+    const now = nowMs()
+    const sanitizedSkus = input.data.skus
+      ?.map((sku) => ({
+        ...sku,
+        skuId: sku.skuId.trim(),
+        isActive: sku.isActive ?? true,
+      }))
+      .filter((sku) => !!sku.skuId)
+    const base: Product = {
+      ...input.data,
+      skus: sanitizedSkus && sanitizedSkus.length ? sanitizedSkus : undefined,
+      createdAt: now,
+      updatedAt: now,
+    }
+    const next = zProduct.parse(base)
+    const res = await productsCol().add({ data: next })
+    return ok({ product: { ...next, id: res._id } })
   },
 }
 

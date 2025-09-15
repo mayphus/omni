@@ -35,3 +35,9 @@ export const zProduct = z
   .merge(zBaseDoc)
 
 export type Product = z.infer<typeof zProduct>
+
+export const zProductInput = zProduct.omit({ createdAt: true, updatedAt: true })
+export type ProductInput = z.infer<typeof zProductInput>
+
+export const zProductWithId = zProduct.extend({ id: z.string() })
+export type ProductWithId = z.infer<typeof zProductWithId>

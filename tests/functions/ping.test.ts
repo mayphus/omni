@@ -1,5 +1,11 @@
-import { describe, it, expect } from 'vitest'
-import { main } from '../../src/functions/shop/index'
+import { beforeEach, describe, expect, it } from 'vitest'
+import { importShop, testCloud } from './helpers/cloud'
+
+const { main } = await importShop()
+
+beforeEach(() => {
+  testCloud.reset()
+})
 
 describe('functions: ping', () => {
   it('returns pong', async () => {
@@ -9,4 +15,3 @@ describe('functions: ping', () => {
     expect(res).toHaveProperty('action', 'v1.system.ping')
   })
 })
-
