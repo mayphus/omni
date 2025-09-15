@@ -1,12 +1,16 @@
-# Admin (React)
+# Admin (React + Vite)
 
-Status: not scaffolded yet. This folder intentionally contains only documentation for now.
+Status: minimal scaffold ready to add logic.
 
-Plan
-- UI: shadcn/ui when implementing (keep minimal to reduce complexity).
-- Auth: CloudBase (no dev login). Start simple and grow progressively.
-- Output target: `./admin/` when built.
+What’s included
+- TailwindCSS configured for admin only (no repo-wide changes).
+- shadcn-style Button component (no customization).
+- Basic layout and CSS tokens aligned with shadcn defaults.
 
-Next (when ready)
-- Scaffold Vite app with minimal layout.
-- Add CloudBase auth integration and a simple dashboard.
+Dev
+- `npm run dev:admin` – runs the admin app.
+- `npm run build:admin` – builds to `./admin`.
+
+Next
+- Add routes and pages as needed.
+- Integrate CloudBase auth and API calls.

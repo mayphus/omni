@@ -1,9 +1,20 @@
+import { Layout } from './components/layout/Layout'
+import { Dashboard } from './pages/Dashboard'
+import { Products } from './pages/Products'
+import { Orders } from './pages/Orders'
+import { Users } from './pages/Users'
+import { System } from './pages/System'
+import { useHashRoute } from './lib/router'
+
 export default function App() {
+  const { route } = useHashRoute()
   return (
-    <div style={{ padding: 16 }}>
-      <h1>Hello, Admin</h1>
-      <p>Minimal runnable shell for build and deploy tests.</p>
-    </div>
+    <Layout>
+      {route === 'dashboard' && <Dashboard />}
+      {route === 'products' && <Products />}
+      {route === 'orders' && <Orders />}
+      {route === 'users' && <Users />}
+      {route === 'system' && <System />}
+    </Layout>
   )
 }
-
