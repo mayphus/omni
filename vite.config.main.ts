@@ -21,14 +21,17 @@ export default defineConfig(({ mode }) => {
   }
 
   if (mode === 'functions') {
+    // For cloud functions, we need simple transpilation, not bundling
+    // Using Vite in library mode with all node modules as external
     return {
       plugins: [],
       resolve: { alias },
       build: {
         outDir: 'functions/shop',
         target: 'node18',
-        sourcemap: true,
+        sourcemap: false,
         emptyOutDir: true,
+        minify: false,
         lib: {
           entry: fileURLToPath(new URL('./src/functions/shop/index.ts', import.meta.url)),
           formats: ['cjs'],
@@ -36,9 +39,19 @@ export default defineConfig(({ mode }) => {
         },
         rollupOptions: {
           treeshake: false,
+          // External only real npm packages, bundle local code
+          external: (id) => {
+            // These are npm packages that should be external
+            const externalPackages = ['wx-server-sdk', 'zod']
+            // Check if it's one of our external packages
+            return externalPackages.some(pkg => id === pkg || id.startsWith(`${pkg}/`))
+          },
           output: {
             exports: 'named',
             entryFileNames: 'index.js',
+            // Preserve the require() statements for external modules
+            format: 'cjs',
+            interop: 'auto',
           }
         }
       }
