@@ -16,6 +16,8 @@ export default defineConfig(({ mode }) => {
     return {
       plugins: [react()],
       root: 'src/admin',
+      // Load env from repo root so .env.local at project root is picked up
+      envDir: process.cwd(),
       base: './',
       resolve: { alias },
       css: {
