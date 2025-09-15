@@ -7,23 +7,19 @@
     "dev:admin": "vite --config vite.config.main.ts --mode admin",
     "dev:functions": "echo 'Function watch not implemented yet'",
     "dev:weapp": "weapp-vite dev",
-
     "build:admin": "vite build --config vite.config.main.ts --mode admin",
     "build:functions": "vite build --config vite.config.main.ts --mode functions",
     "build:weapp": "weapp-vite build && node scripts/ensure-weapp-npm.js",
     "build:weapp:npm": "weapp-vite npm",
     "build:all": "npm run build:weapp && npm run build:weapp:npm && npm run build:functions && npm run build:admin",
-
     "deploy:admin": "echo 'Admin deployment not implemented yet'",
     "deploy:functions": "npm run build:functions && tcb fn deploy shop --force",
     "deploy:weapp": "npm run build:weapp && npm run build:weapp:npm && node scripts/weapp-ci-deploy.js",
     "deploy:all": "npm run build:weapp && npm run build:weapp:npm && npm run build:functions && npm run build:admin",
-
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run",
     "test:ci": "vitest run --reporter=dot",
     "verify": "npm run typecheck && npm run test:ci && npm run build:functions && npm run build:weapp && npm run build:admin",
-
     "prepare": "husky"
   },
   "dependencies": {
@@ -45,7 +41,8 @@
     "typescript": "^5.9.2",
     "vite": "^7.1.5",
     "vitest": "^2.1.9",
-    "weapp-vite": "^5.1.5"
+    "weapp-vite": "^5.1.5",
+    "wx-server-sdk": "^3.0.1"
   },
   "engines": {
     "node": ">=18"

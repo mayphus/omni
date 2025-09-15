@@ -27,7 +27,7 @@ Component({
       }
     },
     onChange(e: WechatMiniprogram.CustomEvent) {
-      const index = e.detail as number;
+      const index = e.detail as unknown as number;
       this.setData({ active: index });
       const url = this.data.routes[index];
       if (url) {

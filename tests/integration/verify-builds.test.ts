@@ -13,9 +13,9 @@ describe('build pipeline', () => {
     expect(fs.existsSync('weapp/app.json')).toBe(true)
     expect(fs.existsSync('weapp/pages/index/index.js')).toBe(true)
     const json = fs.readFileSync('weapp/pages/index/index.json', 'utf-8')
-    expect(json).toContain('van-button')
+    expect(json).toContain('van-search')
     // Ensure NPM prebuild exists for Vant components
-    expect(fs.existsSync('weapp/miniprogram_npm/@vant/weapp/button/index.js')).toBe(true)
+    expect(fs.existsSync('weapp/miniprogram_npm/@vant/weapp/search/index.js')).toBe(true)
   })
 
   it('builds functions output', () => {
