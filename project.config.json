@@ -16,7 +16,7 @@
     "uploadWithSourceMap": true,
     "packNpmRelationList": [
       {
-        "packageJsonPath": "./package.json",
+        "packageJsonPath": "./src/weapp/package.json",
         "miniprogramNpmDistDir": "./weapp/"
       }
     ],
