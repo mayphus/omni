@@ -1,6 +1,7 @@
 import { definePage, ref } from '@vue-mini/core'
+import { withI18nPage } from '../../utils/i18n'
 
-definePage({
+definePage(withI18nPage({
   setup() {
     // Simple reactive state to validate vue-mini integration
     const count = ref(0)
@@ -13,4 +14,4 @@ definePage({
     // @ts-ignore: WeChat runtime API
     tabBar?.setActiveByRoute?.('/pages/index/index');
   },
-})
+}, ({ messages }) => messages.index))

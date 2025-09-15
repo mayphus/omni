@@ -1,5 +1,5 @@
 <!-- Top search -->
-<van-search placeholder="Search products" shape="round" disabled background="#ffffff" />
+<van-search placeholder="{{ i18n.searchPlaceholder }}" shape="round" disabled background="#ffffff" />
 
 <!-- Banner -->
 <van-image
@@ -10,46 +10,35 @@
 />
 
 <!-- Quick categories -->
-<van-divider content-position="left">Quick Categories</van-divider>
+<van-divider content-position="left">{{ i18n.quickCategoriesTitle }}</van-divider>
 <van-grid column-num="4" clickable border="{{ false }}">
-  <van-grid-item icon="shop-o" text="Categories" />
-  <van-grid-item icon="hot-o" text="Hot" />
-  <van-grid-item icon="new-o" text="New" />
-  <van-grid-item icon="coupon-o" text="Coupons" />
-  <van-grid-item icon="like-o" text="Favorites" />
-  <van-grid-item icon="cart-o" text="Cart" />
-  <van-grid-item icon="gift-o" text="Gifts" />
-  <van-grid-item icon="service-o" text="Support" />
+  <van-grid-item
+    wx:for="{{ i18n.quickCategories }}"
+    wx:key="icon"
+    icon="{{ item.icon }}"
+    text="{{ item.text }}"
+  />
 </van-grid>
 
 <!-- Featured products -->
-<van-divider content-position="left">Featured</van-divider>
+<van-divider content-position="left">{{ i18n.featuredTitle }}</van-divider>
 <van-cell-group inset>
-  <van-cell title="Featured" label="Handpicked for you" border="false" />
+  <van-cell title="{{ i18n.featuredTitle }}" label="{{ i18n.featuredSubtitle }}" border="false" />
 </van-cell-group>
 
 <van-card
+  wx:for="{{ i18n.featuredProducts }}"
+  wx:key="id"
   num="1"
-  price="99.00"
-  desc="High quality product"
-  title="Sample Product A"
+  price="{{ item.price }}"
+  desc="{{ item.desc }}"
+  title="{{ item.title }}"
   thumb="https://img.yzcdn.cn/vant/ipad.jpeg"
   currency="¥"
 >
-  <view slot="tags"><van-tag type="danger" plain>NEW</van-tag></view>
+  <view slot="tags" wx:if="{{ item.tag }}">
+    <van-tag type="{{ item.tagType || 'primary' }}" plain>{{ item.tag }}</van-tag>
+  </view>
 </van-card>
 
-<van-divider />
-
-<van-card
-  num="1"
-  price="129.00"
-  desc="Comfortable and durable"
-  title="Sample Product B"
-  thumb="https://img.yzcdn.cn/vant/ipad.jpeg"
-  currency="¥"
->
-  <view slot="tags"><van-tag type="primary" plain>HOT</van-tag></view>
-</van-card>
-
-<van-divider content-position="center">End</van-divider>
+<van-divider content-position="center">{{ i18n.endDivider }}</van-divider>

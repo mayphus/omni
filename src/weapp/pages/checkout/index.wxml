@@ -1,15 +1,19 @@
-<van-divider content-position="left">Order</van-divider>
+<van-divider content-position="left">{{ i18n.orderTitle }}</van-divider>
 <van-cell-group inset>
-  <van-cell title="Checkout" label="Confirm your order" border="false" />
-  <van-cell title="Items" value="2" />
-  <van-cell title="Subtotal" value="¥228.00" />
-  <van-cell title="Shipping" value="¥0.00" />
-  <van-cell title="Coupon" value="None" is-link />
+  <van-cell
+    wx:for="{{ i18n.summary }}"
+    wx:key="title"
+    title="{{ item.title }}"
+    value="{{ item.value }}"
+    label="{{ item.label || '' }}"
+    border="{{ index !== 0 }}"
+    is-link="{{ !!item.link }}"
+  />
 </van-cell-group>
 
-<van-divider content-position="left">Payment</van-divider>
+<van-divider content-position="left">{{ i18n.paymentTitle }}</van-divider>
 <van-cell-group inset>
-  <van-cell title="Payment" value="WeChat Pay" is-link />
+  <van-cell title="{{ i18n.paymentTitle }}" value="{{ i18n.paymentValue }}" is-link />
 </van-cell-group>
 
-<van-submit-bar price="22800" button-text="Pay Now" safe-area-inset-bottom />
+<van-submit-bar price="22800" button-text="{{ i18n.payNow }}" safe-area-inset-bottom />

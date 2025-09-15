@@ -1,27 +1,18 @@
-<van-search placeholder="Search products" shape="round" background="#ffffff" />
+<van-search placeholder="{{ i18n.placeholder }}" shape="round" background="#ffffff" />
 
-<van-divider content-position="left">Results</van-divider>
+<van-divider content-position="left">{{ i18n.resultsTitle }}</van-divider>
 
 <van-cell-group inset>
-  <van-cell title="Results" label="Showing sample items" border="false" />
+  <van-cell title="{{ i18n.resultsTitle }}" label="{{ i18n.resultsSubtitle }}" border="false" />
 </van-cell-group>
 
 <van-card
+  wx:for="{{ i18n.featuredProducts }}"
+  wx:key="id"
   num="1"
-  price="99.00"
-  desc="High quality product"
-  title="Sample Product A"
-  thumb="https://img.yzcdn.cn/vant/ipad.jpeg"
-  currency="¥"
-/>
-
-<van-divider />
-
-<van-card
-  num="1"
-  price="129.00"
-  desc="Comfortable and durable"
-  title="Sample Product B"
+  price="{{ item.price }}"
+  desc="{{ item.desc }}"
+  title="{{ item.title }}"
   thumb="https://img.yzcdn.cn/vant/ipad.jpeg"
   currency="¥"
 />

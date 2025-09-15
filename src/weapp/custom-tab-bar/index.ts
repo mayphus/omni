@@ -1,4 +1,6 @@
-Component({
+import { withI18nComponent } from '../utils/i18n'
+
+Component(withI18nComponent({
   data: {
     active: 0,
     routes: [
@@ -35,4 +37,4 @@ Component({
       }
     },
   },
-});
+}, ({ messages }) => messages.tabBar));

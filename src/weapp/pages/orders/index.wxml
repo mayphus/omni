@@ -1,18 +1,16 @@
 <van-tabs sticky active="{{active}}" bind:change="onTabChange">
-  <van-tab title="All">
-    <van-cell title="Order #1001" label="2 items · ¥228.00" is-link />
-    <van-cell title="Order #1000" label="1 item · ¥99.00" is-link />
-  </van-tab>
-  <van-tab title="To Pay">
-    <van-cell title="Order #1002" label="Awaiting payment" is-link />
-  </van-tab>
-  <van-tab title="To Ship">
-    <van-cell title="Order #0999" label="Preparing shipment" is-link />
-  </van-tab>
-  <van-tab title="To Receive">
-    <van-cell title="Order #0998" label="In transit" is-link />
-  </van-tab>
-  <van-tab title="After-sales">
-    <van-cell title="Order #0997" label="Refund processing" is-link />
+  <van-tab
+    wx:for="{{ i18n.tabs }}"
+    wx:key="title"
+    title="{{ item.title }}"
+  >
+    <van-cell
+      wx:for="{{ item.items }}"
+      wx:for-item="child"
+      wx:key="title"
+      title="{{ child.title }}"
+      label="{{ child.label }}"
+      is-link
+    />
   </van-tab>
 </van-tabs>

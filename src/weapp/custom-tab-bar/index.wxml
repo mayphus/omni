@@ -9,20 +9,20 @@
     icon="home-o"
     link-type="switchTab"
     url="/pages/index/index"
-  >Home</van-tabbar-item>
+  >{{ i18n.home }}</van-tabbar-item>
   <van-tabbar-item
     icon="apps-o"
     link-type="switchTab"
     url="/pages/category/index"
-  >Categories</van-tabbar-item>
+  >{{ i18n.category }}</van-tabbar-item>
   <van-tabbar-item
     icon="cart-o"
     link-type="switchTab"
     url="/pages/cart/index"
-  >Cart</van-tabbar-item>
+  >{{ i18n.cart }}</van-tabbar-item>
   <van-tabbar-item
     icon="user-o"
     link-type="switchTab"
     url="/pages/profile/index"
-  >Profile</van-tabbar-item>
+  >{{ i18n.profile }}</van-tabbar-item>
 </van-tabbar>

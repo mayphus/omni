@@ -7,9 +7,9 @@
       clickable
       is-link="{{ !isLoggedIn }}"
       bind:click="{{ isLoggedIn ? 'onEditProfile' : 'onSignIn' }}"
-      title="{{ isLoggedIn ? nickname : 'Tap to sign in' }}"
+      title="{{ isLoggedIn ? nickname : i18n.profile.header.signedOutTitle }}"
       title-style="font-weight:600"
-      label="{{ isLoggedIn ? 'View and edit your profile' : 'Visitor mode' }}"
+      label="{{ isLoggedIn ? i18n.profile.header.signedInLabel : i18n.profile.header.signedOutLabel }}"
     >
       <van-image
         slot="icon"
@@ -29,70 +29,80 @@
       </van-image>
 
       <view slot="right-icon" wx:if="{{ isLoggedIn }}">
-        <van-tag type="danger" size="mini" plain wx:if="{{ isVIP }}">VIP</van-tag>
+        <van-tag type="danger" size="mini" plain wx:if="{{ isVIP }}">{{ i18n.profile.header.vip }}</van-tag>
       </view>
     </van-cell>
   </van-skeleton>
 </view>
 
 <!-- Quick Entries -->
-<van-divider content-position="left">Quick Entries</van-divider>
+<van-divider content-position="left">{{ i18n.profile.quickEntriesTitle }}</van-divider>
 <van-cell-group inset>
   <van-grid column-num="3" clickable border="{{ false }}" icon-size="28">
-    <van-grid-item icon="coupon-o"   text="Coupons"   url="/pages/coupon/index"    link-type="navigateTo" />
-    <van-grid-item icon="star-o"     text="Favorites" url="/pages/fav/goods"       link-type="navigateTo" />
-    <van-grid-item icon="underway-o" text="History"   url="/pages/history/index"   link-type="navigateTo" />
+    <van-grid-item
+      wx:for="{{ i18n.profile.quickEntries }}"
+      wx:key="text"
+      icon="{{ item.icon }}"
+      text="{{ item.text }}"
+      url="{{ item.url }}"
+      link-type="{{ item.linkType }}"
+    />
   </van-grid>
 </van-cell-group>
 
 <!-- Orders -->
-<van-divider content-position="center">Orders</van-divider>
+<van-divider content-position="center">{{ i18n.profile.ordersTitle }}</van-divider>
 <van-cell-group inset>
   <van-cell
-    title="My Orders"
+    title="{{ i18n.profile.myOrdersTitle }}"
+    value="{{ i18n.profile.myOrdersValue }}"
     is-link
     clickable
-    value="All Orders"
     url="/pages/orders/index"
     link-type="navigateTo"
   />
   <van-grid column-num="4" clickable border="{{ false }}" icon-size="26">
-    <van-grid-item url="/pages/orders/index?active=0" link-type="navigateTo">
-      <van-icon slot="icon" name="pending-payment" size="26" info="{{ orderCounts.toPay || '' }}" />
-      <view slot="text">To Pay</view>
-    </van-grid-item>
-    <van-grid-item url="/pages/orders/index?active=1" link-type="navigateTo">
-      <van-icon slot="icon" name="tosend" size="26" info="{{ orderCounts.toShip || '' }}" />
-      <view slot="text">To Ship</view>
-    </van-grid-item>
-    <van-grid-item url="/pages/orders/index?active=2" link-type="navigateTo">
-      <van-icon slot="icon" name="logistics" size="26" info="{{ orderCounts.toReceive || '' }}" />
-      <view slot="text">To Receive</view>
-    </van-grid-item>
-    <van-grid-item url="/pages/orders/index?active=5" link-type="navigateTo">
-      <van-icon slot="icon" name="after-sale" size="26" info="{{ orderCounts.afterSale || '' }}" />
-      <view slot="text">After-sale</view>
+    <van-grid-item
+      wx:for="{{ i18n.profile.orderTabs }}"
+      wx:key="url"
+      url="{{ item.url }}"
+      link-type="navigateTo"
+    >
+      <van-icon slot="icon" name="{{ item.icon }}" size="26" info="{{ orderCounts[item.countKey] || '' }}" />
+      <view slot="text">{{ item.text }}</view>
     </van-grid-item>
   </van-grid>
 </van-cell-group>
 
 <!-- Tools -->
-<van-divider content-position="center">More</van-divider>
+<van-divider content-position="center">{{ i18n.profile.moreTitle }}</van-divider>
 <van-cell-group inset>
   <van-grid column-num="4" clickable border="{{ false }}" icon-size="26">
-    <van-grid-item url="/pages/wallet/index" link-type="navigateTo">
-      <van-badge slot="icon" content="Hot">
+    <van-grid-item url="{{ i18n.profile.wallet.url }}" link-type="navigateTo">
+      <van-badge slot="icon" content="{{ i18n.profile.wallet.badge }}">
         <van-icon name="balance-o" size="26" />
       </van-badge>
-      <view slot="text">Wallet</view>
+      <view slot="text">{{ i18n.profile.wallet.label }}</view>
     </van-grid-item>
-    <van-grid-item icon="service-o"  text="Support"  url="/pages/support/index"  link-type="navigateTo" />
+    <van-grid-item icon="service-o" text="{{ i18n.profile.support.label }}" url="{{ i18n.profile.support.url }}" link-type="navigateTo" />
   </van-grid>
 </van-cell-group>
 
 <!-- Settings & About -->
-<van-divider></van-divider>
+<van-divider />
 <van-cell-group inset>
-  <van-cell title="Settings" is-link clickable bind:click="onOpenSettings" />
-  <van-cell title="About"    is-link clickable url="/pages/about/index" link-type="navigateTo" />
+  <van-cell
+    title="{{ i18n.profile.settingsTitle }}"
+    value="{{ i18n.currentLanguageLabel }}"
+    is-link
+    clickable
+    bind:click="onOpenSettings"
+  />
+  <van-cell
+    title="{{ i18n.profile.aboutTitle }}"
+    is-link
+    clickable
+    url="/pages/about/index"
+    link-type="navigateTo"
+  />
 </van-cell-group>

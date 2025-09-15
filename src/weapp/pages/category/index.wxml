@@ -1,4 +1,4 @@
-<van-search placeholder="Search categories" shape="round" disabled background="#ffffff" />
+<van-search placeholder="{{ i18n.searchPlaceholder }}" shape="round" disabled background="#ffffff" />
 
 <!-- Category Tabs -->
 <van-tabs
@@ -9,19 +9,21 @@
   bind:change="onTabChange"
 >
   <van-tab
-    wx:for="{{ categories }}"
+    wx:for="{{ i18n.categories }}"
     wx:key="id"
+    wx:for-item="item"
     title="{{ item.name }}"
     name="{{ item.id }}"
   >
     <van-cell-group inset>
-      <van-cell title="{{ item.name }}" label="Browse {{ item.name }}" border="false" />
+      <van-cell title="{{ item.name }}" label="{{ item.label }}" border="false" />
     </van-cell-group>
 
     <van-grid column-num="4" clickable>
       <van-grid-item
         wx:for="{{ item.children }}"
         wx:key="id"
+        wx:for-item="child"
         icon="{{ child.icon || 'apps-o' }}"
         text="{{ child.name }}"
       />

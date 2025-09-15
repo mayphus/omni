@@ -1,20 +1,22 @@
-<van-divider content-position="left">Cart Items</van-divider>
+<van-divider content-position="left">{{ i18n.title }}</van-divider>
 <van-swipe-cell>
   <van-card
     num="1"
-    price="129.00"
-    desc="Comfortable and durable"
-    title="Sample Product B"
+    price="{{ i18n.product.price }}"
+    desc="{{ i18n.product.desc }}"
+    title="{{ i18n.product.title }}"
     thumb="https://img.yzcdn.cn/vant/ipad.jpeg"
     currency="¥"
   >
-    <view slot="tags"><van-tag type="primary" plain>HOT</van-tag></view>
+    <view slot="tags" wx:if="{{ i18n.product.tag }}">
+      <van-tag type="{{ i18n.product.tagType || 'primary' }}" plain>{{ i18n.product.tag }}</van-tag>
+    </view>
   </van-card>
   <view slot="right">
-    <van-button square type="danger" text="Delete" />
+    <van-button square type="danger" text="{{ i18n.delete }}" />
   </view>
 </van-swipe-cell>
 
 <van-divider />
 
-<van-submit-bar price="0" button-text="Checkout" disabled safe-area-inset-bottom />
+<van-submit-bar price="0" button-text="{{ i18n.checkout }}" disabled safe-area-inset-bottom />
