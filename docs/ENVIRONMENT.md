@@ -18,6 +18,7 @@ Conventions
 Variables
 - `VITE_APP_NAME` – product label visible in UI.
 - `VITE_ENV` – optional flag for UI/debug (e.g., `development`, `production`).
+- `VITE_TCB_ENV_ID` – CloudBase environment ID used by Mini Program (`wx.cloud.init`).
 - `WECHAT_APP_ID`, `WECHAT_PRIVATE_KEY` – used by miniprogram-ci locally.
 - `TCB_ENV_ID`, `TCB_PRIVATE_KEY` – used by `tcb` CLI locally.
 
@@ -26,3 +27,6 @@ Why
 - `.env.local` is git-ignored by default to keep credentials off the repo.
 - Functions read `process.env` at runtime; secrets are managed by the platform instead of being compiled into JS.
 
+Mini Program → CloudBase
+- Set `VITE_TCB_ENV_ID` in `.env.local` to pin all `wx.cloud.*` calls to the intended CloudBase environment.
+- Example: `VITE_TCB_ENV_ID=cloud1-xxxxxxxxxxxxxxxx`.
