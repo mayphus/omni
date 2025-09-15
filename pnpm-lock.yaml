@@ -11,6 +11,9 @@ importers:
       '@vant/weapp':
         specifier: ^1.11.7
         version: 1.11.7
+      '@vue-mini/core':
+        specifier: ^1.2.5
+        version: 1.2.5
       zod:
         specifier: ^4.1.8
         version: 4.1.8
@@ -3787,6 +3790,9 @@ packages:
 
   '@vitest/utils@2.1.9':
     resolution: {integrity: sha512-v0psaMSkNJ3A2NMrUEHFRzJtDPFn+/VWZ5WxImB21T9fjucJRmS7xCS3ppEnARb9y11OAzaD+P2Ps+b+BGX5iQ==}
+
+  '@vue-mini/core@1.2.5':
+    resolution: {integrity: sha512-raZLtlK+qPJrPQOuieXQUuj6WpzSWq7AjiGFd2y1PbzyqWMbUgnylzT+IMvdgBk7T+g8qN8sV3wN+bgFk3rgaQ==}
 
   '@vue/compiler-core@3.5.21':
     resolution: {integrity: sha512-8i+LZ0vf6ZgII5Z9XmUvrCyEzocvWT+TeR2VBUVlzIH6Tyv57E20mPZ1bCS+tbejgUgmjrEh7q/0F0bibskAmw==}
@@ -8381,6 +8387,9 @@ packages:
 
   miniprogram-api-promise@1.0.4:
     resolution: {integrity: sha512-lS2ukj03Ugy8IJUDmdssklLT4kjzyRtVYwErhyDZkzxtqcxaed2xldRgNrsikigeMUBR9gAs7wgnjSKPlyKIYg==}
+
+  miniprogram-api-typings@4.0.8:
+    resolution: {integrity: sha512-q3MHCd/r0EsCFsq+nebbBbpwhsQbJg2d8lvRdRBV4KXgp+S1OzzNFpjFoy1X46NA01OD0fbCnxo7tJRSE2pqSw==}
 
   miniprogram-api-typings@4.1.0:
     resolution: {integrity: sha512-4RBsz27nBKyRkVGoNkRaPx24/KeJBw3zaaIlXDR8s/WBh2PbcUAc+q7wLLbp7Qsmb3bLzzUu7tqAti+B06kmjg==}
@@ -16871,6 +16880,11 @@ snapshots:
       loupe: 3.2.1
       tinyrainbow: 1.2.0
 
+  '@vue-mini/core@1.2.5':
+    dependencies:
+      '@vue/reactivity': 3.5.21
+      miniprogram-api-typings: 4.0.8
+
   '@vue/compiler-core@3.5.21':
     dependencies:
       '@babel/parser': 7.28.4
@@ -22435,6 +22449,8 @@ snapshots:
   minipass@7.1.2: {}
 
   miniprogram-api-promise@1.0.4: {}
+
+  miniprogram-api-typings@4.0.8: {}
 
   miniprogram-api-typings@4.1.0: {}
 

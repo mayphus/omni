@@ -24,7 +24,7 @@
   },
   "dependencies": {
     "@vant/weapp": "^1.11.7",
-    "zod": "^4.1.8"
+    "@vue-mini/core": "^1.2.5"
   },
   "devDependencies": {
     "@cloudbase/cli": "^2.9.5",
@@ -32,6 +32,7 @@
     "@types/react": "^19.1.13",
     "@types/react-dom": "^19.1.9",
     "@vitejs/plugin-react": "^5.0.2",
+    "@vue-mini/core": "^1.2.5",
     "autoprefixer": "^10.4.21",
     "esbuild": "^0.25.9",
     "husky": "^9.1.7",
