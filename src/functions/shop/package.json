@@ -4,5 +4,8 @@
   "main": "index.js",
   "type": "commonjs",
   "private": true,
-  "dependencies": {}
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3",
+    "zod": "^4.1.8"
+  }
 }
