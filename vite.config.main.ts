@@ -1,6 +1,8 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { fileURLToPath, URL } from 'node:url'
+import tailwindcss from 'tailwindcss'
+import autoprefixer from 'autoprefixer'
 import fs from 'node:fs'
 import path from 'node:path'
 
@@ -14,7 +16,14 @@ export default defineConfig(({ mode }) => {
     return {
       plugins: [react()],
       root: 'src/admin',
+      base: './',
       resolve: { alias },
+      css: {
+        // PostCSS only for the admin app
+        postcss: {
+          plugins: [tailwindcss(), autoprefixer()],
+        },
+      },
       build: {
         outDir: '../../admin',
         emptyOutDir: true,
