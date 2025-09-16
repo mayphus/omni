@@ -25,6 +25,8 @@
     title="{{ item.title }}"
     thumb="{{ item.imageUrl }}"
     currency="¥"
+    data-product-id="{{ item.id }}"
+    bind:tap="onOpenProduct"
   />
 </block>
 

@@ -5,6 +5,10 @@
   src="https://img.yzcdn.cn/vant/ipad.jpeg"
 />
 
+<view wx:if="{{ productId }}" class="product-id">
+  ID: {{ productId }}
+</view>
+
 <van-divider content-position="left">{{ i18n.productTitle }}</van-divider>
 <van-cell-group inset>
   <van-cell title="{{ i18n.name }}" label="{{ i18n.desc }}" border="false" />

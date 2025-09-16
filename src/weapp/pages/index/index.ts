@@ -81,4 +81,10 @@ definePage(withI18nPage({
   onOpenSearch() {
     wx.navigateTo({ url: '/pages/search/index' })
   },
+
+  onOpenProduct(event: WechatMiniprogram.TouchEvent) {
+    const productId = event?.currentTarget?.dataset?.productId as string | undefined
+    if (!productId || typeof productId !== 'string') return
+    wx.navigateTo({ url: `/pages/product/detail?id=${encodeURIComponent(productId)}` })
+  },
 }, ({ messages }) => messages.index))
