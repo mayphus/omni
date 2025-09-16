@@ -32,7 +32,31 @@ export async function uploadProductImage(file: File): Promise<string> {
     throw new Error('CloudBase upload is not configured')
   }
   const cloudPath = buildCloudPath(file)
-  const res = await app.uploadFile({ cloudPath, file })
+  async function performUpload(method: 'put' | 'post') {
+    const params: any = {
+      cloudPath,
+      method,
+      // CloudBase JS SDK expects `filePath` even in browsers and accepts a `File`
+      filePath: file as any,
+    }
+    if (method === 'put' && file.type) {
+      params.headers = { 'Content-Type': file.type }
+    }
+    return app.uploadFile(params)
+  }
+
+  let res
+  try {
+    res = await performUpload('put')
+  } catch (err: any) {
+    const message = typeof err?.message === 'string' ? err.message : ''
+    if (message.includes('[OPERATION_FAIL]')) {
+      // Some environments reject signed PUT uploads; retry using the signed POST flow
+      res = await performUpload('post')
+    } else {
+      throw err
+    }
+  }
   const fileID = res?.fileID || res?.fileId
   if (!fileID) throw new Error('Upload failed')
   if (typeof app.getTempFileURL !== 'function') {
