@@ -171,8 +171,11 @@ async function ensureUserByOpenid(openid: string, unionid?: string): Promise<{ u
  * updateUserProfile
  * Update the profile for the user identified by openid and return the updated document.
  */
-async function updateUserProfile(openid: string, profile: UserProfile): Promise<User & { id: string }>
+async function updateUserProfile(openid: string, profile: UserProfile, unionid?: string): Promise<User & { id: string }>
 {
+  // Ensure the user document exists before attempting to update the profile.
+  await ensureUserByOpenid(openid, unionid)
+
   const col = usersCol()
   const now = nowMs()
   await col.where({ openid }).update({ data: { profile, updatedAt: now } })
@@ -204,11 +207,11 @@ const handlers: Record<string, (event: any) => Promise<ApiResponse> | ApiRespons
    * Output: { user }
    */
   'v1.auth.profile.update': async (event: any) => {
-    const { OPENID } = getWX() as any
+    const { OPENID, UNIONID } = getWX() as any
     if (!OPENID) return fail('Missing OPENID in WX context')
     const input = zUserProfile.safeParse(event?.profile)
     if (!input.success) return fail('Invalid profile payload', { issues: input.error.issues })
-    const user = await updateUserProfile(OPENID, input.data)
+    const user = await updateUserProfile(OPENID, input.data, UNIONID)
     return ok({ user })
   },
 
