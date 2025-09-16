@@ -1,12 +1,12 @@
-import { definePage, ref } from '@vue-mini/core'
+import { definePage } from '@vue-mini/core'
 import { withI18nPage } from '../../utils/i18n'
 
 definePage(withI18nPage({
   setup() {
-    // Simple reactive state to validate vue-mini integration
-    const count = ref(0)
-    const inc = () => { count.value++ }
-    return { count, inc }
+    const onOpenSearch = () => {
+      wx.navigateTo({ url: '/pages/search/index' })
+    }
+    return { onOpenSearch }
   },
 
   onShow() {

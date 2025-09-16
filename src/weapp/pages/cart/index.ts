@@ -6,4 +6,7 @@ Page(withI18nPage({
     // @ts-ignore WeChat runtime
     tabBar?.setActiveByRoute?.('/pages/cart/index');
   },
+  onGoShopping() {
+    wx.switchTab({ url: '/pages/index/index' });
+  },
 }, ({ messages }) => messages.cart));

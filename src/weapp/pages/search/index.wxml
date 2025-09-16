@@ -3,16 +3,38 @@
 <van-divider content-position="left">{{ i18n.resultsTitle }}</van-divider>
 
 <van-cell-group inset>
-  <van-cell title="{{ i18n.resultsTitle }}" label="{{ i18n.resultsSubtitle }}" border="false" />
+  <van-cell title="{{ i18n.resultsSubtitle }}" border="false" />
 </van-cell-group>
 
-<van-card
-  wx:for="{{ i18n.featuredProducts }}"
-  wx:key="id"
-  num="1"
-  price="{{ item.price }}"
-  desc="{{ item.desc }}"
-  title="{{ item.title }}"
-  thumb="https://img.yzcdn.cn/vant/ipad.jpeg"
-  currency="¥"
-/>
+<block wx:if="{{ i18n.popularKeywords.length }}">
+  <van-cell-group inset>
+    <van-cell title="{{ i18n.popularTitle }}" border="false">
+      <view slot="label">
+        <van-tag
+          wx:for="{{ i18n.popularKeywords }}"
+          wx:key="index"
+          type="primary"
+          plain
+          size="medium"
+        >{{ item }}</van-tag>
+      </view>
+    </van-cell>
+  </van-cell-group>
+</block>
+
+<van-divider content-position="left">{{ i18n.tipsTitle }}</van-divider>
+<van-cell-group inset>
+  <van-cell
+    wx:for="{{ i18n.tips }}"
+    wx:key="index"
+    icon="info-o"
+    title="{{ item }}"
+  />
+</van-cell-group>
+
+<van-empty image="search">
+  <view slot="description">
+    <view>{{ i18n.emptyTitle }}</view>
+    <view>{{ i18n.emptyDescription }}</view>
+  </view>
+</van-empty>

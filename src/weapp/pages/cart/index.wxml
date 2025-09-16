@@ -1,22 +1,22 @@
 <van-divider content-position="left">{{ i18n.title }}</van-divider>
-<van-swipe-cell>
-  <van-card
-    num="1"
-    price="{{ i18n.product.price }}"
-    desc="{{ i18n.product.desc }}"
-    title="{{ i18n.product.title }}"
-    thumb="https://img.yzcdn.cn/vant/ipad.jpeg"
-    currency="¥"
-  >
-    <view slot="tags" wx:if="{{ i18n.product.tag }}">
-      <van-tag type="{{ i18n.product.tagType || 'primary' }}" plain>{{ i18n.product.tag }}</van-tag>
-    </view>
-  </van-card>
-  <view slot="right">
-    <van-button square type="danger" text="{{ i18n.delete }}" />
+
+<van-empty image="cart">
+  <view slot="description">
+    <view>{{ i18n.emptyTitle }}</view>
+    <view>{{ i18n.emptyDescription }}</view>
   </view>
-</van-swipe-cell>
+  <van-button slot="bottom" type="primary" plain size="small" bind:tap="onGoShopping">{{ i18n.goShopping }}</van-button>
+</van-empty>
 
-<van-divider />
+<van-divider content-position="left">{{ i18n.infoTitle }}</van-divider>
+<van-cell-group inset>
+  <van-cell
+    wx:for="{{ i18n.infoItems }}"
+    wx:key="title"
+    icon="{{ item.icon }}"
+    title="{{ item.title }}"
+    value="{{ item.value }}"
+  />
+</van-cell-group>
 
-<van-submit-bar price="0" button-text="{{ i18n.checkout }}" disabled safe-area-inset-bottom />
+<van-submit-bar price="0" button-text="{{ i18n.goShopping }}" disabled safe-area-inset-bottom />

@@ -3,6 +3,9 @@ const I18N_UNSUB_FIELD = '__i18nUnsub__'
 
 type QuickCategoryItem = { icon: string; text: string }
 type FeaturedProduct = { id: string; title: string; desc: string; price: string; tag?: string; tagType?: 'danger' | 'primary' }
+type IndexBanner = { id: string; image: string; title: string; caption: string }
+type IndexStatusItem = { icon: string; title: string; description: string }
+type SupportCard = { icon: string; title: string; description: string }
 type CategoryTab = {
   id: string
   name: string
@@ -10,7 +13,9 @@ type CategoryTab = {
   children: Array<{ id: string; name: string; icon?: string }>
 }
 type OrderTab = { title: string; items: Array<{ title: string; label: string }> }
-type GoodsActionButton = { type: 'warning' | 'danger'; text: string }
+type GoodsActionButton = { type: 'warning' | 'danger'; text: string; disabled?: boolean }
+type CartInfoItem = { icon: string; title: string; value: string }
+type SupportEntry = { icon: string; text: string; url: string; linkType: 'switchTab' | 'navigateTo' }
 
 type I18nMessages = {
   localeLabel: string
@@ -23,11 +28,20 @@ type I18nMessages = {
   }
   index: {
     searchPlaceholder: string
+    announcement: string
+    heroBanners: IndexBanner[]
     quickCategoriesTitle: string
     quickCategories: QuickCategoryItem[]
+    statusTitle: string
+    statusItems: IndexStatusItem[]
     featuredTitle: string
     featuredSubtitle: string
     featuredProducts: FeaturedProduct[]
+    featuredEmptyTitle: string
+    featuredEmptyDescription: string
+    featuredEmptyAction: string
+    supportTitle: string
+    supportItems: SupportCard[]
     endDivider: string
   }
   search: {
@@ -35,12 +49,20 @@ type I18nMessages = {
     resultsTitle: string
     resultsSubtitle: string
     featuredProducts: FeaturedProduct[]
+    popularTitle: string
+    popularKeywords: string[]
+    tipsTitle: string
+    tips: string[]
+    emptyTitle: string
+    emptyDescription: string
   }
   cart: {
     title: string
-    delete: string
-    checkout: string
-    product: FeaturedProduct
+    emptyTitle: string
+    emptyDescription: string
+    goShopping: string
+    infoTitle: string
+    infoItems: CartInfoItem[]
   }
   checkout: {
     orderTitle: string
@@ -48,9 +70,13 @@ type I18nMessages = {
     paymentTitle: string
     paymentValue: string
     payNow: string
+    emptyTitle: string
+    emptyDescription: string
   }
   orders: {
     tabs: OrderTab[]
+    emptyTitle: string
+    emptyDescription: string
   }
   product: {
     productTitle: string
@@ -70,6 +96,8 @@ type I18nMessages = {
     reviewsTab: string
     detailItems: string[]
     reviewItems: Array<{ title: string; label: string }>
+    comingSoonTitle: string
+    comingSoonDescription: string
     actionIcons: Array<{ icon: string; text: string; url?: string; linkType?: 'switchTab' | 'navigateTo' }>
     actionButtons: GoodsActionButton[]
   }
@@ -85,7 +113,7 @@ type I18nMessages = {
       vip: string
     }
     quickEntriesTitle: string
-    quickEntries: Array<{ icon: string; text: string; url: string; linkType: 'navigateTo' }>
+    quickEntries: SupportEntry[]
     ordersTitle: string
     myOrdersTitle: string
     myOrdersValue: string
@@ -129,96 +157,129 @@ const MESSAGES: Record<Locale, I18nMessages> = {
     },
     index: {
       searchPlaceholder: 'Search products',
-      quickCategoriesTitle: 'Quick Categories',
+      announcement: 'We are syncing the catalogue. New arrivals will appear here soon.',
+      heroBanners: [
+        {
+          id: 'welcome',
+          image: 'https://fastly.picsum.photos/seed/tongmeng-shop-1/900/480.jpg?hmac=NkbSY57I45b48bY8AEQmoeyoGxjJ7gP5cX4KletntuA',
+          title: 'Grand opening soon',
+          caption: 'Fresh picks for families are on the way.',
+        },
+        {
+          id: 'quality',
+          image: 'https://fastly.picsum.photos/seed/tongmeng-shop-2/900/480.jpg?hmac=mRh40S2mP1Ab3WBu45fSR0bRyvMXd_Nv27c1sa-UuwQ',
+          title: 'Quality assured',
+          caption: 'We are finalising suppliers to guarantee great value.',
+        },
+      ],
+      quickCategoriesTitle: 'Quick Links',
       quickCategories: [
-        { icon: 'shop-o', text: 'Categories' },
-        { icon: 'hot-o', text: 'Hot' },
-        { icon: 'new-o', text: 'New' },
-        { icon: 'coupon-o', text: 'Coupons' },
-        { icon: 'like-o', text: 'Favorites' },
+        { icon: 'shop-o', text: 'All' },
+        { icon: 'hot-o', text: 'Trending' },
+        { icon: 'bag-o', text: 'Essentials' },
+        { icon: 'flower-o', text: 'Lifestyle' },
+        { icon: 'vip-card-o', text: 'Member' },
         { icon: 'cart-o', text: 'Cart' },
         { icon: 'gift-o', text: 'Gifts' },
         { icon: 'service-o', text: 'Support' },
       ],
-      featuredTitle: 'Featured',
-      featuredSubtitle: 'Handpicked for you',
-      featuredProducts: [
-        { id: 'a', title: 'Sample Product A', desc: 'High quality product', price: '99.00', tag: 'NEW', tagType: 'danger' },
-        { id: 'b', title: 'Sample Product B', desc: 'Comfortable and durable', price: '129.00', tag: 'HOT', tagType: 'primary' },
+      statusTitle: 'Store update',
+      statusItems: [
+        { icon: 'clock-o', title: 'Inventory sync', description: 'Connecting with warehouse systems' },
+        { icon: 'setting-o', title: 'Payments', description: 'WeChat Pay activation in progress' },
+        { icon: 'friends-o', title: 'Member centre', description: 'Benefits will unlock at launch' },
       ],
-      endDivider: 'End',
+      featuredTitle: 'Preview catalogue',
+      featuredSubtitle: 'Real products will display here once the API is ready.',
+      featuredProducts: [],
+      featuredEmptyTitle: 'Catalog syncing',
+      featuredEmptyDescription: 'Please check back soon to explore the full range.',
+      featuredEmptyAction: 'Stay tuned',
+      supportTitle: 'Need help?',
+      supportItems: [
+        { icon: 'guide-o', title: 'Shopping guide', description: 'Browse categories to plan your first order.' },
+        { icon: 'chat-o', title: 'Customer care', description: 'Reach us via the WeChat official account anytime.' },
+      ],
+      endDivider: 'More updates soon',
     },
     search: {
-      placeholder: 'Search products',
-      resultsTitle: 'Results',
-      resultsSubtitle: 'Showing sample items',
-      featuredProducts: [
-        { id: 'a', title: 'Sample Product A', desc: 'High quality product', price: '99.00' },
-        { id: 'b', title: 'Sample Product B', desc: 'Comfortable and durable', price: '129.00' },
+      placeholder: 'Search upcoming products',
+      resultsTitle: 'Suggested keywords',
+      resultsSubtitle: 'Real results will appear when the catalogue is online.',
+      featuredProducts: [],
+      popularTitle: 'Popular plans',
+      popularKeywords: ['Daily essentials', 'Learning toys', 'Healthy snacks'],
+      tipsTitle: 'Tips',
+      tips: [
+        'Use categories to explore while we prepare search results.',
+        'Favourite items will sync automatically once the API responds.',
       ],
+      emptyTitle: 'Results arriving soon',
+      emptyDescription: 'Search will be enabled when the product service is connected.',
     },
     cart: {
-      title: 'Cart Items',
-      delete: 'Delete',
-      checkout: 'Checkout',
-      product: { id: 'b', title: 'Sample Product B', desc: 'Comfortable and durable', price: '129.00', tag: 'HOT', tagType: 'primary' },
+      title: 'Shopping cart',
+      emptyTitle: 'Your cart is empty',
+      emptyDescription: 'Items you add will appear here once the shop opens.',
+      goShopping: 'Browse homepage',
+      infoTitle: 'What to expect',
+      infoItems: [
+        { icon: 'diamond-o', title: 'Member discounts', value: 'Releasing soon' },
+        { icon: 'points', title: 'Free shipping', value: 'Available after launch' },
+        { icon: 'shield-o', title: 'Secure payments', value: 'WeChat Pay integration in progress' },
+      ],
     },
     checkout: {
-      orderTitle: 'Order',
+      orderTitle: 'Order overview',
       summary: [
-        { title: 'Checkout', label: 'Confirm your order', value: '' },
-        { title: 'Items', value: '2' },
-        { title: 'Subtotal', value: '¥228.00' },
-        { title: 'Shipping', value: '¥0.00' },
-        { title: 'Coupon', value: 'None', link: true },
+        { title: 'Status', value: 'Waiting for catalogue', label: 'Add items once products are live.' },
+        { title: 'Delivery', value: 'Setup in progress' },
+        { title: 'Payment', value: 'WeChat Pay activation pending' },
       ],
       paymentTitle: 'Payment',
-      paymentValue: 'WeChat Pay',
+      paymentValue: 'Unavailable until launch',
       payNow: 'Pay Now',
+      emptyTitle: 'Checkout opens soon',
+      emptyDescription: 'Create an order from the cart after the backend is online.',
     },
     orders: {
       tabs: [
-        {
-          title: 'All',
-          items: [
-            { title: 'Order #1001', label: '2 items · ¥228.00' },
-            { title: 'Order #1000', label: '1 item · ¥99.00' },
-          ],
-        },
-        { title: 'To Pay', items: [{ title: 'Order #1002', label: 'Awaiting payment' }] },
-        { title: 'To Ship', items: [{ title: 'Order #0999', label: 'Preparing shipment' }] },
-        { title: 'To Receive', items: [{ title: 'Order #0998', label: 'In transit' }] },
-        { title: 'After-sales', items: [{ title: 'Order #0997', label: 'Refund processing' }] },
+        { title: 'All', items: [] },
+        { title: 'To Pay', items: [] },
+        { title: 'To Ship', items: [] },
+        { title: 'To Receive', items: [] },
+        { title: 'After-sales', items: [] },
       ],
+      emptyTitle: 'No orders yet',
+      emptyDescription: 'Your purchases will appear here once the shop opens.',
     },
     product: {
-      productTitle: 'Product',
-      name: 'Sample Product',
-      desc: 'Short description',
+      productTitle: 'Product preview',
+      name: 'Awaiting details',
+      desc: 'Product information will show here when available.',
       priceLabel: 'Price',
-      price: '¥129.00',
+      price: '—',
       ratingLabel: 'Rating',
-      rating: '4.5',
+      rating: 'Pending',
       optionsTitle: 'Options',
-      color: 'Color',
-      colorValue: 'Red',
+      color: 'Colour',
+      colorValue: 'To be announced',
       size: 'Size',
-      sizeValue: 'M',
+      sizeValue: 'To be announced',
       quantity: 'Quantity',
       detailsTab: 'Details',
       reviewsTab: 'Reviews',
-      detailItems: ['Detail A', 'Detail B', 'Detail C'],
-      reviewItems: [
-        { title: 'Great product', label: 'by User A' },
-        { title: 'Works well', label: 'by User B' },
-      ],
+      detailItems: ['Full specifications will unlock after launch.'],
+      reviewItems: [],
+      comingSoonTitle: 'Preparing product data',
+      comingSoonDescription: 'We are linking the product service. Please check back soon.',
       actionIcons: [
         { icon: 'chat-o', text: 'Service' },
         { icon: 'cart-o', text: 'Cart', url: '/pages/cart/index', linkType: 'switchTab' },
       ],
       actionButtons: [
-        { type: 'warning', text: 'Add to Cart' },
-        { type: 'danger', text: 'Buy Now' },
+        { type: 'warning', text: 'Add to Cart', disabled: true },
+        { type: 'danger', text: 'Buy Now', disabled: true },
       ],
     },
     category: {
@@ -281,24 +342,24 @@ const MESSAGES: Record<Locale, I18nMessages> = {
         signedInLabel: 'View and edit your profile',
         vip: 'VIP',
       },
-      quickEntriesTitle: 'Quick Entries',
+      quickEntriesTitle: 'Quick entries',
       quickEntries: [
-        { icon: 'coupon-o', text: 'Coupons', url: '/pages/coupon/index', linkType: 'navigateTo' },
-        { icon: 'star-o', text: 'Favorites', url: '/pages/fav/goods', linkType: 'navigateTo' },
-        { icon: 'underway-o', text: 'History', url: '/pages/history/index', linkType: 'navigateTo' },
+        { icon: 'home-o', text: 'Home', url: '/pages/index/index', linkType: 'switchTab' },
+        { icon: 'apps-o', text: 'Categories', url: '/pages/category/index', linkType: 'switchTab' },
+        { icon: 'orders-o', text: 'Orders', url: '/pages/orders/index', linkType: 'navigateTo' },
       ],
-      ordersTitle: 'Orders',
-      myOrdersTitle: 'My Orders',
-      myOrdersValue: 'All Orders',
+      ordersTitle: 'My orders',
+      myOrdersTitle: 'Order history',
+      myOrdersValue: 'Open list',
       orderTabs: [
-        { url: '/pages/orders/index?active=0', text: 'To Pay', icon: 'pending-payment', countKey: 'toPay' },
-        { url: '/pages/orders/index?active=1', text: 'To Ship', icon: 'tosend', countKey: 'toShip' },
-        { url: '/pages/orders/index?active=2', text: 'To Receive', icon: 'logistics', countKey: 'toReceive' },
-        { url: '/pages/orders/index?active=5', text: 'After-sale', icon: 'after-sale', countKey: 'afterSale' },
+        { url: '/pages/orders/index?active=1', text: 'To Pay', icon: 'pending-payment', countKey: 'toPay' },
+        { url: '/pages/orders/index?active=2', text: 'To Ship', icon: 'tosend', countKey: 'toShip' },
+        { url: '/pages/orders/index?active=3', text: 'To Receive', icon: 'logistics', countKey: 'toReceive' },
+        { url: '/pages/orders/index?active=4', text: 'After-sale', icon: 'after-sale', countKey: 'afterSale' },
       ],
-      moreTitle: 'More',
-      wallet: { label: 'Wallet', badge: 'Hot', url: '/pages/wallet/index' },
-      support: { label: 'Support', url: '/pages/support/index' },
+      moreTitle: 'More services',
+      wallet: { label: 'Member centre', badge: 'Soon', url: '' },
+      support: { label: 'Customer service', url: '' },
       settingsTitle: 'Settings',
       aboutTitle: 'About',
       languageAction: {
@@ -331,96 +392,126 @@ const MESSAGES: Record<Locale, I18nMessages> = {
     },
     index: {
       searchPlaceholder: '搜索商品',
-      quickCategoriesTitle: '快捷分类',
+      announcement: '商品目录同步中，即将正式开业。',
+      heroBanners: [
+        {
+          id: 'welcome',
+          image: 'https://fastly.picsum.photos/seed/tongmeng-shop-1/900/480.jpg?hmac=NkbSY57I45b48bY8AEQmoeyoGxjJ7gP5cX4KletntuA',
+          title: '商城即将开业',
+          caption: '精选好物正在路上，敬请期待。',
+        },
+        {
+          id: 'quality',
+          image: 'https://fastly.picsum.photos/seed/tongmeng-shop-2/900/480.jpg?hmac=mRh40S2mP1Ab3WBu45fSR0bRyvMXd_Nv27c1sa-UuwQ',
+          title: '严格甄选',
+          caption: '供应链验收中，保障品质与价值。',
+        },
+      ],
+      quickCategoriesTitle: '快捷入口',
       quickCategories: [
-        { icon: 'shop-o', text: '全部分类' },
-        { icon: 'hot-o', text: '热销' },
-        { icon: 'new-o', text: '上新' },
-        { icon: 'coupon-o', text: '优惠券' },
-        { icon: 'like-o', text: '收藏' },
+        { icon: 'shop-o', text: '全部' },
+        { icon: 'hot-o', text: '热度' },
+        { icon: 'bag-o', text: '日用' },
+        { icon: 'flower-o', text: '生活' },
+        { icon: 'vip-card-o', text: '会员' },
         { icon: 'cart-o', text: '购物车' },
-        { icon: 'gift-o', text: '礼品' },
+        { icon: 'gift-o', text: '礼物' },
         { icon: 'service-o', text: '客服' },
       ],
-      featuredTitle: '精选推荐',
-      featuredSubtitle: '为你精心挑选',
-      featuredProducts: [
-        { id: 'a', title: '示例商品 A', desc: '高品质好物', price: '99.00', tag: '新品', tagType: 'danger' },
-        { id: 'b', title: '示例商品 B', desc: '舒适又耐用', price: '129.00', tag: '热卖', tagType: 'primary' },
+      statusTitle: '商城进度',
+      statusItems: [
+        { icon: 'clock-o', title: '商品同步', description: '仓库系统接入中' },
+        { icon: 'setting-o', title: '支付开通', description: '微信支付即将启用' },
+        { icon: 'friends-o', title: '会员中心', description: '上线后即刻启用权益' },
       ],
-      endDivider: '已经到底啦',
+      featuredTitle: '商品预览',
+      featuredSubtitle: '接口准备好后将展示真实商品。',
+      featuredProducts: [],
+      featuredEmptyTitle: '商品同步中',
+      featuredEmptyDescription: '稍后再来看看最新上架。',
+      featuredEmptyAction: '敬请期待',
+      supportTitle: '需要帮助？',
+      supportItems: [
+        { icon: 'guide-o', title: '选购指南', description: '先浏览分类，规划心仪清单。' },
+        { icon: 'chat-o', title: '客服咨询', description: '可通过公众号随时联系我们。' },
+      ],
+      endDivider: '更多更新即将到来',
     },
     search: {
-      placeholder: '搜索商品',
-      resultsTitle: '搜索结果',
-      resultsSubtitle: '展示示例商品',
-      featuredProducts: [
-        { id: 'a', title: '示例商品 A', desc: '高品质好物', price: '99.00' },
-        { id: 'b', title: '示例商品 B', desc: '舒适又耐用', price: '129.00' },
-      ],
+      placeholder: '搜索即将上线的商品',
+      resultsTitle: '推荐关键词',
+      resultsSubtitle: '商品上线后将展示真实结果。',
+      featuredProducts: [],
+      popularTitle: '热门计划',
+      popularKeywords: ['日常用品', '益智玩具', '健康零食'],
+      tipsTitle: '小贴士',
+      tips: ['目前可先通过分类浏览商品。', '收藏的商品将在上线后自动同步。'],
+      emptyTitle: '搜索功能准备中',
+      emptyDescription: '商品服务接入后即可使用搜索。',
     },
     cart: {
-      title: '购物车商品',
-      delete: '删除',
-      checkout: '去结算',
-      product: { id: 'b', title: '示例商品 B', desc: '舒适又耐用', price: '129.00', tag: '热卖', tagType: 'primary' },
+      title: '购物车',
+      emptyTitle: '购物车空空如也',
+      emptyDescription: '商城开放后，加入的商品会出现在这里。',
+      goShopping: '去首页逛逛',
+      infoTitle: '购物提示',
+      infoItems: [
+        { icon: 'diamond-o', title: '会员优惠', value: '即将开放' },
+        { icon: 'points', title: '包邮政策', value: '上线后公布' },
+        { icon: 'shield-o', title: '支付安全', value: '微信支付接入中' },
+      ],
     },
     checkout: {
-      orderTitle: '订单信息',
+      orderTitle: '订单概览',
       summary: [
-        { title: '确认下单', label: '核对订单信息', value: '' },
-        { title: '商品件数', value: '2' },
-        { title: '商品小计', value: '¥228.00' },
-        { title: '运费', value: '¥0.00' },
-        { title: '优惠券', value: '未使用', link: true },
+        { title: '状态', value: '等待商品上线', label: '商品可购买后即可下单。' },
+        { title: '配送', value: '设置中' },
+        { title: '支付', value: '微信支付开通中' },
       ],
       paymentTitle: '支付方式',
-      paymentValue: '微信支付',
+      paymentValue: '上线后启用',
       payNow: '立即支付',
+      emptyTitle: '结算即将开启',
+      emptyDescription: '商城上线后可在此提交订单。',
     },
     orders: {
       tabs: [
-        {
-          title: '全部',
-          items: [
-            { title: '订单 #1001', label: '2 件商品 · ¥228.00' },
-            { title: '订单 #1000', label: '1 件商品 · ¥99.00' },
-          ],
-        },
-        { title: '待付款', items: [{ title: '订单 #1002', label: '等待付款' }] },
-        { title: '待发货', items: [{ title: '订单 #0999', label: '备货中' }] },
-        { title: '待收货', items: [{ title: '订单 #0998', label: '运输中' }] },
-        { title: '售后', items: [{ title: '订单 #0997', label: '退款处理中' }] },
+        { title: '全部', items: [] },
+        { title: '待付款', items: [] },
+        { title: '待发货', items: [] },
+        { title: '待收货', items: [] },
+        { title: '售后', items: [] },
       ],
+      emptyTitle: '暂无订单',
+      emptyDescription: '商城上线后，订单记录会显示在这里。',
     },
     product: {
-      productTitle: '商品信息',
-      name: '示例商品',
-      desc: '简短描述',
+      productTitle: '商品预览',
+      name: '待上线商品',
+      desc: '商品信息准备中。',
       priceLabel: '价格',
-      price: '¥129.00',
+      price: '—',
       ratingLabel: '评分',
-      rating: '4.5',
+      rating: '待更新',
       optionsTitle: '选项',
       color: '颜色',
-      colorValue: '红色',
+      colorValue: '待公布',
       size: '尺码',
-      sizeValue: 'M 码',
+      sizeValue: '待公布',
       quantity: '数量',
       detailsTab: '详情',
       reviewsTab: '评价',
-      detailItems: ['详情 A', '详情 B', '详情 C'],
-      reviewItems: [
-        { title: '非常好用', label: '来自用户 A' },
-        { title: '体验不错', label: '来自用户 B' },
-      ],
+      detailItems: ['上线后将展示完整参数。'],
+      reviewItems: [],
+      comingSoonTitle: '商品信息筹备中',
+      comingSoonDescription: '正在接入商品服务，请稍后再来。',
       actionIcons: [
         { icon: 'chat-o', text: '客服' },
         { icon: 'cart-o', text: '购物车', url: '/pages/cart/index', linkType: 'switchTab' },
       ],
       actionButtons: [
-        { type: 'warning', text: '加入购物车' },
-        { type: 'danger', text: '立即购买' },
+        { type: 'warning', text: '加入购物车', disabled: true },
+        { type: 'danger', text: '立即购买', disabled: true },
       ],
     },
     category: {
@@ -485,22 +576,22 @@ const MESSAGES: Record<Locale, I18nMessages> = {
       },
       quickEntriesTitle: '快捷入口',
       quickEntries: [
-        { icon: 'coupon-o', text: '优惠券', url: '/pages/coupon/index', linkType: 'navigateTo' },
-        { icon: 'star-o', text: '收藏夹', url: '/pages/fav/goods', linkType: 'navigateTo' },
-        { icon: 'underway-o', text: '浏览记录', url: '/pages/history/index', linkType: 'navigateTo' },
+        { icon: 'home-o', text: '首页', url: '/pages/index/index', linkType: 'switchTab' },
+        { icon: 'apps-o', text: '分类', url: '/pages/category/index', linkType: 'switchTab' },
+        { icon: 'orders-o', text: '订单', url: '/pages/orders/index', linkType: 'navigateTo' },
       ],
       ordersTitle: '我的订单',
-      myOrdersTitle: '全部订单',
-      myOrdersValue: '查看全部',
+      myOrdersTitle: '订单记录',
+      myOrdersValue: '查看列表',
       orderTabs: [
-        { url: '/pages/orders/index?active=0', text: '待付款', icon: 'pending-payment', countKey: 'toPay' },
-        { url: '/pages/orders/index?active=1', text: '待发货', icon: 'tosend', countKey: 'toShip' },
-        { url: '/pages/orders/index?active=2', text: '待收货', icon: 'logistics', countKey: 'toReceive' },
-        { url: '/pages/orders/index?active=5', text: '售后/退款', icon: 'after-sale', countKey: 'afterSale' },
+        { url: '/pages/orders/index?active=1', text: '待付款', icon: 'pending-payment', countKey: 'toPay' },
+        { url: '/pages/orders/index?active=2', text: '待发货', icon: 'tosend', countKey: 'toShip' },
+        { url: '/pages/orders/index?active=3', text: '待收货', icon: 'logistics', countKey: 'toReceive' },
+        { url: '/pages/orders/index?active=4', text: '售后/退款', icon: 'after-sale', countKey: 'afterSale' },
       ],
       moreTitle: '更多服务',
-      wallet: { label: '钱包', badge: '推荐', url: '/pages/wallet/index' },
-      support: { label: '客服中心', url: '/pages/support/index' },
+      wallet: { label: '会员中心', badge: '敬请期待', url: '' },
+      support: { label: '客服支持', url: '' },
       settingsTitle: '设置',
       aboutTitle: '关于我们',
       languageAction: {
