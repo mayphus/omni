@@ -1,16 +1,32 @@
-<van-tabs sticky active="{{active}}" bind:change="onTabChange">
-  <van-tab
-    wx:for="{{ i18n.tabs }}"
-    wx:key="title"
-    title="{{ item.title }}"
-  >
-    <van-cell
-      wx:for="{{ item.items }}"
-      wx:for-item="child"
-      wx:key="title"
-      title="{{ child.title }}"
-      label="{{ child.label }}"
-      is-link
-    />
+<van-tabs
+  sticky
+  active="{{ activeIndex }}"
+  bind:change="onTabChange"
+>
+  <van-tab wx:for="{{ tabs }}" wx:key="key" title="{{ item.title }}">
+    <block wx:if="{{ loading }}">
+      <van-skeleton title row="3" loading />
+    </block>
+    <block wx:elif="{{ error }}">
+      <van-empty image="error" description="{{ error }}" />
+    </block>
+    <block wx:elif="{{ filtered.length }}">
+      <van-cell-group>
+        <van-cell
+          wx:for="{{ filtered }}"
+          wx:key="id"
+          title="{{ i18n.orderLabel }} {{ item.id }}"
+          value="¥{{ item.totalYuan }}"
+        >
+          <view slot="label" class="order-label">
+            <view>{{ item.formattedDate }}</view>
+            <view class="order-status">{{ i18n.statusLabel }}: {{ item.status }}</view>
+          </view>
+        </van-cell>
+      </van-cell-group>
+    </block>
+    <block wx:else>
+      <van-empty image="search" description="{{ i18n.emptyDescription }}" />
+    </block>
   </van-tab>
 </van-tabs>

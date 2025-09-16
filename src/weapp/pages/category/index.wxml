@@ -1,4 +1,13 @@
-<van-search placeholder="{{ i18n.searchPlaceholder }}" shape="round" disabled background="#ffffff" />
+<van-search
+  value="{{ searchValue }}"
+  placeholder="{{ i18n.searchPlaceholder }}"
+  shape="round"
+  background="#ffffff"
+  show-action
+  bind:change="onSearchChange"
+  bind:search="onSearchConfirm"
+  bind:cancel="onSearchCancel"
+/>
 
 <!-- Category Tabs -->
 <block wx:if="{{ categoriesLoading && !categoriesLoaded }}">
@@ -15,10 +24,10 @@
   >
     <van-tab
       wx:for="{{ categories }}"
-      wx:key="id"
+      wx:key="slug"
       wx:for-item="item"
       title="{{ item.name }}"
-      name="{{ item.id }}"
+      name="{{ item.slug }}"
     />
   </van-tabs>
 </block>
@@ -36,6 +45,71 @@
 </block>
 
 <block wx:elif="{{ categoriesLoaded }}">
+  <van-empty image="search">
+    <view slot="description">
+      <view>{{ i18n.category.emptyTitle }}</view>
+      <view>{{ i18n.category.emptyDescription }}</view>
+    </view>
+  </van-empty>
+</block>
+
+<!-- Search results -->
+<block wx:if="{{ searchLoading }}">
+  <van-loading size="24px" color="#1989fa" vertical>{{ i18n.loadingText }}</van-loading>
+</block>
+
+<block wx:elif="{{ searchError }}">
+  <van-empty image="search" description="{{ searchError }}" />
+</block>
+
+<block wx:elif="{{ searchResults.length }}">
+  <van-divider content-position="center">{{ i18n.searchResultsTitle }}</van-divider>
+  <van-card
+    wx:for="{{ searchResults }}"
+    wx:key="id"
+    price="{{ item.price }}"
+    desc="{{ item.desc }}"
+    title="{{ item.title }}"
+    thumb="{{ item.imageUrl }}"
+    currency="¥"
+    data-product-id="{{ item.id }}"
+    bind:tap="onProductTap"
+  />
+</block>
+
+<!-- Products list -->
+<block wx:if="{{ productsLoading }}">
+  <van-skeleton title row="3" loading avatar />
+</block>
+
+<block wx:elif="{{ productsError }}">
+  <van-empty image="error">
+    <view slot="description">
+      <view>{{ i18n.category.errorTitle }}</view>
+      <view>{{ productsError }}</view>
+    </view>
+    <van-button slot="bottom" type="primary" size="small" bind:tap="onReloadCategory">
+      {{ i18n.category.errorAction }}
+    </van-button>
+  </van-empty>
+</block>
+
+<block wx:elif="{{ products.length }}">
+  <van-divider content-position="center">{{ i18n.productsTitle }}</van-divider>
+  <van-card
+    wx:for="{{ products }}"
+    wx:key="id"
+    price="{{ item.price }}"
+    desc="{{ item.desc }}"
+    title="{{ item.title }}"
+    thumb="{{ item.imageUrl }}"
+    currency="¥"
+    data-product-id="{{ item.id }}"
+    bind:tap="onProductTap"
+  />
+</block>
+
+<block wx:else>
   <van-empty image="search">
     <view slot="description">
       <view>{{ i18n.category.emptyTitle }}</view>

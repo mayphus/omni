@@ -22,12 +22,12 @@ Collections and fields (minimal)
 - `products`
   - `_id` string
   - `title` string, `subtitle?` string, `description?` string, `richDescription?` string
-  - `images` string[] (URLs)
-  - `categoryId?` string, `spuId?` string
+  - `images` [{ `fileId`, `url` }]
+  - `category?` string slug, `spuId?` string
   - `price` { currency 'CNY', priceYuan number }
   - `stock` int, `isActive` bool, `attributes?` record, `skus?` [{ `skuId`, `priceYuan`, `stock`, `attributes?`, `isActive` }]
   - `createdAt`, `updatedAt`
-  - Indexes: `isActive`; `categoryId`; text index on `title`
+  - Indexes: `isActive`; `category`; text index on `title`
 
 - `orders`
   - `_id` string

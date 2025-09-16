@@ -46,6 +46,8 @@ type I18nMessages = {
     supportTitle: string
     supportItems: SupportCard[]
     endDivider: string
+    searchResultsTitle: string
+    loadingText: string
   }
   search: {
     placeholder: string
@@ -58,6 +60,7 @@ type I18nMessages = {
     tips: string[]
     emptyTitle: string
     emptyDescription: string
+    loadingText: string
   }
   cart: {
     title: string
@@ -66,6 +69,11 @@ type I18nMessages = {
     goShopping: string
     infoTitle: string
     infoItems: CartInfoItem[]
+    removeButton: string
+    clearButton: string
+    continueButton: string
+    checkoutButton: string
+    emptyToast: string
   }
   checkout: {
     orderTitle: string
@@ -75,11 +83,22 @@ type I18nMessages = {
     payNow: string
     emptyTitle: string
     emptyDescription: string
+    itemsTitle: string
+    summaryTitle: string
+    emptyButton: string
+    successToast: string
+    emptyToast: string
+    quantityLabel: string
+    subtotalLabel: string
+    shippingLabel: string
+    totalLabel: string
   }
   orders: {
     tabs: OrderTab[]
     emptyTitle: string
     emptyDescription: string
+    orderLabel: string
+    statusLabel: string
   }
   product: {
     productTitle: string
@@ -103,6 +122,8 @@ type I18nMessages = {
     comingSoonDescription: string
     actionIcons: Array<{ icon: string; text: string; url?: string; linkType?: 'switchTab' | 'navigateTo' }>
     actionButtons: GoodsActionButton[]
+    retryButton: string
+    addedToast: string
   }
   category: {
     searchPlaceholder: string
@@ -112,6 +133,9 @@ type I18nMessages = {
     errorDescription: string
     errorAction: string
     categories: CategoryTab[]
+    productsTitle: string
+    searchResultsTitle: string
+    loadingText: string
   }
   profile: {
     header: {
@@ -212,6 +236,8 @@ const MESSAGES: Record<Locale, I18nMessages> = {
         { icon: 'chat-o', title: 'Customer care', description: 'Reach us via the WeChat official account anytime.' },
       ],
       endDivider: 'More updates soon',
+      searchResultsTitle: 'Search results',
+      loadingText: 'Loading…',
     },
     search: {
       placeholder: 'Search upcoming products',
@@ -227,6 +253,7 @@ const MESSAGES: Record<Locale, I18nMessages> = {
       ],
       emptyTitle: 'Results arriving soon',
       emptyDescription: 'Search will be enabled when the product service is connected.',
+      loadingText: 'Loading…',
     },
     cart: {
       title: 'Shopping cart',
@@ -239,6 +266,11 @@ const MESSAGES: Record<Locale, I18nMessages> = {
         { icon: 'points', title: 'Free shipping', value: 'Available after launch' },
         { icon: 'shield-o', title: 'Secure payments', value: 'WeChat Pay integration in progress' },
       ],
+      removeButton: 'Remove',
+      clearButton: 'Clear cart',
+      continueButton: 'Continue shopping',
+      checkoutButton: 'Checkout',
+      emptyToast: 'Cart is empty',
     },
     checkout: {
       orderTitle: 'Order overview',
@@ -252,6 +284,15 @@ const MESSAGES: Record<Locale, I18nMessages> = {
       payNow: 'Pay Now',
       emptyTitle: 'Checkout opens soon',
       emptyDescription: 'Create an order from the cart after the backend is online.',
+      itemsTitle: 'Items',
+      summaryTitle: 'Summary',
+      emptyButton: 'Browse homepage',
+      successToast: 'Order placed',
+      emptyToast: 'Cart is empty',
+      quantityLabel: 'Qty',
+      subtotalLabel: 'Subtotal',
+      shippingLabel: 'Shipping',
+      totalLabel: 'Total',
     },
     orders: {
       tabs: [
@@ -263,6 +304,8 @@ const MESSAGES: Record<Locale, I18nMessages> = {
       ],
       emptyTitle: 'No orders yet',
       emptyDescription: 'Your purchases will appear here once the shop opens.',
+      orderLabel: 'Order',
+      statusLabel: 'Status',
     },
     product: {
       productTitle: 'Product preview',
@@ -292,14 +335,19 @@ const MESSAGES: Record<Locale, I18nMessages> = {
         { type: 'warning', text: 'Add to Cart', disabled: true },
         { type: 'danger', text: 'Buy Now', disabled: true },
       ],
+      retryButton: 'Retry',
+      addedToast: 'Added to cart',
     },
-  category: {
+    category: {
       searchPlaceholder: 'Search categories',
       emptyTitle: 'Categories syncing',
       emptyDescription: 'Please check back soon for the full catalogue.',
       errorTitle: 'Unable to load categories',
       errorDescription: 'Tap retry to try again.',
       errorAction: 'Retry',
+      productsTitle: 'Products',
+      searchResultsTitle: 'Search results',
+      loadingText: 'Loading…',
       categories: [
         {
           id: 'all',
@@ -455,6 +503,8 @@ const MESSAGES: Record<Locale, I18nMessages> = {
         { icon: 'chat-o', title: '客服咨询', description: '可通过公众号随时联系我们。' },
       ],
       endDivider: '更多更新即将到来',
+      searchResultsTitle: '搜索结果',
+      loadingText: '加载中…',
     },
     search: {
       placeholder: '搜索即将上线的商品',
@@ -467,6 +517,7 @@ const MESSAGES: Record<Locale, I18nMessages> = {
       tips: ['目前可先通过分类浏览商品。', '收藏的商品将在上线后自动同步。'],
       emptyTitle: '搜索功能准备中',
       emptyDescription: '商品服务接入后即可使用搜索。',
+      loadingText: '加载中…',
     },
     cart: {
       title: '购物车',
@@ -479,6 +530,11 @@ const MESSAGES: Record<Locale, I18nMessages> = {
         { icon: 'points', title: '包邮政策', value: '上线后公布' },
         { icon: 'shield-o', title: '支付安全', value: '微信支付接入中' },
       ],
+      removeButton: '移除',
+      clearButton: '清空购物车',
+      continueButton: '继续逛逛',
+      checkoutButton: '去结算',
+      emptyToast: '购物车为空',
     },
     checkout: {
       orderTitle: '订单概览',
@@ -492,6 +548,15 @@ const MESSAGES: Record<Locale, I18nMessages> = {
       payNow: '立即支付',
       emptyTitle: '结算即将开启',
       emptyDescription: '商城上线后可在此提交订单。',
+      itemsTitle: '商品列表',
+      summaryTitle: '订单摘要',
+      emptyButton: '去首页逛逛',
+      successToast: '订单已提交',
+      emptyToast: '购物车为空',
+      quantityLabel: '数量',
+      subtotalLabel: '小计',
+      shippingLabel: '运费',
+      totalLabel: '合计',
     },
     orders: {
       tabs: [
@@ -503,6 +568,8 @@ const MESSAGES: Record<Locale, I18nMessages> = {
       ],
       emptyTitle: '暂无订单',
       emptyDescription: '商城上线后，订单记录会显示在这里。',
+      orderLabel: '订单',
+      statusLabel: '状态',
     },
     product: {
       productTitle: '商品预览',
@@ -532,6 +599,8 @@ const MESSAGES: Record<Locale, I18nMessages> = {
         { type: 'warning', text: '加入购物车', disabled: true },
         { type: 'danger', text: '立即购买', disabled: true },
       ],
+      retryButton: '重试',
+      addedToast: '已加入购物车',
     },
     category: {
       searchPlaceholder: '搜索分类',
@@ -540,6 +609,9 @@ const MESSAGES: Record<Locale, I18nMessages> = {
       errorTitle: '无法加载分类',
       errorDescription: '请检查网络后重试。',
       errorAction: '重试',
+      productsTitle: '分类商品',
+      searchResultsTitle: '搜索结果',
+      loadingText: '加载中…',
       categories: [
         {
           id: 'all',

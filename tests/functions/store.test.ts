@@ -17,6 +17,7 @@ describe('functions: store endpoints', () => {
       subtitle: 'Freshly squeezed',
       description: 'Orange juice',
       images: [{ fileId: 'alpha-img', url: 'https://example.com/a.jpg' }],
+      category: 'beverages',
       price: { currency: 'CNY', priceYuan: 15.5 },
       stock: 10,
       isActive: true,
@@ -28,6 +29,7 @@ describe('functions: store endpoints', () => {
       title: 'Berry Mix',
       subtitle: 'Frozen berries',
       images: [{ fileId: 'berry-img', url: 'https://example.com/b.jpg' }],
+      category: 'beverages',
       price: { currency: 'CNY', priceYuan: 28 },
       stock: 0,
       skus: [
@@ -42,6 +44,7 @@ describe('functions: store endpoints', () => {
     testCloud.insert(Collections.Products, {
       title: 'Hidden Item',
       images: [{ fileId: 'hidden-img', url: 'https://example.com/h.jpg' }],
+      category: 'beverages',
       price: { currency: 'CNY', priceYuan: 9.9 },
       stock: 5,
       isActive: false,
@@ -149,6 +152,120 @@ describe('functions: store endpoints', () => {
   it('fails overview without OPENID context', async () => {
     testCloud.setContext({ OPENID: undefined })
     const res = await main({ action: 'v1.store.profile.overview' })
+    expect(res.success).toBe(false)
+    expect(res.error).toMatch(/Missing OPENID/)
+  })
+
+  it('searches products by keyword', async () => {
+    const now = nowMs()
+    testCloud.insert(Collections.Products, {
+      title: 'Organic Honey',
+      subtitle: 'Sweet and natural',
+      description: 'Harvested locally',
+      images: [{ fileId: 'honey', url: 'https://example.com/honey.jpg' }],
+      category: 'pantry',
+      price: { currency: 'CNY', priceYuan: 25 },
+      stock: 4,
+      isActive: true,
+      createdAt: now - 200,
+      updatedAt: now - 100,
+    })
+    testCloud.insert(Collections.Products, {
+      title: 'Sea Salt',
+      images: [{ fileId: 'salt', url: 'https://example.com/salt.jpg' }],
+      category: 'pantry',
+      price: { currency: 'CNY', priceYuan: 5 },
+      stock: 10,
+      isActive: true,
+      createdAt: now - 300,
+      updatedAt: now - 250,
+    })
+
+    const res = await main({ action: 'v1.store.products.search', keyword: 'honey' })
+    expect(res.success).toBe(true)
+    expect(res.products).toHaveLength(1)
+    expect(res.products[0].title).toBe('Organic Honey')
+  })
+
+  it('lists products by category slug', async () => {
+    const now = nowMs()
+    const vegId = testCloud.insert(Collections.Products, {
+      title: 'Fresh Carrots',
+      images: [{ fileId: 'carrot', url: 'https://example.com/carrot.jpg' }],
+      category: 'produce',
+      price: { currency: 'CNY', priceYuan: 6 },
+      stock: 12,
+      isActive: true,
+      createdAt: now - 400,
+      updatedAt: now - 300,
+    })
+    testCloud.insert(Collections.Products, {
+      title: 'Kitchen Towels',
+      images: [{ fileId: 'towel', url: 'https://example.com/towel.jpg' }],
+      category: 'household',
+      price: { currency: 'CNY', priceYuan: 12 },
+      stock: 5,
+      isActive: true,
+      createdAt: now - 200,
+      updatedAt: now - 150,
+    })
+
+    const res = await main({ action: 'v1.store.products.byCategory', category: 'produce' })
+    expect(res.success).toBe(true)
+    expect(res.products).toHaveLength(1)
+    expect(res.products[0].id).toBe(vegId)
+  })
+
+  it('returns product detail by id', async () => {
+    const now = nowMs()
+    const insertedId = testCloud.insert(Collections.Products, {
+      title: 'Matcha Latte',
+      images: [{ fileId: 'matcha', url: 'https://example.com/matcha.jpg' }],
+      category: 'beverages',
+      price: { currency: 'CNY', priceYuan: 18.5 },
+      stock: 6,
+      isActive: true,
+      createdAt: now,
+      updatedAt: now,
+    })
+
+    const res = await main({ action: 'v1.store.product.detail', productId: insertedId })
+    expect(res.success).toBe(true)
+    expect(res.product.title).toBe('Matcha Latte')
+
+    const missing = await main({ action: 'v1.store.product.detail', productId: 'missing-id' })
+    expect(missing.success).toBe(false)
+    expect(missing.error).toMatch(/not found/i)
+  })
+
+  it('lists user orders with status filter', async () => {
+    const now = nowMs()
+    testCloud.setContext({ OPENID: 'customer-1' })
+    const common = {
+      items: [{ productId: 'p', title: 'Item', qty: 1, priceYuan: 10 }],
+      subtotalYuan: 10,
+      shippingYuan: 0,
+      discountYuan: 0,
+      totalYuan: 10,
+      createdAt: now - 100,
+      updatedAt: now - 50,
+    }
+    testCloud.insert(Collections.Orders, { ...common, userId: 'customer-1', status: 'paid' })
+    testCloud.insert(Collections.Orders, { ...common, userId: 'customer-1', status: 'pending', createdAt: now - 80, updatedAt: now - 40 })
+
+    const listAll = await main({ action: 'v1.store.orders.list' })
+    expect(listAll.success).toBe(true)
+    expect(listAll.orders).toHaveLength(2)
+
+    const filtered = await main({ action: 'v1.store.orders.list', status: 'pending' })
+    expect(filtered.success).toBe(true)
+    expect(filtered.orders).toHaveLength(1)
+    expect(filtered.orders[0].status).toBe('pending')
+  })
+
+  it('requires login for order listing', async () => {
+    testCloud.setContext({ OPENID: undefined })
+    const res = await main({ action: 'v1.store.orders.list' })
     expect(res.success).toBe(false)
     expect(res.error).toMatch(/Missing OPENID/)
   })

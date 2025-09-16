@@ -29,7 +29,7 @@ type ProductDraft = {
   description: string
   richDescription: string
   images: ProductImage[]
-  categoryId: string
+  category: string
   spuId: string
   priceYuan: string
   stock: string
@@ -45,7 +45,7 @@ function createEmptyDraft(): ProductDraft {
     description: '',
     richDescription: '',
     images: [],
-    categoryId: '',
+    category: '',
     spuId: '',
     priceYuan: '',
     stock: '',
@@ -68,7 +68,7 @@ function productToDraft(product: ProductWithId): ProductDraft {
     description: product.description || '',
     richDescription: product.richDescription || '',
     images: cloneImages(product.images),
-    categoryId: product.categoryId || '',
+    category: product.category || '',
     spuId: product.spuId || '',
     priceYuan: product.price.priceYuan.toString(),
     stock: product.stock.toString(),
@@ -144,7 +144,7 @@ function draftToInput(draft: ProductDraft, fallbackSpu: string): ProductInput {
     description: draft.description.trim() || undefined,
     richDescription: draft.richDescription.trim() || undefined,
     images: normalizeImages(draft.images),
-    categoryId: draft.categoryId.trim() || undefined,
+    category: draft.category.trim() || undefined,
     spuId: draft.spuId.trim() || fallbackSpu,
     price: { currency: 'CNY', priceYuan: Math.round(priceNumber * 100) / 100 },
     stock: stockNumber,
@@ -212,7 +212,7 @@ export function Products() {
   const categories = useMemo(() => {
     const set = new Set<string>()
     for (const item of items) {
-      if (item.categoryId) set.add(item.categoryId)
+      if (item.category) set.add(item.category)
     }
     return Array.from(set).sort()
   }, [items])
@@ -231,11 +231,11 @@ export function Products() {
         !q ||
         item.title.toLowerCase().includes(q) ||
         (item.subtitle || '').toLowerCase().includes(q) ||
-        (item.categoryId || '').toLowerCase().includes(q) ||
+        (item.category || '').toLowerCase().includes(q) ||
         (item.spuId || '').toLowerCase().includes(q)
       const matchesStatus =
         statusFilter === 'all' || (statusFilter === 'active' ? item.isActive : !item.isActive)
-      const matchesCategory = categoryFilter === 'all' || item.categoryId === categoryFilter
+      const matchesCategory = categoryFilter === 'all' || item.category === categoryFilter
       return matchesQuery && matchesStatus && matchesCategory
     })
   }, [items, query, statusFilter, categoryFilter])
@@ -356,11 +356,11 @@ export function Products() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="categoryId">Category ID</Label>
+                    <Label htmlFor="category">Category</Label>
                     <Input
-                      id="categoryId"
-                      value={draft.categoryId}
-                      onChange={(event) => setDraft((prev) => ({ ...prev, categoryId: event.target.value }))}
+                      id="category"
+                      value={draft.category}
+                      onChange={(event) => setDraft((prev) => ({ ...prev, category: event.target.value }))}
                       placeholder="toys"
                       disabled={saving}
                     />
@@ -751,7 +751,7 @@ export function Products() {
                       <p className="text-sm font-medium">{formatCNY(item.price.priceYuan)}</p>
                       <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
                         <span>Stock: {item.stock}</span>
-                        {item.categoryId && <span>Category: {item.categoryId}</span>}
+                        {item.category && <span>Category: {item.category}</span>}
                         {item.spuId && <span>SPU: {item.spuId}</span>}
                         <span>Updated: {formatUpdated(item.updatedAt)}</span>
                       </div>
@@ -798,7 +798,7 @@ export function Products() {
                               {item.subtitle && <span className="text-xs text-muted-foreground">{item.subtitle}</span>}
                             </div>
                           </TableCell>
-                          <TableCell className="hidden sm:table-cell">{item.categoryId || '—'}</TableCell>
+                          <TableCell className="hidden sm:table-cell">{item.category || '—'}</TableCell>
                           <TableCell>{formatCNY(item.price.priceYuan)}</TableCell>
                           <TableCell className="hidden md:table-cell">{item.stock}</TableCell>
                           <TableCell>
@@ -904,12 +904,12 @@ export function Products() {
                     <span className="text-muted-foreground">Status</span>
                     <span className="font-medium">{previewProduct.isActive ? 'Active' : 'Inactive'}</span>
                   </div>
-                  {previewProduct.categoryId && (
-                    <div className="mt-2 flex justify-between text-sm">
-                      <span className="text-muted-foreground">Category</span>
-                      <span className="font-medium">{previewProduct.categoryId}</span>
-                    </div>
-                  )}
+                {previewProduct.category && (
+                  <div className="mt-2 flex justify-between text-sm">
+                    <span className="text-muted-foreground">Category</span>
+                    <span className="font-medium">{previewProduct.category}</span>
+                  </div>
+                )}
                   {previewProduct.spuId && (
                     <div className="mt-2 flex justify-between text-sm">
                       <span className="text-muted-foreground">SPU</span>

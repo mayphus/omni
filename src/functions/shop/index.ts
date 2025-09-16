@@ -13,8 +13,8 @@ const fail = (error: string, data: any = {}): ApiResponse => ({ success: false, 
 // Shared schemas and helpers
 import type { User, UserProfile, UserWithId } from '@shared/models/user'
 import { zUser, zUserProfile, zUserWithId } from '@shared/models/user'
-import type { Product, ProductImage, ProductInput } from '@shared/models/product'
-import { zProduct, zProductInput } from '@shared/models/product'
+import type { Product, ProductImage, ProductInput, ProductWithId } from '@shared/models/product'
+import { zProduct, zProductInput, zProductWithId } from '@shared/models/product'
 import type { Order, OrderWithId } from '@shared/models/order'
 import { zOrderWithId } from '@shared/models/order'
 import type {
@@ -105,6 +105,10 @@ function parseUserDocument(doc: any) {
 
 function parseSystemDocument(doc: any) {
   return zSystemItemWithId.safeParse(fromServer<SystemItem>(doc as any))
+}
+
+function parseProductDocument(doc: any) {
+  return zProductWithId.safeParse(fromServer<Product>(doc as any))
 }
 
 async function fetchOrdersForStats(limit = 1000): Promise<OrderWithId[]> {
@@ -312,6 +316,80 @@ const handlers: Record<string, (event: any) => Promise<ApiResponse> | ApiRespons
   },
 
   /**
+   * v1.store.products.search
+   * Input: { keyword?, limit? }
+   * Output: { products }
+   */
+  'v1.store.products.search': async (event: any) => {
+    const keyword = typeof event?.keyword === 'string' ? event.keyword.trim() : ''
+    const rawLimit = Number(event?.limit)
+    const limit = Number.isFinite(rawLimit) ? Math.min(Math.max(rawLimit, 1), 100) : 50
+
+    const fetchLimit = keyword ? Math.max(limit, 100) : limit
+    const snapshot = await productsCol().orderBy('updatedAt', 'desc').limit(fetchLimit).get()
+    const products: ProductWithId[] = []
+    const normalizedKeyword = keyword.toLowerCase()
+
+    for (const doc of snapshot.data || []) {
+      const parsed = parseProductDocument(doc)
+      if (!parsed.success) return fail('Invalid product data', { issues: parsed.error.issues })
+      const product = parsed.data
+      if (product.isActive === false) continue
+      if (!keyword) {
+        products.push(product)
+      } else {
+        const haystack = [product.title, product.subtitle, product.description]
+          .filter(Boolean)
+          .join(' ')
+          .toLowerCase()
+        if (haystack.includes(normalizedKeyword)) {
+          products.push(product)
+        }
+      }
+      if (products.length >= limit) break
+    }
+
+    return ok({ products })
+  },
+
+  /**
+   * v1.store.product.detail
+   * Input: { productId }
+   * Output: { product }
+   */
+  'v1.store.product.detail': async (event: any) => {
+    const productId = typeof event?.productId === 'string' ? event.productId.trim() : ''
+    if (!productId) return fail('Missing productId')
+    const snapshot = await productsCol().where({ _id: productId }).limit(1).get()
+    const doc = snapshot.data?.[0]
+    if (!doc) return fail('Product not found')
+    const parsed = parseProductDocument(doc)
+    if (!parsed.success) return fail('Invalid product data', { issues: parsed.error.issues })
+    const product = parsed.data
+    if (product.isActive === false) return fail('Product unavailable', { productId })
+    return ok({ product })
+  },
+
+  /**
+   * v1.store.products.byCategory
+   * Input: { category }
+   * Output: { products }
+   */
+  'v1.store.products.byCategory': async (event: any) => {
+    const category = typeof event?.category === 'string' ? event.category.trim() : ''
+    if (!category) return fail('Missing category')
+    const snapshot = await productsCol().orderBy('updatedAt', 'desc').where({ category }).limit(100).get()
+    const products: ProductWithId[] = []
+    for (const doc of snapshot.data || []) {
+      const parsed = parseProductDocument(doc)
+      if (!parsed.success) return fail('Invalid product data', { issues: parsed.error.issues })
+      if (parsed.data.isActive === false) continue
+      products.push(parsed.data)
+    }
+    return ok({ products })
+  },
+
+  /**
    * v1.store.categories.list
    * Input: none
    * Output: { categories }
@@ -377,6 +455,29 @@ const handlers: Record<string, (event: any) => Promise<ApiResponse> | ApiRespons
     )
 
     return ok({ orderCounts: counts })
+  },
+
+  /**
+   * v1.store.orders.list
+   * Input: { status?, limit? }
+   * Output: { orders }
+   */
+  'v1.store.orders.list': async (event: any) => {
+    const { OPENID } = getWX() as any
+    if (!OPENID) return fail('Missing OPENID in WX context')
+    const status = typeof event?.status === 'string' ? event.status.trim() : ''
+    const rawLimit = Number(event?.limit)
+    const limit = Number.isFinite(rawLimit) ? Math.min(Math.max(rawLimit, 1), 100) : 50
+
+    const criteria = status ? { userId: OPENID, status } : { userId: OPENID }
+    const snapshot = await ordersCol().where(criteria).orderBy('createdAt', 'desc').limit(limit).get()
+    const orders: OrderWithId[] = []
+    for (const doc of snapshot.data || []) {
+      const parsed = parseOrderDocument(doc)
+      if (!parsed.success) return fail('Invalid order data', { issues: parsed.error.issues })
+      orders.push(parsed.data)
+    }
+    return ok({ orders })
   },
 
   /**

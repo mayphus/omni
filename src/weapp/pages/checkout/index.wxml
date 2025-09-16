@@ -1,19 +1,39 @@
-<van-divider content-position="left">{{ i18n.orderTitle }}</van-divider>
-<van-cell-group inset>
-  <van-cell
-    wx:for="{{ i18n.summary }}"
-    wx:key="title"
-    title="{{ item.title }}"
-    value="{{ item.value }}"
-    label="{{ item.label || '' }}"
-    border="{{ index !== 0 }}"
-    is-link="{{ !!item.link }}"
+<block wx:if="{{ !items.length }}">
+  <van-empty image="search">
+    <view slot="description">
+      <view>{{ i18n.emptyTitle }}</view>
+      <view>{{ i18n.emptyDescription }}</view>
+    </view>
+    <van-button slot="bottom" type="primary" plain size="small" bind:tap="onGoShopping">
+      {{ i18n.emptyButton }}
+    </van-button>
+  </van-empty>
+</block>
+
+<block wx:else>
+  <van-divider content-position="left">{{ i18n.itemsTitle }}</van-divider>
+  <van-cell-group inset>
+    <van-cell
+      wx:for="{{ items }}"
+      wx:key="id"
+      title="{{ item.title }}"
+      label="{{ i18n.quantityLabel }}: {{ item.qty }}"
+      value="¥{{ item.totalText }}"
+    />
+  </van-cell-group>
+
+  <van-divider content-position="left">{{ i18n.summaryTitle }}</van-divider>
+  <van-cell-group inset>
+    <van-cell title="{{ i18n.subtotalLabel }}" value="¥{{ subtotalText }}" />
+    <van-cell title="{{ i18n.shippingLabel }}" value="¥0.00" />
+    <van-cell title="{{ i18n.totalLabel }}" value="¥{{ totalText }}" />
+  </van-cell-group>
+
+  <van-submit-bar
+    price="{{ Math.round(total * 100) }}"
+    loading="{{ submitting }}"
+    button-text="{{ i18n.payNow }}"
+    bind:submit="onSubmit"
+    safe-area-inset-bottom
   />
-</van-cell-group>
-
-<van-divider content-position="left">{{ i18n.paymentTitle }}</van-divider>
-<van-cell-group inset>
-  <van-cell title="{{ i18n.paymentTitle }}" value="{{ i18n.paymentValue }}" is-link />
-</van-cell-group>
-
-<van-submit-bar price="22800" button-text="{{ i18n.payNow }}" safe-area-inset-bottom />
+</block>

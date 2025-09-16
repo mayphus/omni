@@ -7,27 +7,22 @@
       size="large"
       clickable
       is-link="{{ !isLoggedIn }}"
-      bind:click="{{ isLoggedIn ? 'onEditProfile' : 'onSignIn' }}"
+      bind:click="onProfileAction"
       title="{{ isLoggedIn ? nickname : i18n.profile.header.signedOutTitle }}"
       title-style="font-weight:600"
       label="{{ isLoggedIn ? i18n.profile.header.signedInLabel : i18n.profile.header.signedOutLabel }}"
     >
-      <van-image
-        slot="icon"
-        round
-        width="96rpx"
-        height="96rpx"
-        fit="cover"
-        lazy-load
-        src="{{ avatarUrl }}"
-        show-loading
-        use-loading-slot
-        show-error
-        use-error-slot
-      >
-        <van-loading slot="loading" size="18" />
-        <van-icon slot="error" name="user-circle-o" size="40" color="#c0c4cc" />
-      </van-image>
+      <view slot="icon" class="profile-avatar">
+        <van-image
+          wx:if="{{ avatarUrl }}"
+          round
+          width="96rpx"
+          height="96rpx"
+          fit="cover"
+          src="{{ avatarUrl }}"
+        />
+        <van-icon wx:else name="contact-o" size="48" color="#969799" />
+      </view>
 
       <view slot="right-icon" wx:if="{{ isLoggedIn }}">
         <van-tag type="danger" size="mini" plain wx:if="{{ isVIP }}">{{ i18n.profile.header.vip }}</van-tag>

@@ -1,0 +1,11 @@
+.order-label {
+  display: flex;
+  flex-direction: column;
+  color: #969799;
+  font-size: 24rpx;
+}
+
+.order-status {
+  margin-top: 8rpx;
+  color: #323233;
+}

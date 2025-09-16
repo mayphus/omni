@@ -1,3 +1,6 @@
+import type { ProductWithId } from '@shared/models/product'
+import type { OrderWithId } from '@shared/models/order'
+
 type ShopCallSuccess<T> = {
   success: true
   action: string
@@ -67,5 +70,25 @@ export function fetchStoreProfileOverview() {
   return callShopFunction<StoreProfileOverview>('v1.store.profile.overview')
 }
 
-export { callShopFunction as callShop }
+export function searchStoreProducts(keyword: string, limit?: number) {
+  const payload: Record<string, unknown> = { keyword }
+  if (typeof limit === 'number') payload.limit = limit
+  return callShopFunction<{ products: ProductWithId[] }>('v1.store.products.search', payload)
+}
 
+export function fetchProductDetail(productId: string) {
+  return callShopFunction<{ product: ProductWithId }>('v1.store.product.detail', { productId })
+}
+
+export function fetchProductsByCategory(category: string) {
+  return callShopFunction<{ products: ProductWithId[] }>('v1.store.products.byCategory', { category })
+}
+
+export function fetchStoreOrders(status?: string, limit?: number) {
+  const payload: Record<string, unknown> = {}
+  if (status) payload.status = status
+  if (typeof limit === 'number') payload.limit = limit
+  return callShopFunction<{ orders: OrderWithId[] }>('v1.store.orders.list', payload)
+}
+
+export { callShopFunction as callShop }

@@ -29,7 +29,7 @@ export const zProduct = z
     description: z.string().optional(),
     richDescription: z.string().optional(),
     images: z.array(zProductImageInput).default([]),
-    categoryId: z.string().optional(),
+    category: z.string().min(1).optional(),
     spuId: z.string().optional(),
     price: zPrice,
     stock: z.number().int().min(0).default(0),

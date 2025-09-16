@@ -128,6 +128,12 @@ Page(withI18nPage({
     this.onUpdateProfile()
   },
 
+  onProfileAction() {
+    const { isLoggedIn } = this.data as any
+    if (isLoggedIn) this.onEditProfile()
+    else this.onSignIn()
+  },
+
   onOpenSettings() {
     const i18n = (this.data as any).i18n || {}
     const options = i18n.languageOptions || []

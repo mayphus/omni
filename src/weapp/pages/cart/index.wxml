@@ -1,9 +1,39 @@
-<van-empty image="cart">
-  <view slot="description">
-    <view>{{ i18n.emptyTitle }}</view>
-    <view>{{ i18n.emptyDescription }}</view>
-  </view>
-  <van-button slot="bottom" type="primary" plain size="small" bind:tap="onGoShopping">{{ i18n.goShopping }}</van-button>
-</van-empty>
+<block wx:if="{{ !items.length }}">
+  <van-empty image="cart">
+    <view slot="description">
+      <view>{{ i18n.emptyTitle }}</view>
+      <view>{{ i18n.emptyDescription }}</view>
+    </view>
+    <van-button slot="bottom" type="primary" plain size="small" bind:tap="onGoShopping">{{ i18n.goShopping }}</van-button>
+  </van-empty>
+</block>
 
-<van-submit-bar price="0" button-text="{{ i18n.goShopping }}" disabled safe-area-inset-bottom />
+<block wx:else>
+  <van-cell-group inset>
+    <van-cell
+      wx:for="{{ items }}"
+      wx:key="id"
+      title="{{ item.title }}"
+      label="¥{{ item.price }}"
+      border="false"
+    >
+      <view slot="icon">
+        <van-image width="80rpx" height="80rpx" fit="cover" src="{{ item.imageUrl || 'https://img.yzcdn.cn/vant/ipad.jpeg' }}" />
+      </view>
+      <view slot="right-icon" class="cart-actions" data-product-id="{{ item.id }}">
+        <van-stepper value="{{ item.qty }}" min="0" bind:change="onQuantityChange" data-product-id="{{ item.id }}" />
+        <van-button class="remove" size="mini" type="danger" plain bind:tap="onRemoveItem" data-product-id="{{ item.id }}">{{ i18n.removeButton }}</van-button>
+      </view>
+    </van-cell>
+  </van-cell-group>
+  <view class="cart-actions-row">
+    <van-button type="warning" size="small" bind:tap="onClearCart">{{ i18n.clearButton }}</van-button>
+    <van-button type="primary" size="small" bind:tap="onGoShopping">{{ i18n.continueButton }}</van-button>
+  </view>
+  <van-submit-bar
+    price="{{ totalCents }}"
+    button-text="{{ i18n.checkoutButton }}"
+    bind:submit="onCheckout"
+    safe-area-inset-bottom
+  />
+</block>

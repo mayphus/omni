@@ -1,5 +1,6 @@
 import { definePage } from '@vue-mini/core'
-import { fetchStoreHome, type StoreFeaturedProduct } from '../../utils/api'
+import { fetchStoreHome, searchStoreProducts, type StoreFeaturedProduct } from '../../utils/api'
+import type { ProductWithId } from '@shared/models/product'
 import { withI18nPage } from '../../utils/i18n'
 
 type FeaturedCard = {
@@ -18,14 +19,20 @@ function formatPrice(value: number): string {
   return value.toFixed(2)
 }
 
-function toFeaturedCard(item: StoreFeaturedProduct): FeaturedCard {
+function toFeaturedCard(item: StoreFeaturedProduct | ProductWithId): FeaturedCard {
+  const priceYuan = 'priceYuan' in item ? item.priceYuan : item.price.priceYuan
+  const subtitle = 'subtitle' in item ? item.subtitle : undefined
+  const description = 'description' in item ? item.description : undefined
+  const image = 'imageUrl' in item ? item.imageUrl : (item as ProductWithId).images?.[0]?.url
   return {
     id: item.id,
     title: item.title,
-    desc: item.subtitle || '',
-    price: formatPrice(item.priceYuan),
-    imageUrl: item.imageUrl || DEFAULT_IMAGE,
-    hasStock: item.hasStock,
+    desc: subtitle || description || '',
+    price: formatPrice(priceYuan),
+    imageUrl: image || DEFAULT_IMAGE,
+    hasStock: 'hasStock' in item
+      ? item.hasStock
+      : ((item as ProductWithId).stock ?? 0) > 0 || Boolean(((item as ProductWithId).skus || []).some((sku) => (sku.stock ?? 0) > 0 && sku.isActive !== false)),
   }
 }
 
@@ -35,6 +42,10 @@ definePage(withI18nPage({
     featuredLoading: false,
     featuredLoaded: false,
     featuredError: '',
+    searchValue: '',
+    searchResults: [] as FeaturedCard[],
+    searchLoading: false,
+    searchError: '',
   },
 
   onLoad() {
@@ -78,8 +89,38 @@ definePage(withI18nPage({
     this.loadFeaturedProducts()
   },
 
-  onOpenSearch() {
-    wx.navigateTo({ url: '/pages/search/index' })
+  onSearchChange(event: WechatMiniprogram.CustomEvent) {
+    const value = (event?.detail as any)?.value ?? ''
+    this.setData({ searchValue: value })
+    if (!value) {
+      this.setData({ searchResults: [], searchError: '', searchLoading: false })
+    }
+  },
+
+  async onSearchConfirm(event: WechatMiniprogram.CustomEvent) {
+    const value = (event?.detail as any)?.value ?? ''
+    const keyword = typeof value === 'string' ? value.trim() : ''
+    if (!keyword) {
+      this.setData({ searchValue: '', searchResults: [], searchError: '' })
+      return
+    }
+    if ((this.data as any).searchLoading) return
+    this.setData({ searchLoading: true, searchError: '' })
+    try {
+      const { products } = await searchStoreProducts(keyword, 20)
+      const mapped = (products || []).map(toFeaturedCard)
+      this.setData({ searchResults: mapped })
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Search failed'
+      this.setData({ searchError: message, searchResults: [] })
+      wx.showToast({ title: message, icon: 'none' })
+    } finally {
+      this.setData({ searchLoading: false })
+    }
+  },
+
+  onSearchCancel() {
+    this.setData({ searchValue: '', searchResults: [], searchError: '', searchLoading: false })
   },
 
   onOpenProduct(event: WechatMiniprogram.TouchEvent) {

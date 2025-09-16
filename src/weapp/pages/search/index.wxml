@@ -1,40 +1,42 @@
-<van-search placeholder="{{ i18n.placeholder }}" shape="round" background="#ffffff" />
+<van-search
+  value="{{ value }}"
+  placeholder="{{ i18n.placeholder }}"
+  shape="round"
+  background="#ffffff"
+  show-action
+  bind:change="onChange"
+  bind:search="onSearch"
+  bind:cancel="onClear"
+/>
 
-<van-divider content-position="left">{{ i18n.resultsTitle }}</van-divider>
+<block wx:if="{{ loading }}">
+  <van-loading size="24px" color="#1989fa" vertical>{{ i18n.loadingText }}</van-loading>
+</block>
 
-<van-cell-group inset>
-  <van-cell title="{{ i18n.resultsSubtitle }}" border="false" />
-</van-cell-group>
+<block wx:elif="{{ error }}">
+  <van-empty image="error" description="{{ error }}" />
+</block>
 
-<block wx:if="{{ i18n.popularKeywords.length }}">
-  <van-cell-group inset>
-    <van-cell title="{{ i18n.popularTitle }}" border="false">
-      <view slot="label">
-        <van-tag
-          wx:for="{{ i18n.popularKeywords }}"
-          wx:key="index"
-          type="primary"
-          plain
-          size="medium"
-        >{{ item }}</van-tag>
-      </view>
-    </van-cell>
+<block wx:elif="{{ results.length }}">
+  <van-cell-group>
+    <van-cell
+      wx:for="{{ results }}"
+      wx:key="id"
+      title="{{ item.title }}"
+      value="¥{{ item.price.priceYuan }}"
+      label="{{ item.subtitle || item.description }}"
+      is-link
+      bind:tap="onSelect"
+      data-product-id="{{ item.id }}"
+    />
   </van-cell-group>
 </block>
 
-<van-divider content-position="left">{{ i18n.tipsTitle }}</van-divider>
-<van-cell-group inset>
-  <van-cell
-    wx:for="{{ i18n.tips }}"
-    wx:key="index"
-    icon="info-o"
-    title="{{ item }}"
-  />
-</van-cell-group>
-
-<van-empty image="search">
-  <view slot="description">
-    <view>{{ i18n.emptyTitle }}</view>
-    <view>{{ i18n.emptyDescription }}</view>
-  </view>
-</van-empty>
+<block wx:else>
+  <van-empty image="search">
+    <view slot="description">
+      <view>{{ i18n.emptyTitle }}</view>
+      <view>{{ i18n.emptyDescription }}</view>
+    </view>
+  </van-empty>
+</block>

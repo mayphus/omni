@@ -1,69 +1,58 @@
-<van-image
-  fit="cover"
-  width="750rpx"
-  height="480rpx"
-  src="https://img.yzcdn.cn/vant/ipad.jpeg"
-/>
+<block wx:if="{{ loading }}">
+  <van-skeleton avatar title row="5" loading />
+</block>
 
-<view wx:if="{{ productId }}" class="product-id">
-  ID: {{ productId }}
-</view>
+<block wx:elif="{{ error }}">
+  <van-empty image="error">
+    <view slot="description">
+      <view>{{ i18n.comingSoonTitle }}</view>
+      <view>{{ error }}</view>
+    </view>
+    <van-button slot="bottom" type="primary" size="small" bind:tap="onReloadProduct">
+      {{ i18n.retryButton }}
+    </van-button>
+  </van-empty>
+</block>
 
-<van-divider content-position="left">{{ i18n.productTitle }}</van-divider>
-<van-cell-group inset>
-  <van-cell title="{{ i18n.name }}" label="{{ i18n.desc }}" border="false" />
-  <van-cell title="{{ i18n.priceLabel }}" value="{{ i18n.price }}" />
-  <van-cell title="{{ i18n.ratingLabel }}" value="{{ i18n.rating }}" />
-</van-cell-group>
-
-<van-divider content-position="left">{{ i18n.optionsTitle }}</van-divider>
-<van-cell-group inset>
-  <van-cell title="{{ i18n.optionsTitle }}" border="false" />
-  <van-cell title="{{ i18n.color }}" value="{{ i18n.colorValue }}" is-link />
-  <van-cell title="{{ i18n.size }}" value="{{ i18n.sizeValue }}" is-link />
-  <van-cell title="{{ i18n.quantity }}" border="false">
-    <van-stepper slot="right-icon" value="1" disabled />
-  </van-cell>
-</van-cell-group>
-
-<van-tabs sticky>
-  <van-tab title="{{ i18n.detailsTab }}">
-    <van-cell
-      wx:for="{{ i18n.detailItems }}"
-      wx:key="index"
-      title="{{ item }}"
-    />
-  </van-tab>
-  <van-tab title="{{ i18n.reviewsTab }}">
-    <van-cell
-      wx:for="{{ i18n.reviewItems }}"
-      wx:for-item="review"
-      wx:key="title"
-      title="{{ review.title }}"
-      label="{{ review.label }}"
-    />
-  </van-tab>
-</van-tabs>
-
-<van-goods-action safe-area-inset-bottom>
-  <block wx:for="{{ i18n.actionIcons }}" wx:for-item="iconItem" wx:key="icon">
-    <van-goods-action-icon
-      wx:if="{{ iconItem.url }}"
-      icon="{{ iconItem.icon }}"
-      text="{{ iconItem.text }}"
-      link-type="{{ iconItem.linkType || 'navigateTo' }}"
-      url="{{ iconItem.url }}"
-    />
-    <van-goods-action-icon
-      wx:else
-      icon="{{ iconItem.icon }}"
-      text="{{ iconItem.text }}"
-    />
-  </block>
-  <van-goods-action-button
-    wx:for="{{ i18n.actionButtons }}"
-    wx:key="text"
-    type="{{ item.type }}"
-    text="{{ item.text }}"
+<block wx:elif="{{ product }}">
+  <van-image
+    fit="cover"
+    width="750rpx"
+    height="480rpx"
+    src="{{ product.images.length ? product.images[0].url : 'https://img.yzcdn.cn/vant/ipad.jpeg' }}"
   />
-</van-goods-action>
+
+  <van-cell-group inset>
+    <van-cell title="{{ product.title }}" label="{{ product.subtitle || product.description }}" border="false" />
+    <van-cell title="{{ i18n.priceLabel }}" value="¥{{ product.price.priceYuan }}" />
+    <van-cell title="Stock" value="{{ product.stock }}" />
+    <van-cell wx:if="{{ product.category }}" title="Category" value="{{ product.category }}" />
+  </van-cell-group>
+
+  <van-divider content-position="left">{{ i18n.optionsTitle }}</van-divider>
+  <van-cell-group inset>
+    <van-cell title="Quantity" border="false">
+      <van-stepper slot="right-icon" value="{{ quantity }}" min="1" bind:change="onQuantityChange" />
+    </van-cell>
+  </van-cell-group>
+
+  <van-divider content-position="left">{{ i18n.detailsTab }}</van-divider>
+  <van-cell-group inset>
+    <van-cell title="ID" value="{{ product.id }}" />
+    <van-cell wx:if="{{ product.description }}" title="Description" label="{{ product.description }}" border="false" />
+  </van-cell-group>
+
+  <van-goods-action safe-area-inset-bottom>
+    <van-goods-action-button type="warning" text="Add to cart" bind:tap="onAddToCart" />
+    <van-goods-action-button type="danger" text="Buy now" bind:tap="onBuyNow" />
+  </van-goods-action>
+</block>
+
+<block wx:else>
+  <van-empty image="search">
+    <view slot="description">
+      <view>{{ i18n.comingSoonTitle }}</view>
+      <view>{{ i18n.comingSoonDescription }}</view>
+    </view>
+  </van-empty>
+</block>
