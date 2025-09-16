@@ -47,6 +47,7 @@ tests/        # Vitest unit/integration tests
 ## Documentation Practices
 
 - Keep `docs/` aligned with the current implementation and roadmap; update relevant pages whenever behaviour or plans change so the folder remains a reliable high-level guide.
+- Treat documentation as a living contract: every significant feature or plan update should accompany a doc refresh before the work is considered complete.
 
 ## Security & Configuration Tips
 
