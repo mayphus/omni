@@ -61,3 +61,14 @@ Notes
 - Cart lives client-side (local storage) initially; no `carts` collection.
 - Start with virtual products: no `shipments` or `user_addresses` collections.
 - Keep referrals simple: just `referrerId` on `users` for now.
+
+## Planned API surface & collection evolution
+
+Use this as forward guidance when expanding the backend:
+
+- **Orders** – introduce write endpoints for cart checkout, status updates (paid/shipped/completed/refunded), and attach payment metadata (`payment.transactionId`, settlement timestamps). Consider a `order_events` or `audit_logs` collection to chronicle transitions.
+- **Payments & wallet** – model wallet transactions (credit/debit/freeze) and persist them either as an embedded array or a dedicated `wallet_ledger` collection. Tie mutations to payment confirmation APIs.
+- **System items** – provide admin CRUD endpoints for `system` items, enforcing slug/code uniqueness server-side. Track history via optional `audit_logs` entries.
+- **Products** – add price history or inventory movement logs (`inventory_adjustments`) once stock synchronization is required.
+- **Customer data** – when shipping addresses or invoices become necessary, introduce `user_addresses`/`invoices` collections linked to users and orders.
+- **Referrals & marketing** – expand `referralCode` usage with a supporting `referrals` collection if campaigns require tracking and reward issuance.

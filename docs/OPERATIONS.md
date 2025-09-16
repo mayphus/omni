@@ -13,6 +13,7 @@ WeApp (Miniapp)
 - Deploy: `npm run deploy:weapp` (uses `miniprogram-ci` with appid from `project.config.json` and key at `.private-wx.key` or `WECHAT_PRIVATE_KEY_PATH`)
 - DevTools: import the repo root; it uses `project.config.json` (`miniprogramRoot: weapp/`).
 - Env: baseline does not inject env into builds; add runtime config or compile-time define later only if necessary.
+- Planned: hook cart/checkout UI into future `v1.store.order.*` APIs once implemented; prepare UX for payment confirmation states.
 
 Functions (CloudBase)
 - Runtime: Nodejs18.15, CJS output
@@ -20,11 +21,13 @@ Functions (CloudBase)
   - Using config envId: `npm run deploy:functions`
   - Override envId: `tcb fn deploy shop --envId <env> --force`
   - Invoke example: `tcb fn invoke shop --envId <env> --params '{"action":"v1.system.ping"}'`
+- Planned: add order/payment endpoints, admin role enforcement, and system collection mutation handlers.
 
 Admin
-- Dev: `npm run dev:admin` – Vite dev server (Hello World)
+- Dev: `npm run dev:admin` – Vite dev server with dashboard, catalog CRUD, orders/users/system views.
 - Build: `npm run build:admin` → `./admin`
 - Hosting (example): `npx tcb hosting deploy ./admin --envId <env>`
+- Planned: surface order status updates, bulk product tools, and CMS features once corresponding APIs exist.
 
 Env & secrets
 - Optional: create `.env.local` later if build-time values are truly needed
