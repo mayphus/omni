@@ -32,3 +32,6 @@ export const zUser = z
   .merge(zBaseDoc)
 
 export type User = z.infer<typeof zUser>
+
+export const zUserWithId = zUser.extend({ id: z.string() })
+export type UserWithId = z.infer<typeof zUserWithId>

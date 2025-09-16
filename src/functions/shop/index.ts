@@ -11,10 +11,21 @@ const ok = (data: any = {}): ApiResponse => ({ success: true, timestamp: new Dat
 const fail = (error: string, data: any = {}): ApiResponse => ({ success: false, timestamp: new Date().toISOString(), error, ...data })
 
 // Shared schemas and helpers
-import type { User, UserProfile } from '@shared/models/user'
-import { zUser, zUserProfile } from '@shared/models/user'
+import type { User, UserProfile, UserWithId } from '@shared/models/user'
+import { zUser, zUserProfile, zUserWithId } from '@shared/models/user'
 import type { Product, ProductInput } from '@shared/models/product'
 import { zProduct, zProductInput } from '@shared/models/product'
+import type { Order, OrderWithId } from '@shared/models/order'
+import { zOrderWithId } from '@shared/models/order'
+import type {
+  SystemBannerWithId,
+  SystemCategoryWithId,
+  SystemCouponWithId,
+  SystemItem,
+} from '@shared/models/system'
+import {
+  zSystemItemWithId,
+} from '@shared/models/system'
 import { Collections } from '@shared/collections'
 import { fromServer, nowMs } from '@shared/base'
 
@@ -46,6 +57,8 @@ function getWX() {
 // Utilities — DB helpers kept tiny and explicit
 const usersCol = () => db.collection(Collections.Users)
 const productsCol = () => db.collection(Collections.Products)
+const ordersCol = () => db.collection(Collections.Orders)
+const systemCol = () => db.collection(Collections.System)
 
 function sanitizeSkus(skus: ProductInput['skus']) {
   const normalized = skus
@@ -80,6 +93,50 @@ function getAdminContext() {
   }
 
   return null
+}
+
+function parseOrderDocument(doc: any) {
+  return zOrderWithId.safeParse(fromServer<Order>(doc as any))
+}
+
+function parseUserDocument(doc: any) {
+  return zUserWithId.safeParse(fromServer<User>(doc as any))
+}
+
+function parseSystemDocument(doc: any) {
+  return zSystemItemWithId.safeParse(fromServer<SystemItem>(doc as any))
+}
+
+async function fetchOrdersForStats(limit = 1000): Promise<OrderWithId[]> {
+  const pageSize = 100
+  const maxDocs = Math.max(0, limit)
+  const results: OrderWithId[] = []
+
+  const countRes = (await ordersCol().count().catch(() => ({ total: 0 }))) as { total?: number }
+  const totalOrders = typeof countRes.total === 'number' ? countRes.total : 0
+  if (totalOrders === 0 || maxDocs === 0) return []
+
+  const cappedTotal = Math.min(totalOrders, maxDocs)
+  for (let offset = 0; offset < cappedTotal; offset += pageSize) {
+    const snapshot = await ordersCol()
+      .orderBy('createdAt', 'desc')
+      .skip(offset)
+      .limit(Math.min(pageSize, cappedTotal - offset))
+      .get()
+
+    for (const doc of snapshot.data || []) {
+      const parsed = parseOrderDocument(doc)
+      if (!parsed.success) {
+        const issue = parsed.error.issues?.[0]
+        throw new Error(issue?.message || 'Invalid order data')
+      }
+      results.push(parsed.data)
+    }
+
+    if (!snapshot.data || snapshot.data.length < pageSize) break
+  }
+
+  return results
 }
 
 /**
@@ -231,6 +288,125 @@ const handlers: Record<string, (event: any) => Promise<ApiResponse> | ApiRespons
 
     await productsCol().where({ _id: productId }).remove()
     return ok({ productId })
+  },
+
+  /**
+   * v1.admin.orders.list
+   * Input: none
+   * Output: { orders }
+   */
+  'v1.admin.orders.list': async () => {
+    if (!getAdminContext()) return fail('Not authenticated')
+    const snapshot = await ordersCol().orderBy('createdAt', 'desc').limit(200).get()
+    const orders: OrderWithId[] = []
+    for (const doc of snapshot.data || []) {
+      const parsed = parseOrderDocument(doc)
+      if (!parsed.success) return fail('Invalid order data', { issues: parsed.error.issues })
+      orders.push(parsed.data)
+    }
+    return ok({ orders })
+  },
+
+  /**
+   * v1.admin.users.list
+   * Input: none
+   * Output: { users }
+   */
+  'v1.admin.users.list': async () => {
+    if (!getAdminContext()) return fail('Not authenticated')
+    const snapshot = await usersCol().orderBy('createdAt', 'desc').limit(200).get()
+    const users: UserWithId[] = []
+    for (const doc of snapshot.data || []) {
+      const parsed = parseUserDocument(doc)
+      if (!parsed.success) return fail('Invalid user data', { issues: parsed.error.issues })
+      users.push(parsed.data)
+    }
+    return ok({ users })
+  },
+
+  /**
+   * v1.admin.system.list
+   * Input: none
+   * Output: { categories, coupons, banners }
+   */
+  'v1.admin.system.list': async () => {
+    if (!getAdminContext()) return fail('Not authenticated')
+    const snapshot = await systemCol().orderBy('updatedAt', 'desc').limit(200).get()
+    const categories: SystemCategoryWithId[] = []
+    const coupons: SystemCouponWithId[] = []
+    const banners: SystemBannerWithId[] = []
+    for (const doc of snapshot.data || []) {
+      const parsed = parseSystemDocument(doc)
+      if (!parsed.success) return fail('Invalid system data', { issues: parsed.error.issues })
+      const item = parsed.data
+      switch (item.kind) {
+        case 'category':
+          categories.push(item)
+          break
+        case 'coupon':
+          coupons.push(item)
+          break
+        case 'banner':
+          banners.push(item)
+          break
+        default:
+          return fail('Unknown system item kind')
+      }
+    }
+    return ok({ categories, coupons, banners })
+  },
+
+  /**
+   * v1.admin.dashboard.summary
+   * Input: none
+   * Output: { summary, recentOrders }
+   */
+  'v1.admin.dashboard.summary': async () => {
+    if (!getAdminContext()) return fail('Not authenticated')
+
+    let ordersForStats: OrderWithId[] = []
+    try {
+      ordersForStats = await fetchOrdersForStats(1000)
+    } catch (error) {
+      return fail((error as Error)?.message || 'Failed to load orders for summary')
+    }
+
+    const paidStatuses = new Set(['paid', 'shipped', 'completed'])
+    let totalRevenueYuan = 0
+    let paidOrders = 0
+    let pendingOrders = 0
+    for (const order of ordersForStats) {
+      if (paidStatuses.has(order.status)) {
+        paidOrders += 1
+        totalRevenueYuan += order.totalYuan
+      }
+      if (order.status === 'pending') pendingOrders += 1
+    }
+
+    const countRes = (await ordersCol().count().catch(() => ({ total: 0 }))) as { total?: number }
+    const totalOrders = typeof countRes.total === 'number' ? countRes.total : ordersForStats.length
+
+    const userCountRes = (await usersCol().count().catch(() => ({ total: 0 }))) as { total?: number }
+    const customerCount = typeof userCountRes.total === 'number' ? userCountRes.total : 0
+
+    const recentSnapshot = await ordersCol().orderBy('createdAt', 'desc').limit(5).get()
+    const recentOrders: OrderWithId[] = []
+    for (const doc of recentSnapshot.data || []) {
+      const parsed = parseOrderDocument(doc)
+      if (!parsed.success) return fail('Invalid order data', { issues: parsed.error.issues })
+      recentOrders.push(parsed.data)
+    }
+
+    return ok({
+      summary: {
+        totalRevenueYuan,
+        totalOrders,
+        paidOrders,
+        pendingOrders,
+        customerCount,
+      },
+      recentOrders,
+    })
   },
 }
 

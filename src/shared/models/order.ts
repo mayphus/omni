@@ -40,3 +40,6 @@ export const zOrder = z
 
 export type Order = z.infer<typeof zOrder>
 export type OrderItem = z.infer<typeof zOrderItem>
+
+export const zOrderWithId = zOrder.extend({ id: z.string() })
+export type OrderWithId = z.infer<typeof zOrderWithId>

@@ -7,6 +7,7 @@ type QueryState = {
   query: Record<string, any>
   sort: SortConfig
   limit?: number
+  skip?: number
 }
 
 function clone<T>(value: T): T {
@@ -32,6 +33,9 @@ function getDocs(state: QueryState, store: Record<string, Doc[]>) {
     })
     if (direction === 'desc') docs.reverse()
   }
+  if (typeof state.skip === 'number') {
+    docs = docs.slice(state.skip)
+  }
   if (typeof state.limit === 'number') {
     docs = docs.slice(0, state.limit)
   }
@@ -49,9 +53,16 @@ function createQuery(state: QueryState, store: Record<string, Doc[]>) {
     limit(n: number) {
       return createQuery({ ...state, limit: n }, store)
     },
+    skip(n: number) {
+      return createQuery({ ...state, skip: n }, store)
+    },
     async get() {
       const docs = getDocs(state, store).map((doc) => clone(doc))
       return { data: docs }
+    },
+    async count() {
+      const docs = getDocs({ ...state, limit: undefined, skip: undefined }, store)
+      return { total: docs.length }
     },
     async update({ data }: { data: Record<string, any> }) {
       const docs = getDocs(state, store)
@@ -103,7 +114,9 @@ function resetStore() {
         where: query.where,
         orderBy: query.orderBy,
         limit: query.limit,
+        skip: query.skip,
         get: query.get,
+        count: query.count,
         async add({ data }: { data: Doc }) {
           const doc = clone(data)
           const _id = `mock-${++idCounter}`
@@ -123,6 +136,12 @@ export const testCloud = {
   },
   getData: (name: string) => store[name].map((doc) => clone(doc)),
   getContext: () => ({ ...context }),
+  insert: (name: string, doc: Doc) => {
+    const payload = clone(doc)
+    const _id = `mock-${++idCounter}`
+    store[name].push({ _id, ...payload })
+    return _id
+  },
 }
 
 export async function importShop() {

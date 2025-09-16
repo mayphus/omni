@@ -1,15 +1,7 @@
 import { z } from 'zod'
 import { callShopFunction } from '../lib/cloudbase'
+import { zShopSuccess } from './shop'
 import { zProductInput, zProductWithId, type ProductInput, type ProductWithId } from '@shared/models/product'
-
-const zShopSuccess = z
-  .object({
-    success: z.literal(true),
-    action: z.string(),
-    executionTime: z.number(),
-    timestamp: z.string(),
-  })
-  .passthrough()
 
 const zListResponse = zShopSuccess.extend({
   products: z.array(zProductWithId),

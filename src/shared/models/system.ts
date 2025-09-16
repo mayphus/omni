@@ -52,3 +52,18 @@ export type SystemBanner = z.infer<typeof zSystemBanner>
 export const zSystemItem = z.discriminatedUnion('kind', [zSystemCategory, zSystemCoupon, zSystemBanner])
 export type SystemItem = z.infer<typeof zSystemItem>
 
+export const zSystemCategoryWithId = zSystemCategory.extend({ id: z.string() })
+export type SystemCategoryWithId = z.infer<typeof zSystemCategoryWithId>
+
+export const zSystemCouponWithId = zSystemCoupon.extend({ id: z.string() })
+export type SystemCouponWithId = z.infer<typeof zSystemCouponWithId>
+
+export const zSystemBannerWithId = zSystemBanner.extend({ id: z.string() })
+export type SystemBannerWithId = z.infer<typeof zSystemBannerWithId>
+
+export const zSystemItemWithId = z.discriminatedUnion('kind', [
+  zSystemCategoryWithId,
+  zSystemCouponWithId,
+  zSystemBannerWithId,
+])
+export type SystemItemWithId = z.infer<typeof zSystemItemWithId>
