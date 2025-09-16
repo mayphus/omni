@@ -1,5 +1,3 @@
-<van-divider content-position="left">{{ i18n.title }}</van-divider>
-
 <van-empty image="cart">
   <view slot="description">
     <view>{{ i18n.emptyTitle }}</view>
@@ -7,16 +5,5 @@
   </view>
   <van-button slot="bottom" type="primary" plain size="small" bind:tap="onGoShopping">{{ i18n.goShopping }}</van-button>
 </van-empty>
-
-<van-divider content-position="left">{{ i18n.infoTitle }}</van-divider>
-<van-cell-group inset>
-  <van-cell
-    wx:for="{{ i18n.infoItems }}"
-    wx:key="title"
-    icon="{{ item.icon }}"
-    title="{{ item.title }}"
-    value="{{ item.value }}"
-  />
-</van-cell-group>
 
 <van-submit-bar price="0" button-text="{{ i18n.goShopping }}" disabled safe-area-inset-bottom />

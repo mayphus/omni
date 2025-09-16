@@ -40,6 +40,9 @@ type I18nMessages = {
     featuredEmptyTitle: string
     featuredEmptyDescription: string
     featuredEmptyAction: string
+    featuredErrorTitle: string
+    featuredErrorDescription: string
+    featuredErrorAction: string
     supportTitle: string
     supportItems: SupportCard[]
     endDivider: string
@@ -103,6 +106,11 @@ type I18nMessages = {
   }
   category: {
     searchPlaceholder: string
+    emptyTitle: string
+    emptyDescription: string
+    errorTitle: string
+    errorDescription: string
+    errorAction: string
     categories: CategoryTab[]
   }
   profile: {
@@ -195,6 +203,9 @@ const MESSAGES: Record<Locale, I18nMessages> = {
       featuredEmptyTitle: 'Catalog syncing',
       featuredEmptyDescription: 'Please check back soon to explore the full range.',
       featuredEmptyAction: 'Stay tuned',
+      featuredErrorTitle: 'Unable to load products',
+      featuredErrorDescription: 'Check your connection and try again.',
+      featuredErrorAction: 'Retry',
       supportTitle: 'Need help?',
       supportItems: [
         { icon: 'guide-o', title: 'Shopping guide', description: 'Browse categories to plan your first order.' },
@@ -282,8 +293,13 @@ const MESSAGES: Record<Locale, I18nMessages> = {
         { type: 'danger', text: 'Buy Now', disabled: true },
       ],
     },
-    category: {
+  category: {
       searchPlaceholder: 'Search categories',
+      emptyTitle: 'Categories syncing',
+      emptyDescription: 'Please check back soon for the full catalogue.',
+      errorTitle: 'Unable to load categories',
+      errorDescription: 'Tap retry to try again.',
+      errorAction: 'Retry',
       categories: [
         {
           id: 'all',
@@ -430,6 +446,9 @@ const MESSAGES: Record<Locale, I18nMessages> = {
       featuredEmptyTitle: '商品同步中',
       featuredEmptyDescription: '稍后再来看看最新上架。',
       featuredEmptyAction: '敬请期待',
+      featuredErrorTitle: '无法加载商品',
+      featuredErrorDescription: '请检查网络后再试。',
+      featuredErrorAction: '重试',
       supportTitle: '需要帮助？',
       supportItems: [
         { icon: 'guide-o', title: '选购指南', description: '先浏览分类，规划心仪清单。' },
@@ -516,6 +535,11 @@ const MESSAGES: Record<Locale, I18nMessages> = {
     },
     category: {
       searchPlaceholder: '搜索分类',
+      emptyTitle: '分类同步中',
+      emptyDescription: '稍后再试，更多分类即将上线。',
+      errorTitle: '无法加载分类',
+      errorDescription: '请检查网络后重试。',
+      errorAction: '重试',
       categories: [
         {
           id: 'all',

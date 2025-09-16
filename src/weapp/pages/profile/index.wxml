@@ -1,3 +1,4 @@
+<!-- TODO: Refine profile page layout; will fix later -->
 <!-- Profile Header -->
 <view class="profile-header">
   <van-skeleton title row="1" loading="{{ loading }}">
@@ -35,21 +36,6 @@
   </van-skeleton>
 </view>
 
-<!-- Quick Entries -->
-<van-divider content-position="left">{{ i18n.profile.quickEntriesTitle }}</van-divider>
-<van-cell-group inset>
-  <van-grid column-num="3" clickable border="{{ false }}" icon-size="28">
-    <van-grid-item
-      wx:for="{{ i18n.profile.quickEntries }}"
-      wx:key="text"
-      icon="{{ item.icon }}"
-      text="{{ item.text }}"
-      url="{{ item.url }}"
-      link-type="{{ item.linkType }}"
-    />
-  </van-grid>
-</van-cell-group>
-
 <!-- Orders -->
 <van-divider content-position="center">{{ i18n.profile.ordersTitle }}</van-divider>
 <van-cell-group inset>
@@ -74,7 +60,7 @@
   </van-grid>
 </van-cell-group>
 
-<!-- Tools -->
+<!-- More -->
 <van-divider content-position="center">{{ i18n.profile.moreTitle }}</van-divider>
 <van-cell-group inset>
   <van-grid column-num="4" clickable border="{{ false }}" icon-size="26">

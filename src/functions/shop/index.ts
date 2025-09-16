@@ -139,6 +139,77 @@ async function fetchOrdersForStats(limit = 1000): Promise<OrderWithId[]> {
   return results
 }
 
+type StoreFeaturedProduct = {
+  id: string
+  title: string
+  subtitle?: string
+  priceYuan: number
+  currency: 'CNY'
+  imageUrl?: string
+  hasStock: boolean
+}
+
+type StoreCategoryNode = {
+  id: string
+  name: string
+  slug: string
+  imageUrl?: string
+  description?: string
+  children: Array<{ id: string; name: string; slug: string; imageUrl?: string; description?: string }>
+}
+
+function getPrimaryProductImage(product: Product) {
+  return product.images && product.images.length > 0 ? product.images[0] : undefined
+}
+
+function getProductMinPrice(product: Product) {
+  const skuPrices = product.skus
+    ?.filter((sku) => sku.isActive !== false)
+    .map((sku) => sku.priceYuan)
+    .filter((price) => typeof price === 'number')
+  if (skuPrices && skuPrices.length > 0) {
+    return Math.min(...skuPrices)
+  }
+  return product.price.priceYuan
+}
+
+function toFeaturedProduct(id: string, product: Product): StoreFeaturedProduct {
+  return {
+    id,
+    title: product.title,
+    subtitle: product.subtitle,
+    priceYuan: getProductMinPrice(product),
+    currency: product.price.currency,
+    imageUrl: getPrimaryProductImage(product),
+    hasStock: (product.stock ?? 0) > 0 || Boolean(product.skus?.some((sku) => (sku.stock ?? 0) > 0 && sku.isActive !== false)),
+  }
+}
+
+function sortCategories<T extends { sort?: number; name: string }>(a: T, b: T) {
+  const aSort = typeof a.sort === 'number' ? a.sort : 0
+  const bSort = typeof b.sort === 'number' ? b.sort : 0
+  if (aSort !== bSort) return aSort - bSort
+  return a.name.localeCompare(b.name)
+}
+
+function toCategoryNode(category: SystemCategoryWithId, children: SystemCategoryWithId[]): StoreCategoryNode {
+  const nextChildren = [...children].sort(sortCategories).map((child) => ({
+    id: child.id,
+    name: child.name,
+    slug: child.slug,
+    imageUrl: child.imageUrl,
+    description: child.description,
+  }))
+  return {
+    id: category.id,
+    name: category.name,
+    slug: category.slug,
+    imageUrl: category.imageUrl,
+    description: category.description,
+    children: nextChildren,
+  }
+}
+
 /**
  * ensureUserByOpenid
  * Given an openid/unionid, fetch the user; if it does not exist, create it.
@@ -213,6 +284,99 @@ const handlers: Record<string, (event: any) => Promise<ApiResponse> | ApiRespons
     if (!input.success) return fail('Invalid profile payload', { issues: input.error.issues })
     const user = await updateUserProfile(OPENID, input.data, UNIONID)
     return ok({ user })
+  },
+
+  /**
+   * v1.store.home
+   * Input: none
+   * Output: { featuredProducts }
+   */
+  'v1.store.home': async () => {
+    const FEATURED_LIMIT = 8
+    const snapshot = await productsCol().orderBy('updatedAt', 'desc').limit(FEATURED_LIMIT * 3).get()
+    const featured: StoreFeaturedProduct[] = []
+
+    for (const doc of snapshot.data || []) {
+      const { _id, ...rest } = doc as any
+      const parsed = zProduct.safeParse(rest)
+      if (!parsed.success) {
+        return fail('Invalid product data', { issues: parsed.error.issues, productId: _id })
+      }
+      const product = parsed.data
+      if (product.isActive === false) continue
+      featured.push(toFeaturedProduct(_id, product))
+      if (featured.length >= FEATURED_LIMIT) break
+    }
+
+    return ok({ featuredProducts: featured })
+  },
+
+  /**
+   * v1.store.categories.list
+   * Input: none
+   * Output: { categories }
+   */
+  'v1.store.categories.list': async () => {
+    const snapshot = await systemCol().where({ kind: 'category' }).limit(500).get()
+    const allCategories: SystemCategoryWithId[] = []
+
+    for (const doc of snapshot.data || []) {
+      const parsed = parseSystemDocument(doc)
+      if (!parsed.success) return fail('Invalid system data', { issues: parsed.error.issues })
+      if (parsed.data.kind !== 'category') continue
+      allCategories.push(parsed.data)
+    }
+
+    const active = allCategories.filter((category) => category.isActive !== false)
+    const childrenMap = new Map<string, SystemCategoryWithId[]>()
+    for (const category of active) {
+      if (category.parentId) {
+        const list = childrenMap.get(category.parentId) || []
+        list.push(category)
+        childrenMap.set(category.parentId, list)
+      }
+    }
+
+    const roots = active.filter((category) => !category.parentId).sort(sortCategories)
+    const categories = roots.map((root) => toCategoryNode(root, childrenMap.get(root.id) || []))
+
+    return ok({ categories })
+  },
+
+  /**
+   * v1.store.profile.overview
+   * Input: none (identity from context)
+   * Output: { orderCounts }
+   */
+  'v1.store.profile.overview': async () => {
+    const { OPENID } = getWX() as any
+    if (!OPENID) return fail('Missing OPENID in WX context')
+
+    const counts = {
+      toPay: 0,
+      toShip: 0,
+      toReceive: 0,
+      afterSale: 0,
+    }
+
+    const statusToKey: Array<{ status: string; key: keyof typeof counts }> = [
+      { status: 'pending', key: 'toPay' },
+      { status: 'paid', key: 'toShip' },
+      { status: 'shipped', key: 'toReceive' },
+      { status: 'refunded', key: 'afterSale' },
+      { status: 'canceled', key: 'afterSale' },
+    ]
+
+    await Promise.all(
+      statusToKey.map(async ({ status, key }) => {
+        const res = (await ordersCol().where({ userId: OPENID, status }).count().catch(() => ({ total: 0 }))) as { total?: number }
+        if (typeof res.total === 'number') {
+          counts[key] += res.total
+        }
+      }),
+    )
+
+    return ok({ orderCounts: counts })
   },
 
   /**

@@ -1,32 +1,45 @@
 <van-search placeholder="{{ i18n.searchPlaceholder }}" shape="round" disabled background="#ffffff" />
 
 <!-- Category Tabs -->
-<van-tabs
-  sticky
-  swipeable
-  animated
-  active="{{ active }}"
-  bind:change="onTabChange"
->
-  <van-tab
-    wx:for="{{ i18n.categories }}"
-    wx:key="id"
-    wx:for-item="item"
-    title="{{ item.name }}"
-    name="{{ item.id }}"
-  >
-    <van-cell-group inset>
-      <van-cell title="{{ item.name }}" label="{{ item.label }}" border="false" />
-    </van-cell-group>
+<block wx:if="{{ categoriesLoading && !categoriesLoaded }}">
+  <van-skeleton title row="3" loading />
+</block>
 
-    <van-grid column-num="4" clickable>
-      <van-grid-item
-        wx:for="{{ item.children }}"
-        wx:key="id"
-        wx:for-item="child"
-        icon="{{ child.icon || 'apps-o' }}"
-        text="{{ child.name }}"
-      />
-    </van-grid>
-  </van-tab>
-</van-tabs>
+<block wx:elif="{{ categories.length }}">
+  <van-tabs
+    sticky
+    swipeable
+    animated
+    active="{{ active }}"
+    bind:change="onTabChange"
+  >
+    <van-tab
+      wx:for="{{ categories }}"
+      wx:key="id"
+      wx:for-item="item"
+      title="{{ item.name }}"
+      name="{{ item.id }}"
+    />
+  </van-tabs>
+</block>
+
+<block wx:elif="{{ categoriesError }}">
+  <van-empty image="error">
+    <view slot="description">
+      <view>{{ i18n.category.errorTitle }}</view>
+      <view>{{ categoriesError || i18n.category.errorDescription }}</view>
+    </view>
+    <van-button slot="bottom" type="primary" size="small" bind:click="onRetryCategories">
+      {{ i18n.category.errorAction }}
+    </van-button>
+  </van-empty>
+</block>
+
+<block wx:elif="{{ categoriesLoaded }}">
+  <van-empty image="search">
+    <view slot="description">
+      <view>{{ i18n.category.emptyTitle }}</view>
+      <view>{{ i18n.category.emptyDescription }}</view>
+    </view>
+  </van-empty>
+</block>

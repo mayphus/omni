@@ -8,80 +8,39 @@
 />
 
 <!-- Announcement -->
-<van-notice-bar
-  left-icon="volume-o"
-  wrapable
-  background="#fffbe8"
-  color="#ad6800"
-  text="{{ i18n.announcement }}"
-/>
 
 <!-- Banner -->
-<van-swipe autoplay="5000" indicator-color="#fff" circular>
-  <van-swipe-item
-    wx:for="{{ i18n.heroBanners }}"
-    wx:key="id"
-    wx:for-item="banner"
-  >
-    <van-image
-      fit="cover"
-      width="750rpx"
-      height="320rpx"
-      src="{{ banner.image }}"
-    />
-    <van-cell-group inset>
-      <van-cell title="{{ banner.title }}" label="{{ banner.caption }}" border="false" />
-    </van-cell-group>
-  </van-swipe-item>
-</van-swipe>
-
-<!-- Quick categories -->
-<van-divider content-position="left">{{ i18n.quickCategoriesTitle }}</van-divider>
-<van-grid column-num="4" clickable border="{{ false }}">
-  <van-grid-item
-    wx:for="{{ i18n.quickCategories }}"
-    wx:key="icon"
-    icon="{{ item.icon }}"
-    text="{{ item.text }}"
-  />
-</van-grid>
-
-<!-- Status -->
-<van-divider content-position="left">{{ i18n.statusTitle }}</van-divider>
-<van-cell-group inset>
-  <van-cell
-    wx:for="{{ i18n.statusItems }}"
-    wx:key="title"
-    title="{{ item.title }}"
-    label="{{ item.description }}"
-    icon="{{ item.icon }}"
-  />
-</van-cell-group>
 
 <!-- Featured products -->
-<van-divider content-position="left">{{ i18n.featuredTitle }}</van-divider>
-<van-cell-group inset>
-  <van-cell title="{{ i18n.featuredTitle }}" label="{{ i18n.featuredSubtitle }}" border="false" />
-</van-cell-group>
+<block wx:if="{{ featuredLoading && !featuredLoaded }}">
+  <van-skeleton title row="3" loading avatar />
+</block>
 
-<block wx:if="{{ i18n.featuredProducts.length }}">
+<block wx:elif="{{ featuredProducts.length }}">
   <van-card
-    wx:for="{{ i18n.featuredProducts }}"
+    wx:for="{{ featuredProducts }}"
     wx:key="id"
-    num="1"
     price="{{ item.price }}"
     desc="{{ item.desc }}"
     title="{{ item.title }}"
-    thumb="https://img.yzcdn.cn/vant/ipad.jpeg"
+    thumb="{{ item.imageUrl }}"
     currency="¥"
-  >
-    <view slot="tags" wx:if="{{ item.tag }}">
-      <van-tag type="{{ item.tagType || 'primary' }}" plain>{{ item.tag }}</van-tag>
-    </view>
-  </van-card>
+  />
 </block>
 
-<block wx:else>
+<block wx:elif="{{ featuredError }}">
+  <van-empty image="error">
+    <view slot="description">
+      <view>{{ i18n.featuredErrorTitle }}</view>
+      <view>{{ featuredError || i18n.featuredErrorDescription }}</view>
+    </view>
+    <van-button slot="bottom" type="primary" size="small" bind:click="onRetryFeatured">
+      {{ i18n.featuredErrorAction }}
+    </van-button>
+  </van-empty>
+</block>
+
+<block wx:elif="{{ featuredLoaded }}">
   <van-empty image="search">
     <view slot="description">
       <view>{{ i18n.featuredEmptyTitle }}</view>
@@ -90,18 +49,5 @@
     <van-button slot="bottom" type="primary" plain size="small" disabled>{{ i18n.featuredEmptyAction }}</van-button>
   </van-empty>
 </block>
-
-<!-- Support -->
-<van-divider content-position="left">{{ i18n.supportTitle }}</van-divider>
-<van-cell-group inset>
-  <van-cell
-    wx:for="{{ i18n.supportItems }}"
-    wx:key="title"
-    title="{{ item.title }}"
-    label="{{ item.description }}"
-    icon="{{ item.icon }}"
-    is-link="{{ false }}"
-  />
-</van-cell-group>
 
 <van-divider content-position="center">{{ i18n.endDivider }}</van-divider>
