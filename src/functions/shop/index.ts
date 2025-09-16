@@ -6,7 +6,7 @@
  * (database calls, cloud context) are isolated and called out.
  */
 
-import { z } from 'zod'
+import { z, type ZodIssue } from 'zod'
 
 type ApiResponse = { success: true; [k: string]: any } | { success: false; error?: string; [k: string]: any }
 const ok = (data: any = {}): ApiResponse => ({ success: true, timestamp: new Date().toISOString(), ...data })
@@ -495,13 +495,76 @@ const handlers: Record<string, (event: any) => Promise<ApiResponse> | ApiRespons
   'v1.store.categories.list': async () => {
     const snapshot = await systemCol().where({ kind: 'category' }).limit(500).get()
     const allCategories: SystemCategoryWithId[] = []
+    const invalidCategories: Array<{ docId?: string; issues: ZodIssue[] }> = []
 
     for (const doc of snapshot.data || []) {
       const parsed = parseSystemDocument(doc)
-      if (!parsed.success) return fail('Invalid system data', { issues: parsed.error.issues })
+      if (!parsed.success) {
+        invalidCategories.push({ docId: (doc as any)?._id, issues: parsed.error.issues })
+        continue
+      }
       if (parsed.data.kind !== 'category') continue
       allCategories.push(parsed.data)
     }
+
+    if (invalidCategories.length > 0) {
+      const summary = invalidCategories.slice(0, 5).map(({ docId, issues }) => ({
+        docId,
+        issues: issues.map((issue) => ({ path: issue.path, message: issue.message })),
+      }))
+      const remaining = invalidCategories.length - summary.length
+      if (remaining > 0) {
+        console.warn('[shop] skipped invalid category documents', summary, { truncated: remaining })
+      } else {
+        console.warn('[shop] skipped invalid category documents', summary)
+      }
+    }
+
+    const invalidProducts: Array<{ docId?: string; issues: ZodIssue[] }> = []
+    const productCategorySlugs = new Set<string>()
+    const pageSize = 100
+    const maxDocs = 1000
+    for (let offset = 0; offset < maxDocs; offset += pageSize) {
+      const productSnapshot = await productsCol()
+        .orderBy('updatedAt', 'desc')
+        .skip(offset)
+        .limit(pageSize)
+        .get()
+
+      const docs = productSnapshot.data || []
+      if (docs.length === 0) break
+
+      for (const doc of docs) {
+        const parsed = parseProductDocument(doc)
+        if (!parsed.success) {
+          invalidProducts.push({ docId: (doc as any)?._id, issues: parsed.error.issues })
+          continue
+        }
+
+        if (parsed.data.isActive === false) continue
+        const slug = parsed.data.category?.trim()
+        if (slug) productCategorySlugs.add(slug)
+      }
+
+      if (docs.length < pageSize) break
+    }
+
+    if (invalidProducts.length > 0) {
+      const summary = invalidProducts.slice(0, 5).map(({ docId, issues }) => ({
+        docId,
+        issues: issues.map((issue) => ({ path: issue.path, message: issue.message })),
+      }))
+      const remaining = invalidProducts.length - summary.length
+      if (remaining > 0) {
+        console.warn('[shop] skipped invalid product documents while building categories', summary, {
+          truncated: remaining,
+        })
+      } else {
+        console.warn('[shop] skipped invalid product documents while building categories', summary)
+      }
+    }
+
+    const matchedSlugs = new Set<string>()
 
     const active = allCategories.filter((category) => category.isActive !== false)
     const childrenMap = new Map<string, SystemCategoryWithId[]>()
@@ -514,7 +577,40 @@ const handlers: Record<string, (event: any) => Promise<ApiResponse> | ApiRespons
     }
 
     const roots = active.filter((category) => !category.parentId).sort(sortCategories)
-    const categories = roots.map((root) => toCategoryNode(root, childrenMap.get(root.id) || []))
+    const categories: Array<ReturnType<typeof toCategoryNode>> = []
+    const fallbackCategories: Array<ReturnType<typeof toCategoryNode>> = []
+
+    for (const root of roots) {
+      const rawChildren = childrenMap.get(root.id) || []
+      const filteredChildren = rawChildren.filter((child) => {
+        if (productCategorySlugs.has(child.slug)) {
+          matchedSlugs.add(child.slug)
+          return true
+        }
+        return false
+      })
+
+      const includeRoot = productCategorySlugs.has(root.slug) || filteredChildren.length > 0
+      if (!includeRoot) continue
+
+      if (productCategorySlugs.has(root.slug)) matchedSlugs.add(root.slug)
+      categories.push(toCategoryNode(root, filteredChildren))
+    }
+
+    for (const slug of productCategorySlugs) {
+      if (matchedSlugs.has(slug)) continue
+      fallbackCategories.push({
+        id: slug,
+        name: slug,
+        slug,
+        imageUrl: undefined,
+        description: undefined,
+        children: [] as ReturnType<typeof toCategoryNode>['children'],
+      })
+    }
+
+    fallbackCategories.sort((a, b) => a.name.localeCompare(b.name))
+    categories.push(...fallbackCategories)
 
     return ok({ categories })
   },

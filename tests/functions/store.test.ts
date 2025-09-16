@@ -112,12 +112,94 @@ describe('functions: store endpoints', () => {
       updatedAt: now - 900,
     })
 
+    const commonProduct = {
+      images: [{ fileId: 'img', url: 'https://example.com/img.jpg' }],
+      price: { currency: 'CNY', priceYuan: 10 },
+      stock: 5,
+      isActive: true,
+      createdAt: now - 500,
+      updatedAt: now - 100,
+    }
+    testCloud.insert(Collections.Products, {
+      title: 'Pantry Staples',
+      category: 'pantry',
+      ...commonProduct,
+    })
+    testCloud.insert(Collections.Products, {
+      title: 'Bananas Bunch',
+      category: 'bananas',
+      ...commonProduct,
+    })
+    testCloud.insert(Collections.Products, {
+      title: 'Red Apples',
+      category: 'apples',
+      ...commonProduct,
+    })
+
     const res = await main({ action: 'v1.store.categories.list' })
     expect(res.success).toBe(true)
     expect(res.categories).toHaveLength(2)
     expect(res.categories[0].slug).toBe('pantry')
     expect(res.categories[1].slug).toBe('fresh')
     expect(res.categories[1].children.map((child: any) => child.slug)).toEqual(['bananas', 'apples'])
+  })
+
+  it('skips invalid category documents instead of failing', async () => {
+    const now = nowMs()
+    testCloud.insert(Collections.System, {
+      kind: 'category',
+      name: 'Valid Category',
+      slug: 'valid',
+      isActive: true,
+      createdAt: now - 2000,
+      updatedAt: now - 1000,
+    })
+
+    testCloud.insert(Collections.System, {
+      kind: 'category',
+      name: 'Broken Category',
+      // Intentionally invalid slug to trigger safeParse failure
+      slug: 123 as any,
+      isActive: true,
+      createdAt: now - 1500,
+      updatedAt: now - 500,
+    })
+
+    testCloud.insert(Collections.Products, {
+      title: 'Valid Product',
+      category: 'valid',
+      images: [{ fileId: 'valid', url: 'https://example.com/valid.jpg' }],
+      price: { currency: 'CNY', priceYuan: 12 },
+      stock: 3,
+      isActive: true,
+      createdAt: now - 600,
+      updatedAt: now - 100,
+    })
+
+    const res = await main({ action: 'v1.store.categories.list' })
+    expect(res.success).toBe(true)
+    expect(res.categories).toHaveLength(1)
+    expect(res.categories[0].slug).toBe('valid')
+  })
+
+  it('creates fallback categories for products missing system metadata', async () => {
+    const now = nowMs()
+    testCloud.insert(Collections.Products, {
+      title: 'Special Sauce',
+      category: 'sauces',
+      images: [{ fileId: 'sauce', url: 'https://example.com/sauce.jpg' }],
+      price: { currency: 'CNY', priceYuan: 18 },
+      stock: 2,
+      isActive: true,
+      createdAt: now - 300,
+      updatedAt: now - 100,
+    })
+
+    const res = await main({ action: 'v1.store.categories.list' })
+    expect(res.success).toBe(true)
+    expect(res.categories).toHaveLength(1)
+    expect(res.categories[0].slug).toBe('sauces')
+    expect(res.categories[0].children).toHaveLength(0)
   })
 
   it('returns order counts for the current user', async () => {
