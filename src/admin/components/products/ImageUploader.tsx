@@ -3,10 +3,11 @@ import { Button } from '../ui/button'
 import { Input } from '../ui/input'
 import { uploadProductImage, isImageFile } from '../../services/media'
 import { cn } from '../../lib/utils'
+import type { ProductImage } from '@shared/models/product'
 
 type ImageUploaderProps = {
-  value: string[]
-  onChange: (next: string[]) => void
+  value: ProductImage[]
+  onChange: (next: ProductImage[]) => void
   disabled?: boolean
 }
 
@@ -20,7 +21,7 @@ export function ImageUploader({ value, onChange, disabled }: ImageUploaderProps)
     if (!fileList || fileList.length === 0) return
     setError(null)
     setUploading(true)
-    const next: string[] = []
+    const next: ProductImage[] = []
     try {
       for (const file of Array.from(fileList)) {
         if (file.size && file.size > 5 * 1024 * 1024) {
@@ -31,8 +32,8 @@ export function ImageUploader({ value, onChange, disabled }: ImageUploaderProps)
           setError('Only image files are supported')
           continue
         }
-        const url = await uploadProductImage(file)
-        next.push(url)
+        const uploaded = await uploadProductImage(file)
+        next.push(uploaded)
       }
       if (next.length > 0) {
         onChange([...value, ...next])
@@ -56,7 +57,7 @@ export function ImageUploader({ value, onChange, disabled }: ImageUploaderProps)
     if (!trimmed) return
     try {
       const url = new URL(trimmed)
-      onChange([...value, url.toString()])
+      onChange([...value, { fileId: url.toString(), url: url.toString() }])
       setManualUrl('')
       setError(null)
     } catch (err) {
@@ -109,9 +110,9 @@ export function ImageUploader({ value, onChange, disabled }: ImageUploaderProps)
 
       {value.length > 0 && (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-          {value.map((url, idx) => (
-            <div key={`${url}-${idx}`} className="group relative overflow-hidden rounded-md border">
-              <img src={url} alt="Product" className="h-32 w-full object-cover" />
+          {value.map((image, idx) => (
+            <div key={`${image.fileId}-${idx}`} className="group relative overflow-hidden rounded-md border">
+              <img src={image.url} alt="Product" className="h-32 w-full object-cover" />
               <button
                 type="button"
                 disabled={disabled}

@@ -8,7 +8,7 @@ import { Label } from '../components/ui/label'
 import { Textarea } from '../components/ui/textarea'
 import { ImageUploader } from '../components/products/ImageUploader'
 import { RichTextEditor } from '../components/RichTextEditor'
-import { zProductInput, type ProductInput, type ProductWithId } from '@shared/models/product'
+import { zProductInput, type ProductImage, type ProductInput, type ProductWithId } from '@shared/models/product'
 import { formatCNY } from '@shared/money'
 import { createProduct, deleteProduct, listProducts, updateProduct } from '../services/products'
 
@@ -28,7 +28,7 @@ type ProductDraft = {
   subtitle: string
   description: string
   richDescription: string
-  images: string[]
+  images: ProductImage[]
   categoryId: string
   spuId: string
   priceYuan: string
@@ -55,6 +55,11 @@ function createEmptyDraft(): ProductDraft {
   }
 }
 
+function cloneImages(images: ProductImage[] | undefined): ProductImage[] {
+  if (!images || images.length === 0) return []
+  return images.map((image) => ({ ...image }))
+}
+
 function productToDraft(product: ProductWithId): ProductDraft {
   return {
     id: product.id,
@@ -62,7 +67,7 @@ function productToDraft(product: ProductWithId): ProductDraft {
     subtitle: product.subtitle || '',
     description: product.description || '',
     richDescription: product.richDescription || '',
-    images: [...product.images],
+    images: cloneImages(product.images),
     categoryId: product.categoryId || '',
     spuId: product.spuId || '',
     priceYuan: product.price.priceYuan.toString(),
@@ -116,6 +121,17 @@ function rowsToSkus(rows: SkuRow[]): ProductInput['skus'] {
   return mapped.length ? (mapped as NonNullable<ProductInput['skus']>) : undefined
 }
 
+function normalizeImages(images: ProductDraft['images']): ProductImage[] {
+  const result: ProductImage[] = []
+  for (const image of images) {
+    const url = image.url?.trim()
+    const fileId = image.fileId?.trim()
+    if (!url) continue
+    result.push({ fileId: fileId || url, url })
+  }
+  return result
+}
+
 function draftToInput(draft: ProductDraft, fallbackSpu: string): ProductInput {
   if (!draft.title.trim()) throw new Error('Title is required')
   const priceNumber = Number.parseFloat(draft.priceYuan || '0')
@@ -127,7 +143,7 @@ function draftToInput(draft: ProductDraft, fallbackSpu: string): ProductInput {
     subtitle: draft.subtitle.trim() || undefined,
     description: draft.description.trim() || undefined,
     richDescription: draft.richDescription.trim() || undefined,
-    images: draft.images.map((url) => url.trim()).filter(Boolean),
+    images: normalizeImages(draft.images),
     categoryId: draft.categoryId.trim() || undefined,
     spuId: draft.spuId.trim() || fallbackSpu,
     price: { currency: 'CNY', priceYuan: Math.round(priceNumber * 100) / 100 },
@@ -714,7 +730,7 @@ export function Products() {
                 {filteredItems.map((item) => (
                   <div key={item.id} className="space-y-3 rounded-md border bg-card p-3 shadow-sm">
                     {item.images[0] && (
-                      <img src={item.images[0]} alt="Product" className="h-40 w-full rounded object-cover" />
+                      <img src={item.images[0].url} alt="Product" className="h-40 w-full rounded object-cover" />
                     )}
                     <div className="space-y-1">
                       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -844,8 +860,13 @@ export function Products() {
               <div className="space-y-4">
                 {previewProduct.images.length > 0 ? (
                   <div className="grid gap-3 md:grid-cols-2">
-                    {previewProduct.images.map((url, idx) => (
-                      <img key={`${url}-${idx}`} src={url} alt={`Product ${idx + 1}`} className="h-40 w-full rounded object-cover" />
+                    {previewProduct.images.map((image, idx) => (
+                      <img
+                        key={`${image.fileId}-${idx}`}
+                        src={image.url}
+                        alt={`Product ${idx + 1}`}
+                        className="h-40 w-full rounded object-cover"
+                      />
                     ))}
                   </div>
                 ) : (

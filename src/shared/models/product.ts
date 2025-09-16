@@ -2,6 +2,21 @@ import { z } from 'zod'
 import { zBaseDoc } from '../base'
 import { zYuan } from '../money'
 
+export const zProductImage = z.object({
+  fileId: z.string().min(1),
+  url: z.string().url(),
+})
+export type ProductImage = z.infer<typeof zProductImage>
+
+const zProductImageInput = z.preprocess((value) => {
+  if (typeof value === 'string') {
+    const trimmed = value.trim()
+    if (!trimmed) return value
+    return { fileId: trimmed, url: trimmed }
+  }
+  return value
+}, zProductImage)
+
 export const zPrice = z.object({
   currency: z.literal('CNY').default('CNY'),
   priceYuan: zYuan.min(0),
@@ -13,7 +28,7 @@ export const zProduct = z
     subtitle: z.string().optional(),
     description: z.string().optional(),
     richDescription: z.string().optional(),
-    images: z.array(z.string().url()).default([]),
+    images: z.array(zProductImageInput).default([]),
     categoryId: z.string().optional(),
     spuId: z.string().optional(),
     price: zPrice,

@@ -16,7 +16,7 @@ describe('functions: store endpoints', () => {
       title: 'Alpha Juice',
       subtitle: 'Freshly squeezed',
       description: 'Orange juice',
-      images: ['https://example.com/a.jpg'],
+      images: [{ fileId: 'alpha-img', url: 'https://example.com/a.jpg' }],
       price: { currency: 'CNY', priceYuan: 15.5 },
       stock: 10,
       isActive: true,
@@ -27,7 +27,7 @@ describe('functions: store endpoints', () => {
     const secondId = testCloud.insert(Collections.Products, {
       title: 'Berry Mix',
       subtitle: 'Frozen berries',
-      images: ['https://example.com/b.jpg'],
+      images: [{ fileId: 'berry-img', url: 'https://example.com/b.jpg' }],
       price: { currency: 'CNY', priceYuan: 28 },
       stock: 0,
       skus: [
@@ -41,7 +41,7 @@ describe('functions: store endpoints', () => {
 
     testCloud.insert(Collections.Products, {
       title: 'Hidden Item',
-      images: ['https://example.com/h.jpg'],
+      images: [{ fileId: 'hidden-img', url: 'https://example.com/h.jpg' }],
       price: { currency: 'CNY', priceYuan: 9.9 },
       stock: 5,
       isActive: false,
@@ -153,4 +153,3 @@ describe('functions: store endpoints', () => {
     expect(res.error).toMatch(/Missing OPENID/)
   })
 })
-

@@ -25,7 +25,7 @@ export function isImageFile(file: File) {
   return ['png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp', 'svg'].includes(ext)
 }
 
-export async function uploadProductImage(file: File): Promise<string> {
+export async function uploadProductImage(file: File): Promise<{ fileId: string; url: string }> {
   if (!isImageFile(file)) throw new Error('Please choose an image file')
   const app = getCloudBaseApp() as any
   if (typeof app.uploadFile !== 'function') {
@@ -57,7 +57,7 @@ export async function uploadProductImage(file: File): Promise<string> {
       throw err
     }
   }
-  const fileID = res?.fileID || res?.fileId
+  const fileID = (res?.fileID || res?.fileId) as string | undefined
   if (!fileID) throw new Error('Upload failed')
   if (typeof app.getTempFileURL !== 'function') {
     throw new Error('Cannot resolve uploaded file URL')
@@ -68,5 +68,5 @@ export async function uploadProductImage(file: File): Promise<string> {
   const urlEntry = tempRes?.fileList?.[0]
   const url = urlEntry?.tempFileURL
   if (!url) throw new Error('Failed to obtain image URL')
-  return url
+  return { fileId: fileID, url }
 }

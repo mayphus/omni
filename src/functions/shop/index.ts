@@ -13,7 +13,7 @@ const fail = (error: string, data: any = {}): ApiResponse => ({ success: false, 
 // Shared schemas and helpers
 import type { User, UserProfile, UserWithId } from '@shared/models/user'
 import { zUser, zUserProfile, zUserWithId } from '@shared/models/user'
-import type { Product, ProductInput } from '@shared/models/product'
+import type { Product, ProductImage, ProductInput } from '@shared/models/product'
 import { zProduct, zProductInput } from '@shared/models/product'
 import type { Order, OrderWithId } from '@shared/models/order'
 import { zOrderWithId } from '@shared/models/order'
@@ -158,7 +158,7 @@ type StoreCategoryNode = {
   children: Array<{ id: string; name: string; slug: string; imageUrl?: string; description?: string }>
 }
 
-function getPrimaryProductImage(product: Product) {
+function getPrimaryProductImage(product: Product): ProductImage | undefined {
   return product.images && product.images.length > 0 ? product.images[0] : undefined
 }
 
@@ -180,7 +180,7 @@ function toFeaturedProduct(id: string, product: Product): StoreFeaturedProduct {
     subtitle: product.subtitle,
     priceYuan: getProductMinPrice(product),
     currency: product.price.currency,
-    imageUrl: getPrimaryProductImage(product),
+    imageUrl: getPrimaryProductImage(product)?.url,
     hasStock: (product.stock ?? 0) > 0 || Boolean(product.skus?.some((sku) => (sku.stock ?? 0) > 0 && sku.isActive !== false)),
   }
 }

@@ -49,7 +49,7 @@ describe('functions: products admin', () => {
         price: { currency: 'CNY', priceYuan: 8.99 },
         stock: 3,
         isActive: false,
-        images: ['https://example.com/a.jpg'],
+        images: [{ fileId: 'mock-file-a', url: 'https://example.com/a.jpg' }],
       },
     })
     if (!second.success) throw new Error(`create failed: ${second.error}`)
@@ -72,7 +72,7 @@ describe('functions: products admin', () => {
         price: { currency: 'CNY', priceYuan: 15.75 },
         stock: 50,
         isActive: true,
-        images: ['https://example.com/rocket.png'],
+        images: [{ fileId: 'rocket-base', url: 'https://example.com/rocket.png' }],
       },
     })
     if (!create.success) throw new Error(`create failed: ${create.error}`)
@@ -88,7 +88,10 @@ describe('functions: products admin', () => {
         price: { currency: 'CNY', priceYuan: 18.5 },
         stock: 45,
         isActive: false,
-        images: ['https://example.com/rocket-new.png', 'https://example.com/rocket-detail.png'],
+        images: [
+          { fileId: 'rocket-new', url: 'https://example.com/rocket-new.png' },
+          { fileId: 'rocket-detail', url: 'https://example.com/rocket-detail.png' },
+        ],
         skus: [
           { skuId: '  rocket-std  ', priceYuan: 18.5, stock: 10, isActive: true },
           { skuId: 'rocket-deluxe', priceYuan: 22.5, stock: 5, isActive: false },
