@@ -44,6 +44,10 @@ tests/        # Vitest unit/integration tests
 - Hooks: pre‑commit runs `typecheck` + `test`; pre‑push runs `verify`.
 - PRs: include a clear description, link issues, add tests/docs, and pass CI. Include screenshots/GIFs for UI changes.
 
+## Documentation Practices
+
+- Keep `docs/` aligned with the current implementation and roadmap; update relevant pages whenever behaviour or plans change so the folder remains a reliable high-level guide.
+
 ## Security & Configuration Tips
 
 - Never commit secrets. Use `.env.local`; note `VITE_*` variables are public.
