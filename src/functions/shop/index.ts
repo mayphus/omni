@@ -6,6 +6,8 @@
  * (database calls, cloud context) are isolated and called out.
  */
 
+import { z } from 'zod'
+
 type ApiResponse = { success: true; [k: string]: any } | { success: false; error?: string; [k: string]: any }
 const ok = (data: any = {}): ApiResponse => ({ success: true, timestamp: new Date().toISOString(), ...data })
 const fail = (error: string, data: any = {}): ApiResponse => ({ success: false, timestamp: new Date().toISOString(), error, ...data })
@@ -16,7 +18,7 @@ import { zUser, zUserProfile, zUserWithId } from '@shared/models/user'
 import type { Product, ProductImage, ProductInput, ProductWithId } from '@shared/models/product'
 import { zProduct, zProductInput, zProductWithId } from '@shared/models/product'
 import type { Order, OrderWithId } from '@shared/models/order'
-import { zOrderWithId } from '@shared/models/order'
+import { zOrder, zOrderWithId } from '@shared/models/order'
 import type {
   SystemBannerWithId,
   SystemCategoryWithId,
@@ -111,6 +113,23 @@ function parseProductDocument(doc: any) {
   return zProductWithId.safeParse(fromServer<Product>(doc as any))
 }
 
+const zOrderItemInput = z.object({
+  productId: z.string().min(1),
+  quantity: z.number().int().min(1).max(999),
+})
+
+const zOrderCreateInput = z.object({
+  items: z.array(zOrderItemInput).min(1),
+  notes: z.string().max(500).optional(),
+  address: z
+    .object({
+      contact: z.string().min(1).optional(),
+      phone: z.string().min(1).optional(),
+      detail: z.string().min(1).optional(),
+    })
+    .optional(),
+})
+
 async function fetchOrdersForStats(limit = 1000): Promise<OrderWithId[]> {
   const pageSize = 100
   const maxDocs = Math.max(0, limit)
@@ -175,6 +194,10 @@ function getProductMinPrice(product: Product) {
     return Math.min(...skuPrices)
   }
   return product.price.priceYuan
+}
+
+function roundToTwo(amount: number): number {
+  return Math.round(amount * 100) / 100
 }
 
 function toFeaturedProduct(id: string, product: Product): StoreFeaturedProduct {
@@ -387,6 +410,81 @@ const handlers: Record<string, (event: any) => Promise<ApiResponse> | ApiRespons
       products.push(parsed.data)
     }
     return ok({ products })
+  },
+
+  /**
+   * v1.store.order.create
+   * Input: { items, notes?, address? }
+   * Output: { order }
+   */
+  'v1.store.order.create': async (event: any) => {
+    const { OPENID, UNIONID } = getWX() as any
+    if (!OPENID) return fail('Missing OPENID in WX context')
+    const parsedInput = zOrderCreateInput.safeParse(event)
+    if (!parsedInput.success) return fail('Invalid order payload', { issues: parsedInput.error.issues })
+
+    const aggregated = new Map<string, number>()
+    for (const { productId, quantity } of parsedInput.data.items) {
+      const trimmedId = productId.trim()
+      if (!trimmedId) continue
+      aggregated.set(trimmedId, (aggregated.get(trimmedId) || 0) + quantity)
+    }
+    if (aggregated.size === 0) return fail('No valid items provided')
+
+    const productMap = new Map<string, ProductWithId>()
+    for (const [productId] of aggregated) {
+      const snapshot = await productsCol().where({ _id: productId }).limit(1).get()
+      const doc = snapshot.data?.[0]
+      if (!doc) return fail('Product not found', { productId })
+      const productParsed = parseProductDocument(doc)
+      if (!productParsed.success) return fail('Invalid product data', { issues: productParsed.error.issues, productId })
+      if (productParsed.data.isActive === false) return fail('Product unavailable', { productId })
+      productMap.set(productId, productParsed.data)
+    }
+
+    let subtotal = 0
+    const orderItems = Array.from(aggregated.entries()).map(([productId, quantity]) => {
+      const product = productMap.get(productId)!
+      const unitPrice = getProductMinPrice(product)
+      subtotal += unitPrice * quantity
+      return {
+        productId,
+        title: product.title,
+        qty: quantity,
+        priceYuan: unitPrice,
+      }
+    })
+
+    const notesValue = parsedInput.data.notes?.trim() || undefined
+    const addressValue = parsedInput.data.address
+      ? {
+          contact: parsedInput.data.address.contact?.trim() || undefined,
+          phone: parsedInput.data.address.phone?.trim() || undefined,
+          detail: parsedInput.data.address.detail?.trim() || undefined,
+        }
+      : undefined
+
+    const now = nowMs()
+    const subtotalYuan = roundToTwo(subtotal)
+    await ensureUserByOpenid(OPENID, UNIONID)
+    const orderData = zOrder.parse({
+      userId: OPENID,
+      items: orderItems,
+      subtotalYuan,
+      shippingYuan: 0,
+      discountYuan: 0,
+      totalYuan: subtotalYuan,
+      status: 'pending',
+      payment: undefined,
+      address: addressValue,
+      notes: notesValue,
+      createdAt: now,
+      updatedAt: now,
+    })
+
+    const addRes = await ordersCol().add({ data: orderData })
+    const order: OrderWithId = { ...orderData, id: addRes._id }
+    return ok({ order })
   },
 
   /**

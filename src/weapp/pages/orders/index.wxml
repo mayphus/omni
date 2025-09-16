@@ -3,7 +3,13 @@
   active="{{ activeIndex }}"
   bind:change="onTabChange"
 >
-  <van-tab wx:for="{{ tabs }}" wx:key="key" title="{{ item.title }}">
+  <van-tab
+    wx:for="{{ tabs }}"
+    wx:key="key"
+    wx:for-index="index"
+    title="{{ (i18n.tabs && i18n.tabs[index]?.title) || item.title }}"
+    name="{{ item.key }}"
+  >
     <block wx:if="{{ loading }}">
       <van-skeleton title row="3" loading />
     </block>

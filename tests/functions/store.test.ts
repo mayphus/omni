@@ -269,4 +269,52 @@ describe('functions: store endpoints', () => {
     expect(res.success).toBe(false)
     expect(res.error).toMatch(/Missing OPENID/)
   })
+
+  it('creates order from cart payload', async () => {
+    const now = nowMs()
+    testCloud.setContext({ OPENID: 'buyer-1' })
+    const productId = testCloud.insert(Collections.Products, {
+      title: 'Notebook',
+      images: [{ fileId: 'notebook', url: 'https://example.com/notebook.jpg' }],
+      category: 'stationery',
+      price: { currency: 'CNY', priceYuan: 12.5 },
+      stock: 20,
+      isActive: true,
+      createdAt: now - 50,
+      updatedAt: now - 25,
+    })
+
+    const res = await main({
+      action: 'v1.store.order.create',
+      items: [
+        { productId, quantity: 2 },
+        { productId, quantity: 1 },
+      ],
+      notes: 'Leave at door',
+      address: { contact: 'Tester', phone: '1234567890', detail: 'No.1 Road' },
+    })
+
+    expect(res.success).toBe(true)
+    expect(res.order.items).toHaveLength(1)
+    expect(res.order.items[0]).toMatchObject({ productId, qty: 3, priceYuan: 12.5 })
+    expect(res.order.totalYuan).toBeCloseTo(37.5)
+
+    const stored = testCloud.getData(Collections.Orders)
+    expect(stored).toHaveLength(1)
+    expect(stored[0].userId).toBe('buyer-1')
+  })
+
+  it('rejects invalid order payloads', async () => {
+    testCloud.setContext({ OPENID: 'buyer-2' })
+    const res = await main({ action: 'v1.store.order.create', items: [] })
+    expect(res.success).toBe(false)
+    expect(res.error).toMatch(/Invalid order payload/)
+  })
+
+  it('requires login for order creation', async () => {
+    testCloud.setContext({ OPENID: undefined })
+    const res = await main({ action: 'v1.store.order.create', items: [{ productId: 'p', quantity: 1 }] })
+    expect(res.success).toBe(false)
+    expect(res.error).toMatch(/Missing OPENID/)
+  })
 })

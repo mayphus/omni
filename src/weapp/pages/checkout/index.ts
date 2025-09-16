@@ -1,4 +1,5 @@
 import { loadCart, clearCart, type CartItem } from '../../utils/cart'
+import { createStoreOrder } from '../../utils/api'
 import { withI18nPage } from '../../utils/i18n'
 
 type DisplayCartItem = CartItem & { totalText: string }
@@ -46,10 +47,24 @@ Page(withI18nPage({
     }
     this.setData({ submitting: true })
     try {
-      // Placeholder for payment integration
+      const payload = {
+        items: items.map((item) => ({ productId: item.id, quantity: item.qty })),
+      }
+      await createStoreOrder(payload)
       clearCart()
+      this.setData({
+        items: [],
+        subtotal: 0,
+        shipping: 0,
+        total: 0,
+        subtotalText: '0.00',
+        totalText: '0.00',
+      })
       wx.showToast({ title: i18n.successToast || 'Order placed', icon: 'success' })
       setTimeout(() => wx.switchTab({ url: '/pages/orders/index' }), 600)
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Checkout failed'
+      wx.showToast({ title: message, icon: 'none' })
     } finally {
       this.setData({ submitting: false })
     }

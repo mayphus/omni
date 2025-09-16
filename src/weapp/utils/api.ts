@@ -91,4 +91,14 @@ export function fetchStoreOrders(status?: string, limit?: number) {
   return callShopFunction<{ orders: OrderWithId[] }>('v1.store.orders.list', payload)
 }
 
+export type CreateOrderPayload = {
+  items: Array<{ productId: string; quantity: number }>
+  notes?: string
+  address?: { contact?: string; phone?: string; detail?: string }
+}
+
+export function createStoreOrder(payload: CreateOrderPayload) {
+  return callShopFunction<{ order: OrderWithId }>('v1.store.order.create', payload)
+}
+
 export { callShopFunction as callShop }
