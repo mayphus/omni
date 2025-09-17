@@ -14,6 +14,17 @@ type FeaturedCard = {
 
 const DEFAULT_IMAGE = 'https://img.yzcdn.cn/vant/ipad.jpeg'
 
+function getEventValue(event: WechatMiniprogram.CustomEvent): string {
+  const detail = event?.detail as any
+  if (typeof detail === 'string') return detail
+  if (detail && typeof detail.value !== 'undefined') {
+    const value = detail.value
+    if (typeof value === 'string') return value
+    if (typeof value === 'number') return String(value)
+  }
+  return ''
+}
+
 function formatPrice(value: number): string {
   if (!Number.isFinite(value)) return '0.00'
   return value.toFixed(2)
@@ -90,7 +101,7 @@ definePage(withI18nPage({
   },
 
   onSearchChange(event: WechatMiniprogram.CustomEvent) {
-    const value = (event?.detail as any)?.value ?? ''
+    const value = getEventValue(event)
     this.setData({ searchValue: value })
     if (!value) {
       this.setData({ searchResults: [], searchError: '', searchLoading: false })
@@ -98,7 +109,7 @@ definePage(withI18nPage({
   },
 
   async onSearchConfirm(event: WechatMiniprogram.CustomEvent) {
-    const value = (event?.detail as any)?.value ?? ''
+    const value = getEventValue(event)
     const keyword = typeof value === 'string' ? value.trim() : ''
     if (!keyword) {
       this.setData({ searchValue: '', searchResults: [], searchError: '' })

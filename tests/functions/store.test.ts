@@ -269,6 +269,42 @@ describe('functions: store endpoints', () => {
     expect(res.products[0].title).toBe('Organic Honey')
   })
 
+  it('searches across multiple pages of products', async () => {
+    const now = nowMs()
+    for (let index = 0; index < 120; index += 1) {
+      testCloud.insert(Collections.Products, {
+        title: `Staple ${index}`,
+        subtitle: `Stock item ${index}`,
+        description: 'Bulk supply',
+        images: [{ fileId: `staple-${index}`, url: `https://example.com/staple-${index}.jpg` }],
+        category: 'pantry',
+        price: { currency: 'CNY', priceYuan: 10 + index },
+        stock: 20,
+        isActive: true,
+        createdAt: now + index,
+        updatedAt: now + index,
+      })
+    }
+
+    testCloud.insert(Collections.Products, {
+      title: 'Herbal Tea Blend',
+      subtitle: 'Relaxing infusion',
+      description: 'Calming herbs for evening routines',
+      images: [{ fileId: 'tea', url: 'https://example.com/tea.jpg' }],
+      category: 'beverages',
+      price: { currency: 'CNY', priceYuan: 48 },
+      stock: 3,
+      isActive: true,
+      createdAt: now - 5000,
+      updatedAt: now - 5000,
+    })
+
+    const res = await main({ action: 'v1.store.products.search', keyword: 'herbal' })
+    expect(res.success).toBe(true)
+    expect(res.products).toHaveLength(1)
+    expect(res.products[0].title).toBe('Herbal Tea Blend')
+  })
+
   it('lists products by category slug', async () => {
     const now = nowMs()
     const vegId = testCloud.insert(Collections.Products, {

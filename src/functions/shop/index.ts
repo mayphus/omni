@@ -348,28 +348,37 @@ const handlers: Record<string, (event: any) => Promise<ApiResponse> | ApiRespons
     const rawLimit = Number(event?.limit)
     const limit = Number.isFinite(rawLimit) ? Math.min(Math.max(rawLimit, 1), 100) : 50
 
-    const fetchLimit = keyword ? Math.max(limit, 100) : limit
-    const snapshot = await productsCol().orderBy('updatedAt', 'desc').limit(fetchLimit).get()
     const products: ProductWithId[] = []
     const normalizedKeyword = keyword.toLowerCase()
+    const pageSize = 100
 
-    for (const doc of snapshot.data || []) {
-      const parsed = parseProductDocument(doc)
-      if (!parsed.success) return fail('Invalid product data', { issues: parsed.error.issues })
-      const product = parsed.data
-      if (product.isActive === false) continue
-      if (!keyword) {
-        products.push(product)
-      } else {
-        const haystack = [product.title, product.subtitle, product.description]
-          .filter(Boolean)
-          .join(' ')
-          .toLowerCase()
-        if (haystack.includes(normalizedKeyword)) {
+    for (let offset = 0; products.length < limit; offset += pageSize) {
+      const snapshot = await productsCol().orderBy('updatedAt', 'desc').skip(offset).limit(pageSize).get()
+      const docs = snapshot.data || []
+      if (docs.length === 0) break
+
+      for (const doc of docs) {
+        const parsed = parseProductDocument(doc)
+        if (!parsed.success) return fail('Invalid product data', { issues: parsed.error.issues })
+        const product = parsed.data
+        if (product.isActive === false) continue
+
+        let matches = true
+        if (keyword) {
+          const haystack = [product.title, product.subtitle, product.description]
+            .filter(Boolean)
+            .join(' ')
+            .toLowerCase()
+          matches = haystack.includes(normalizedKeyword)
+        }
+
+        if (matches) {
           products.push(product)
+          if (products.length >= limit) break
         }
       }
-      if (products.length >= limit) break
+
+      if (docs.length < pageSize) break
     }
 
     return ok({ products })

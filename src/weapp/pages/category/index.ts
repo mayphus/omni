@@ -54,6 +54,17 @@ function toProductCard(product: {
   }
 }
 
+function getEventValue(event: WechatMiniprogram.CustomEvent): string {
+  const detail = event?.detail as any
+  if (typeof detail === 'string') return detail
+  if (detail && typeof detail.value !== 'undefined') {
+    const value = detail.value
+    if (typeof value === 'string') return value
+    if (typeof value === 'number') return String(value)
+  }
+  return ''
+}
+
 Page(withI18nPage({
   data: {
     active: '' as string,
@@ -154,7 +165,7 @@ Page(withI18nPage({
   },
 
   onSearchChange(event: WechatMiniprogram.CustomEvent) {
-    const value = (event?.detail as any)?.value ?? ''
+    const value = getEventValue(event)
     this.setData({ searchValue: value })
     if (!value) {
       this.setData({ searchResults: [], searchError: '', searchLoading: false })
@@ -162,7 +173,7 @@ Page(withI18nPage({
   },
 
   async onSearchConfirm(event: WechatMiniprogram.CustomEvent) {
-    const value = (event?.detail as any)?.value ?? ''
+    const value = getEventValue(event)
     const keyword = typeof value === 'string' ? value.trim() : ''
     if (!keyword) {
       this.setData({ searchValue: '', searchResults: [], searchError: '' })

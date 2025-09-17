@@ -2,6 +2,17 @@ import { searchStoreProducts } from '../../utils/api'
 import { withI18nPage } from '../../utils/i18n'
 import type { ProductWithId } from '@shared/models/product'
 
+function getEventValue(event: WechatMiniprogram.CustomEvent): string {
+  const detail = event?.detail as any
+  if (typeof detail === 'string') return detail
+  if (detail && typeof detail.value !== 'undefined') {
+    const value = detail.value
+    if (typeof value === 'string') return value
+    if (typeof value === 'number') return String(value)
+  }
+  return ''
+}
+
 Page(withI18nPage({
   data: {
     value: '',
@@ -19,7 +30,7 @@ Page(withI18nPage({
   },
 
   onChange(event: WechatMiniprogram.CustomEvent) {
-    const value = (event?.detail as any)?.value ?? ''
+    const value = getEventValue(event)
     this.setData({ value })
     if (!value) {
       this.setData({ results: [], error: '' })
@@ -27,7 +38,7 @@ Page(withI18nPage({
   },
 
   onSearch(event: WechatMiniprogram.CustomEvent) {
-    const value = (event?.detail as any)?.value ?? ''
+    const value = getEventValue(event)
     const keyword = typeof value === 'string' ? value.trim() : ''
     if (!keyword) return
     void this.performSearch(keyword)
