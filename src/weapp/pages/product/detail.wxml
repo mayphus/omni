@@ -105,8 +105,14 @@
     >
       <view class="product-detail__popup-content">
         <view class="product-detail__popup-header">
-          <view class="product-detail__popup-title">{{ i18n.optionsTitle }}</view>
-          <view class="product-detail__popup-price">¥{{ selectedSkuPriceText }}</view>
+          <image class="product-detail__popup-thumb" src="{{ gallery[0] || '' }}" mode="aspectFill" />
+          <view class="product-detail__popup-meta">
+            <view wx:if="{{ i18n.optionsTitle }}" class="product-detail__popup-subtitle">{{ i18n.optionsTitle }}</view>
+            <view class="product-detail__popup-title">{{ product.title }}</view>
+            <view class="product-detail__popup-price">¥{{ selectedSkuPriceText }}</view>
+            <view wx:if="{{ selectedSkuLabel }}" class="product-detail__popup-selected">{{ selectedSkuLabel }}</view>
+            <view wx:if="{{ selectedSkuStock > 0 }}" class="product-detail__popup-stock">In stock: {{ selectedSkuStock }}</view>
+          </view>
         </view>
         <view wx:if="{{ skuOptions.length }}" class="product-detail__popup-section">
           <view class="product-detail__popup-label">{{ i18n.skuLabel || 'Select option' }}</view>
@@ -114,10 +120,22 @@
             <van-radio
               wx:for="{{ skuOptions }}"
               wx:key="skuId"
+              class="product-detail__sku-radio"
               name="{{ item.skuId }}"
               disabled="{{ item.disabled }}"
             >
-              {{ item.text }}
+              <view class="product-detail__sku-option">
+                <view class="product-detail__sku-option-main">
+                  <view class="product-detail__sku-option-label">{{ item.label }}</view>
+                  <view class="product-detail__sku-option-price">¥{{ item.priceText }}</view>
+                </view>
+                <view wx:if="{{ item.description }}" class="product-detail__sku-option-desc">{{ item.description }}</view>
+                <van-icon
+                  wx:if="{{ selectedSkuId === item.skuId }}"
+                  name="success"
+                  class="product-detail__sku-option-check"
+                />
+              </view>
             </van-radio>
           </van-radio-group>
         </view>
@@ -133,10 +151,7 @@
           />
         </view>
         <view class="product-detail__popup-actions">
-          <van-button size="small" type="default" plain bind:tap="onClosePurchasePopup">
-            {{ i18n.popupCancel || 'Cancel' }}
-          </van-button>
-          <van-button size="small" type="primary" bind:tap="onConfirmPurchase">
+          <van-button block type="primary" bind:tap="onConfirmPurchase">
             {{ i18n.popupConfirm || 'Confirm' }}
           </van-button>
         </view>

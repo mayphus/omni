@@ -8,7 +8,15 @@ const PLACEHOLDER_IMAGE = 'https://img.yzcdn.cn/vant/ipad.jpeg'
 
 type ProductMessages = I18nMessages['product']
 type AttributeEntry = { key: string; value: string }
-type SkuOption = { skuId: string; text: string; disabled: boolean; stock: number; priceYuan: number }
+type SkuOption = {
+  skuId: string
+  label: string
+  description: string
+  disabled: boolean
+  stock: number
+  priceYuan: number
+  priceText: string
+}
 
 function buildGallery(product: ProductWithId | null): string[] {
   if (!product || !Array.isArray(product.images) || product.images.length === 0) {
@@ -77,11 +85,19 @@ function buildSkuOptions(product: ProductWithId | null, messages: ProductMessage
             .join(' / ')
         : ''
       const label = attributesText || sku.skuId
+      const description = attributesText ? `SKU: ${sku.skuId}` : ''
       const price = formatPriceYuan(sku?.priceYuan ?? product.price.priceYuan)
-      const text = price ? `${label} · ¥${price.toFixed(2)}` : label
       const stock = typeof sku?.stock === 'number' ? sku.stock : 0
       const disabled = sku?.isActive === false || stock <= 0
-      return { skuId: sku.skuId, text, disabled, stock: stock > 0 ? stock : 0, priceYuan: price }
+      return {
+        skuId: sku.skuId,
+        label,
+        description,
+        disabled,
+        stock: stock > 0 ? stock : 0,
+        priceYuan: price,
+        priceText: price.toFixed(2),
+      }
     })
 }
 
@@ -111,6 +127,7 @@ Page(withI18nPage({
     selectedSkuId: '',
     selectedSkuPrice: 0,
     selectedSkuPriceText: '0.00',
+    selectedSkuLabel: '',
     selectedSkuStock: 0,
     showPurchasePopup: false,
     pendingAction: '' as '' | 'addToCart' | 'buyNow',
@@ -156,6 +173,7 @@ Page(withI18nPage({
       const skuOptions = buildSkuOptions(product, i18n)
       const defaultSkuId = getDefaultSkuId(skuOptions)
       const selectedSku = findSku(skuOptions, defaultSkuId)
+      const selectedSkuLabel = selectedSku ? selectedSku.label : ''
       const selectedSkuStock = selectedSku ? selectedSku.stock : product.stock
       const adjustedQuantity = selectedSkuStock && selectedSkuStock > 0 ? Math.min(quantity, selectedSkuStock) : quantity
       const selectedSkuPrice = selectedSku ? selectedSku.priceYuan : formatPriceYuan(product.price.priceYuan)
@@ -170,6 +188,7 @@ Page(withI18nPage({
         selectedSkuId: defaultSkuId,
         selectedSkuPrice,
         selectedSkuPriceText: selectedSkuPrice.toFixed(2),
+        selectedSkuLabel,
         selectedSkuStock: selectedSkuStock || 0,
       })
       wx.setNavigationBarTitle({ title: product.title || 'Product' })
@@ -269,6 +288,7 @@ Page(withI18nPage({
       quantity,
       selectedSkuPrice: price,
       selectedSkuPriceText: price.toFixed(2),
+      selectedSkuLabel: selectedSku ? selectedSku.label : '',
     })
   },
 
@@ -295,6 +315,7 @@ Page(withI18nPage({
       selectedSkuStock: stock,
       selectedSkuPrice: price,
       selectedSkuPriceText: price.toFixed(2),
+      selectedSkuLabel: selectedSku ? selectedSku.label : '',
       quantity,
       pendingAction: action,
       showPurchasePopup: true,
@@ -343,7 +364,7 @@ Page(withI18nPage({
       return false
     }
     const price = selectedSku ? selectedSku.priceYuan : formatPriceYuan(product.price.priceYuan)
-    const itemTitle = selectedSku ? `${product.title} (${selectedSku.text})` : product.title
+    const itemTitle = selectedSku ? `${product.title} (${selectedSku.label})` : product.title
     addToCart(
       {
         id: product.id,

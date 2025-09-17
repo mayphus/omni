@@ -75,15 +75,39 @@
   background-color: #ffffff;
   border-radius: 24rpx 24rpx 0 0;
   padding: 32rpx;
-  padding-bottom: calc(12rpx + constant(safe-area-inset-bottom));
-  padding-bottom: calc(12rpx + env(safe-area-inset-bottom));
+  padding-bottom: calc(48rpx + constant(safe-area-inset-bottom));
+  padding-bottom: calc(48rpx + env(safe-area-inset-bottom));
+  display: flex;
+  flex-direction: column;
+  gap: 24rpx;
 }
 
 .product-detail__popup-header {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 24rpx;
+  align-items: flex-start;
+  gap: 24rpx;
+}
+
+.product-detail__popup-thumb {
+  width: 160rpx;
+  height: 160rpx;
+  border-radius: 20rpx;
+  background-color: #f3f4f6;
+  object-fit: cover;
+}
+
+.product-detail__popup-meta {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+}
+
+.product-detail__popup-subtitle {
+  font-size: 22rpx;
+  letter-spacing: 2rpx;
+  text-transform: uppercase;
+  color: #9ca3af;
 }
 
 .product-detail__popup-title {
@@ -98,53 +122,110 @@
   color: #ee0a24;
 }
 
+.product-detail__popup-selected {
+  font-size: 26rpx;
+  color: #374151;
+}
+
+.product-detail__popup-stock {
+  font-size: 24rpx;
+  color: #6b7280;
+}
+
 .product-detail__popup-section {
-  margin-bottom: 24rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
 }
 
 .product-detail__popup-label {
-  margin-bottom: 12rpx;
   font-size: 26rpx;
   color: #6b7280;
 }
 
 .product-detail__sku-group {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
   gap: 16rpx;
 }
 
-.product-detail__sku-group .van-radio {
+.product-detail__sku-radio {
   margin: 0;
 }
 
-.product-detail__sku-group .van-radio__icon {
+.product-detail__sku-radio .van-radio__icon {
   display: none;
 }
 
-.product-detail__sku-group .van-radio__label {
-  display: inline-block;
-  padding: 12rpx 28rpx;
-  border-radius: 999rpx;
-  border: 1px solid #dfe4ea;
+.product-detail__sku-radio .van-radio__label {
+  display: block;
+  padding: 24rpx;
+  border-radius: 20rpx;
+  border: 1px solid #e5e7eb;
   background-color: #ffffff;
-  font-size: 26rpx;
-  color: #374151;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-.product-detail__sku-group .van-radio--checked .van-radio__label {
-  border-color: #1989fa;
-  color: #1989fa;
-  background-color: rgba(25, 137, 250, 0.08);
+.product-detail__sku-radio.van-radio--checked .van-radio__label {
+  border-color: #2563eb;
+  background-color: #eff6ff;
+  box-shadow: 0 16rpx 36rpx -18rpx rgba(37, 99, 235, 0.45);
 }
 
-.product-detail__sku-group .van-radio--disabled .van-radio__label {
-  color: #c8c9cc;
-  border-color: #ebedf0;
+.product-detail__sku-option {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
+}
+
+.product-detail__sku-option-main {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16rpx;
+}
+
+.product-detail__sku-option-label {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #111827;
+}
+
+.product-detail__sku-option-price {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #2563eb;
+}
+
+.product-detail__sku-option-desc {
+  font-size: 24rpx;
+  color: #6b7280;
+}
+
+.product-detail__sku-option-check {
+  position: absolute;
+  top: 16rpx;
+  right: 16rpx;
+  font-size: 32rpx;
+  color: #2563eb;
+}
+
+.product-detail__sku-radio.van-radio--disabled .van-radio__label {
+  background-color: #f9fafb;
+  border-color: #e5e7eb;
+}
+
+.product-detail__sku-radio.van-radio--disabled .product-detail__sku-option-label,
+.product-detail__sku-radio.van-radio--disabled .product-detail__sku-option-price,
+.product-detail__sku-radio.van-radio--disabled .product-detail__sku-option-desc,
+.product-detail__sku-radio.van-radio--disabled .product-detail__sku-option-check {
+  color: #9ca3af;
 }
 
 .product-detail__popup-actions {
   display: flex;
+  flex-direction: column;
   gap: 16rpx;
 }
 
