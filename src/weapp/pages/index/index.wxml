@@ -4,10 +4,8 @@
   placeholder="{{ i18n.searchPlaceholder }}"
   shape="round"
   background="#ffffff"
-  show-action
   bind:change="onSearchChange"
   bind:search="onSearchConfirm"
-  bind:cancel="onSearchCancel"
 />
 
 <!-- Announcement -->

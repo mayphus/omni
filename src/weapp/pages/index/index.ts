@@ -113,10 +113,6 @@ definePage(withI18nPage({
     wx.navigateTo({ url: `/pages/search/index?q=${encodeURIComponent(keyword)}` })
   },
 
-  onSearchCancel() {
-    this.setData({ searchValue: '' })
-  },
-
   onOpenProduct(event: WechatMiniprogram.TouchEvent) {
     const productId = event?.currentTarget?.dataset?.productId as string | undefined
     if (!productId || typeof productId !== 'string') return

@@ -3,10 +3,9 @@
   placeholder="{{ i18n.placeholder }}"
   shape="round"
   background="#ffffff"
-  show-action
   bind:change="onChange"
   bind:search="onSearch"
-  bind:cancel="onClear"
+  bind:clear="onClear"
 />
 
 <block wx:if="{{ loading }}">
