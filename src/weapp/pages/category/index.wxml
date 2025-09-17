@@ -95,7 +95,6 @@
 </block>
 
 <block wx:elif="{{ products.length }}">
-  <van-divider content-position="center">{{ i18n.productsTitle }}</van-divider>
   <van-card
     wx:for="{{ products }}"
     wx:key="id"
