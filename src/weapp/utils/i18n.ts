@@ -140,6 +140,7 @@ type I18nMessages = {
   profile: {
     header: {
       signedOutTitle: string
+      signedInTitle: string
       signedOutLabel: string
       signedInLabel: string
       vip: string
@@ -252,13 +253,13 @@ const MESSAGES: Record<Locale, I18nMessages> = {
         'Favourite items will sync automatically once the API responds.',
       ],
       emptyTitle: 'Results arriving soon',
-      emptyDescription: 'Search will be enabled when the product service is connected.',
+      emptyDescription: 'Try another keyword or explore categories to discover products.',
       loadingText: 'Loading…',
     },
     cart: {
       title: 'Shopping cart',
       emptyTitle: 'Your cart is empty',
-      emptyDescription: 'Items you add will appear here once the shop opens.',
+      emptyDescription: 'Items you add will appear here. Start shopping to fill your cart.',
       goShopping: 'Browse homepage',
       infoTitle: 'What to expect',
       infoItems: [
@@ -283,7 +284,7 @@ const MESSAGES: Record<Locale, I18nMessages> = {
       paymentValue: 'Unavailable until launch',
       payNow: 'Pay Now',
       emptyTitle: 'Checkout opens soon',
-      emptyDescription: 'Create an order from the cart after the backend is online.',
+      emptyDescription: 'You need items in your cart before you can check out.',
       itemsTitle: 'Items',
       summaryTitle: 'Summary',
       emptyButton: 'Browse homepage',
@@ -304,7 +305,7 @@ const MESSAGES: Record<Locale, I18nMessages> = {
         { title: 'After-sales', items: [] },
       ],
       emptyTitle: 'No orders yet',
-      emptyDescription: 'Your purchases will appear here once the shop opens.',
+      emptyDescription: 'You have no orders yet. Place your first order to see it here.',
       orderLabel: 'Order',
       statusLabel: 'Status',
     },
@@ -342,7 +343,7 @@ const MESSAGES: Record<Locale, I18nMessages> = {
     category: {
       searchPlaceholder: 'Search categories',
       emptyTitle: 'Categories syncing',
-      emptyDescription: 'Please check back soon for the full catalogue.',
+      emptyDescription: 'Browse other categories while we prepare more listings.',
       errorTitle: 'Unable to load categories',
       errorDescription: 'Tap retry to try again.',
       errorAction: 'Retry',
@@ -403,6 +404,7 @@ const MESSAGES: Record<Locale, I18nMessages> = {
     profile: {
       header: {
         signedOutTitle: 'Tap to sign in',
+        signedInTitle: 'Welcome, ',
         signedOutLabel: 'Visitor mode',
         signedInLabel: 'View and edit your profile',
         vip: 'VIP',
@@ -517,13 +519,13 @@ const MESSAGES: Record<Locale, I18nMessages> = {
       tipsTitle: '小贴士',
       tips: ['目前可先通过分类浏览商品。', '收藏的商品将在上线后自动同步。'],
       emptyTitle: '搜索功能准备中',
-      emptyDescription: '商品服务接入后即可使用搜索。',
+      emptyDescription: '换个关键词试试，或浏览分类发现更多商品。',
       loadingText: '加载中…',
     },
     cart: {
       title: '购物车',
       emptyTitle: '购物车空空如也',
-      emptyDescription: '商城开放后，加入的商品会出现在这里。',
+      emptyDescription: '暂未添加商品，去逛逛把喜欢的商品加入购物车。',
       goShopping: '去首页逛逛',
       infoTitle: '购物提示',
       infoItems: [
@@ -548,7 +550,7 @@ const MESSAGES: Record<Locale, I18nMessages> = {
       paymentValue: '上线后启用',
       payNow: '立即支付',
       emptyTitle: '结算即将开启',
-      emptyDescription: '商城上线后可在此提交订单。',
+      emptyDescription: '购物车为空，添加商品后即可提交订单。',
       itemsTitle: '商品列表',
       summaryTitle: '订单摘要',
       emptyButton: '去首页逛逛',
@@ -569,7 +571,7 @@ const MESSAGES: Record<Locale, I18nMessages> = {
         { title: '售后', items: [] },
       ],
       emptyTitle: '暂无订单',
-      emptyDescription: '商城上线后，订单记录会显示在这里。',
+      emptyDescription: '暂无订单，完成购买后即可在此查看。',
       orderLabel: '订单',
       statusLabel: '状态',
     },
@@ -607,7 +609,7 @@ const MESSAGES: Record<Locale, I18nMessages> = {
     category: {
       searchPlaceholder: '搜索分类',
       emptyTitle: '分类同步中',
-      emptyDescription: '稍后再试，更多分类即将上线。',
+      emptyDescription: '欢迎先浏览其他分类，更多商品即将上架。',
       errorTitle: '无法加载分类',
       errorDescription: '请检查网络后重试。',
       errorAction: '重试',
@@ -668,6 +670,7 @@ const MESSAGES: Record<Locale, I18nMessages> = {
     profile: {
       header: {
         signedOutTitle: '点击登录',
+        signedInTitle: '欢迎回来，',
         signedOutLabel: '访客模式',
         signedInLabel: '查看并管理个人资料',
         vip: 'VIP',
