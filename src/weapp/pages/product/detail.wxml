@@ -130,11 +130,9 @@
                   <view class="product-detail__sku-option-price">¥{{ item.priceText }}</view>
                 </view>
                 <view wx:if="{{ item.description }}" class="product-detail__sku-option-desc">{{ item.description }}</view>
-                <van-icon
-                  wx:if="{{ selectedSkuId === item.skuId }}"
-                  name="success"
-                  class="product-detail__sku-option-check"
-                />
+                <view wx:if="{{ selectedSkuId === item.skuId }}" class="product-detail__sku-option-badge">
+                  {{ i18n.selectedBadge || 'Selected' }}
+                </view>
               </view>
             </van-radio>
           </van-radio-group>
