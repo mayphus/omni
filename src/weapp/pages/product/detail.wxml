@@ -102,7 +102,6 @@
       round
       position="bottom"
       bind:close="onClosePurchasePopup"
-      custom-style="background: transparent;"
     >
       <view class="product-detail__popup-content">
         <view class="product-detail__popup-header">

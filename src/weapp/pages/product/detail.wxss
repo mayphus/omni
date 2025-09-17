@@ -68,15 +68,15 @@
 }
 
 .product-detail__popup {
-  background: transparent !important;
+  background-color: #ffffff;
 }
 
 .product-detail__popup-content {
   background-color: #ffffff;
   border-radius: 24rpx 24rpx 0 0;
   padding: 32rpx;
-  padding-bottom: calc(32rpx + constant(safe-area-inset-bottom));
-  padding-bottom: calc(32rpx + env(safe-area-inset-bottom));
+  padding-bottom: calc(12rpx + constant(safe-area-inset-bottom));
+  padding-bottom: calc(12rpx + env(safe-area-inset-bottom));
 }
 
 .product-detail__popup-header {
