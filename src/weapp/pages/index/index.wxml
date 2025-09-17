@@ -14,29 +14,6 @@
 
 <!-- Banner -->
 
-<block wx:if="{{ searchLoading }}">
-  <van-loading size="24px" color="#1989fa" vertical>{{ i18n.loadingText }}</van-loading>
-</block>
-
-<block wx:elif="{{ searchError }}">
-  <van-empty image="search" description="{{ searchError }}" />
-</block>
-
-<block wx:elif="{{ searchResults.length }}">
-  <van-divider content-position="center">{{ i18n.searchResultsTitle }}</van-divider>
-  <van-card
-    wx:for="{{ searchResults }}"
-    wx:key="id"
-    price="{{ item.price }}"
-    desc="{{ item.desc }}"
-    title="{{ item.title }}"
-    thumb="{{ item.imageUrl }}"
-    currency="¥"
-    data-product-id="{{ item.id }}"
-    bind:tap="onOpenProduct"
-  />
-</block>
-
 <!-- Featured products -->
 <block wx:if="{{ featuredLoading && !featuredLoaded }}">
   <van-skeleton title row="3" loading avatar />

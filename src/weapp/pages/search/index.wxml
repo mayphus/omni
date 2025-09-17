@@ -18,18 +18,18 @@
 </block>
 
 <block wx:elif="{{ results.length }}">
-  <van-cell-group>
-    <van-cell
-      wx:for="{{ results }}"
-      wx:key="id"
-      title="{{ item.title }}"
-      value="¥{{ item.price.priceYuan }}"
-      label="{{ item.subtitle || item.description }}"
-      is-link
-      bind:tap="onSelect"
-      data-product-id="{{ item.id }}"
-    />
-  </van-cell-group>
+  <van-divider content-position="center">{{ i18n.resultsTitle }}</van-divider>
+  <van-card
+    wx:for="{{ results }}"
+    wx:key="id"
+    price="{{ item.price }}"
+    desc="{{ item.desc }}"
+    title="{{ item.title }}"
+    thumb="{{ item.imageUrl }}"
+    currency="¥"
+    data-product-id="{{ item.id }}"
+    bind:tap="onSelect"
+  />
 </block>
 
 <block wx:else>

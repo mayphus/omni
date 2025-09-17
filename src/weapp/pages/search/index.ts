@@ -2,6 +2,35 @@ import { searchStoreProducts } from '../../utils/api'
 import { withI18nPage } from '../../utils/i18n'
 import type { ProductWithId } from '@shared/models/product'
 
+type SearchCard = {
+  id: string
+  title: string
+  desc: string
+  price: string
+  imageUrl: string
+  hasStock: boolean
+}
+
+const DEFAULT_IMAGE = 'https://img.yzcdn.cn/vant/ipad.jpeg'
+
+function formatPrice(value: number): string {
+  if (!Number.isFinite(value)) return '0.00'
+  return value.toFixed(2)
+}
+
+function toSearchCard(product: ProductWithId): SearchCard {
+  const priceYuan = Number(product.price?.priceYuan)
+  const hasStock = (product.stock ?? 0) > 0 || Boolean(product.skus?.some((sku) => (sku.stock ?? 0) > 0 && sku.isActive !== false))
+  return {
+    id: product.id,
+    title: product.title,
+    desc: product.subtitle || product.description || '',
+    price: formatPrice(priceYuan),
+    imageUrl: product.images?.[0]?.url || DEFAULT_IMAGE,
+    hasStock,
+  }
+}
+
 function getEventValue(event: WechatMiniprogram.CustomEvent): string {
   const detail = event?.detail as any
   if (typeof detail === 'string') return detail
@@ -16,7 +45,7 @@ function getEventValue(event: WechatMiniprogram.CustomEvent): string {
 Page(withI18nPage({
   data: {
     value: '',
-    results: [] as ProductWithId[],
+    results: [] as SearchCard[],
     loading: false,
     error: '',
   },
@@ -49,7 +78,8 @@ Page(withI18nPage({
     this.setData({ loading: true, error: '', results: [] })
     try {
       const { products } = await searchStoreProducts(keyword, 50)
-      this.setData({ results: products || [] })
+      const mapped = (products || []).map(toSearchCard)
+      this.setData({ results: mapped })
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Search failed'
       this.setData({ error: message, results: [] })

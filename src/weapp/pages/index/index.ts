@@ -1,5 +1,5 @@
 import { definePage } from '@vue-mini/core'
-import { fetchStoreHome, searchStoreProducts, type StoreFeaturedProduct } from '../../utils/api'
+import { fetchStoreHome, type StoreFeaturedProduct } from '../../utils/api'
 import type { ProductWithId } from '@shared/models/product'
 import { withI18nPage } from '../../utils/i18n'
 
@@ -54,9 +54,6 @@ definePage(withI18nPage({
     featuredLoaded: false,
     featuredError: '',
     searchValue: '',
-    searchResults: [] as FeaturedCard[],
-    searchLoading: false,
-    searchError: '',
   },
 
   onLoad() {
@@ -103,35 +100,21 @@ definePage(withI18nPage({
   onSearchChange(event: WechatMiniprogram.CustomEvent) {
     const value = getEventValue(event)
     this.setData({ searchValue: value })
-    if (!value) {
-      this.setData({ searchResults: [], searchError: '', searchLoading: false })
-    }
   },
 
   async onSearchConfirm(event: WechatMiniprogram.CustomEvent) {
     const value = getEventValue(event)
     const keyword = typeof value === 'string' ? value.trim() : ''
     if (!keyword) {
-      this.setData({ searchValue: '', searchResults: [], searchError: '' })
+      this.setData({ searchValue: '' })
       return
     }
-    if ((this.data as any).searchLoading) return
-    this.setData({ searchLoading: true, searchError: '' })
-    try {
-      const { products } = await searchStoreProducts(keyword, 20)
-      const mapped = (products || []).map(toFeaturedCard)
-      this.setData({ searchResults: mapped })
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Search failed'
-      this.setData({ searchError: message, searchResults: [] })
-      wx.showToast({ title: message, icon: 'none' })
-    } finally {
-      this.setData({ searchLoading: false })
-    }
+    this.setData({ searchValue: keyword })
+    wx.navigateTo({ url: `/pages/search/index?q=${encodeURIComponent(keyword)}` })
   },
 
   onSearchCancel() {
-    this.setData({ searchValue: '', searchResults: [], searchError: '', searchLoading: false })
+    this.setData({ searchValue: '' })
   },
 
   onOpenProduct(event: WechatMiniprogram.TouchEvent) {
