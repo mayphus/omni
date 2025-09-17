@@ -163,7 +163,7 @@
   border-radius: 20rpx;
   border: 1px solid #e5e7eb;
   background-color: #ffffff;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
 }
 
 .product-detail__sku-radio.van-radio--checked .van-radio__label {
@@ -178,6 +178,15 @@
   flex-direction: column;
   gap: 12rpx;
   padding-top: 12rpx;
+}
+
+.product-detail__sku-option--selected .product-detail__sku-option-label,
+.product-detail__sku-option--selected .product-detail__sku-option-price {
+  color: #2563eb;
+}
+
+.product-detail__sku-option--selected .product-detail__sku-option-desc {
+  color: #3b82f6;
 }
 
 .product-detail__sku-option-main {
@@ -204,21 +213,6 @@
   color: #6b7280;
 }
 
-.product-detail__sku-option-badge {
-  position: absolute;
-  top: -18rpx;
-  right: 24rpx;
-  padding: 6rpx 20rpx;
-  border-radius: 999rpx;
-  background-color: #2563eb;
-  color: #ffffff;
-  font-size: 22rpx;
-  font-weight: 600;
-  letter-spacing: 2rpx;
-  text-transform: uppercase;
-  box-shadow: 0 12rpx 24rpx -12rpx rgba(37, 99, 235, 0.45);
-}
-
 .product-detail__sku-radio.van-radio--disabled .van-radio__label {
   background-color: #f9fafb;
   border-color: #e5e7eb;
@@ -228,12 +222,6 @@
 .product-detail__sku-radio.van-radio--disabled .product-detail__sku-option-price,
 .product-detail__sku-radio.van-radio--disabled .product-detail__sku-option-desc {
   color: #9ca3af;
-}
-
-.product-detail__sku-radio.van-radio--disabled .product-detail__sku-option-badge {
-  color: #6b7280;
-  background-color: #d1d5db;
-  box-shadow: none;
 }
 
 .product-detail__popup-actions {

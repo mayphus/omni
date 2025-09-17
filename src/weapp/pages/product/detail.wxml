@@ -124,15 +124,12 @@
               name="{{ item.skuId }}"
               disabled="{{ item.disabled }}"
             >
-              <view class="product-detail__sku-option">
+              <view class="product-detail__sku-option {{ selectedSkuId === item.skuId ? 'product-detail__sku-option--selected' : '' }}">
                 <view class="product-detail__sku-option-main">
                   <view class="product-detail__sku-option-label">{{ item.label }}</view>
                   <view class="product-detail__sku-option-price">¥{{ item.priceText }}</view>
                 </view>
                 <view wx:if="{{ item.description }}" class="product-detail__sku-option-desc">{{ item.description }}</view>
-                <view wx:if="{{ selectedSkuId === item.skuId }}" class="product-detail__sku-option-badge">
-                  {{ i18n.selectedBadge || 'Selected' }}
-                </view>
               </view>
             </van-radio>
           </van-radio-group>
