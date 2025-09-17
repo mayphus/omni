@@ -356,7 +356,7 @@ Page(withI18nPage({
     const toastText = data.i18n?.addedToast || 'Added to cart'
     wx.showToast({ title: toastText, icon: 'success' })
     if (action === 'buyNow') {
-      wx.switchTab({ url: '/pages/cart/index' })
+      wx.navigateTo({ url: '/pages/checkout/index' })
     }
     return true
   },
