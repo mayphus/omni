@@ -124,6 +124,19 @@ type I18nMessages = {
     actionButtons: GoodsActionButton[]
     retryButton: string
     addedToast: string
+    stockLabel: string
+    stockSoldOut: string
+    stockLeftSuffix: string
+    categoryLabel: string
+    codeLabel: string
+    idLabel: string
+    attributeYes: string
+    attributeNo: string
+    maxQuantityPrefix: string
+    maxQuantitySuffix: string
+    skuLabel: string
+    popupConfirm: string
+    popupCancel: string
   }
   category: {
     searchPlaceholder: string
@@ -339,6 +352,19 @@ const MESSAGES: Record<Locale, I18nMessages> = {
       ],
       retryButton: 'Retry',
       addedToast: 'Added to cart',
+      stockLabel: 'Stock',
+      stockSoldOut: 'Sold out',
+      stockLeftSuffix: ' left',
+      categoryLabel: 'Category',
+      codeLabel: 'Product code',
+      idLabel: 'Product ID',
+      attributeYes: 'Yes',
+      attributeNo: 'No',
+      maxQuantityPrefix: 'Max ',
+      maxQuantitySuffix: '',
+      skuLabel: 'Select option',
+      popupConfirm: 'Confirm',
+      popupCancel: 'Cancel',
     },
     category: {
       searchPlaceholder: 'Search categories',
@@ -605,6 +631,19 @@ const MESSAGES: Record<Locale, I18nMessages> = {
       ],
       retryButton: '重试',
       addedToast: '已加入购物车',
+      stockLabel: '库存',
+      stockSoldOut: '已售罄',
+      stockLeftSuffix: ' 件',
+      categoryLabel: '分类',
+      codeLabel: '商品编码',
+      idLabel: '商品ID',
+      attributeYes: '是',
+      attributeNo: '否',
+      maxQuantityPrefix: '最多 ',
+      maxQuantitySuffix: ' 件',
+      skuLabel: '选择规格',
+      popupConfirm: '确定',
+      popupCancel: '取消',
     },
     category: {
       searchPlaceholder: '搜索分类',
