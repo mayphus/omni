@@ -61,7 +61,7 @@ Page(withI18nPage({
         totalText: '0.00',
       })
       wx.showToast({ title: i18n.successToast || 'Order placed', icon: 'success' })
-      setTimeout(() => wx.switchTab({ url: '/pages/orders/index' }), 600)
+      setTimeout(() => wx.redirectTo({ url: '/pages/orders/index' }), 600)
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Checkout failed'
       wx.showToast({ title: message, icon: 'none' })
