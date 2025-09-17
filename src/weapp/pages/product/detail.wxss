@@ -19,10 +19,52 @@
 .product-detail__card .van-card__title {
   font-size: 36rpx;
   font-weight: 600;
+  line-height: 1.6;
+}
+
+.product-detail__card .van-card__price,
+.product-detail__card .van-card__price-integer {
+  font-size: 44rpx;
+  font-weight: 700;
+}
+
+.product-detail__card .van-card__price-currency {
+  font-size: 32rpx;
+  margin-right: 4rpx;
+}
+
+.product-detail__category {
+  display: inline-block;
+  margin-top: 16rpx;
+  padding: 10rpx 24rpx;
+  border-radius: 999rpx;
+  background-color: #f2f3f5;
+  font-size: 24rpx;
+  color: #596273;
 }
 
 .product-detail__section {
-  margin: 24rpx 24rpx 0;
+  margin: 24rpx;
+  margin-bottom: 0;
+  border-radius: 24rpx;
+  overflow: hidden;
+}
+
+.product-detail__panel-padding {
+  padding: 0;
+}
+
+.product-detail__description {
+  padding: 24rpx 32rpx;
+  font-size: 28rpx;
+  color: #323233;
+  line-height: 1.6;
+}
+
+.product-detail__placeholder {
+  padding: 16rpx 32rpx 32rpx;
+  font-size: 26rpx;
+  color: #969799;
 }
 
 .product-detail__popup {

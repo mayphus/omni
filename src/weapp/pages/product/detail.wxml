@@ -36,20 +36,19 @@
         centered
         tag="{{ !purchasable ? i18n.stockSoldOut : lowStockLabel }}"
       >
-        <view slot="bottom">
-          <view>{{ i18n.stockLabel }}：<text wx:if="{{ product.stock > 0 }}">{{ product.stock }}</text><text wx:else>{{ i18n.stockSoldOut }}</text></view>
-          <view wx:if="{{ product.category }}">{{ i18n.categoryLabel }}：{{ product.category }}</view>
+        <view slot="bottom" wx:if="{{ product.category }}" class="product-detail__category">
+          {{ product.category }}
         </view>
       </van-card>
 
-      <van-panel class="product-detail__section" title="{{ i18n.detailsTab }}">
+      <van-panel class="product-detail__section product-detail__panel-padding" title="{{ i18n.detailsTab }}">
         <rich-text wx:if="{{ product.richDescription }}" nodes="{{ product.richDescription }}" />
-        <view wx:elif="{{ product.description }}">{{ product.description }}</view>
+        <view wx:elif="{{ product.description }}" class="product-detail__description">{{ product.description }}</view>
         <van-cell-group wx:if="{{ attributes.length }}" inset>
           <van-cell wx:for="{{ attributes }}" wx:key="key" title="{{ item.key }}" value="{{ item.value }}" />
         </van-cell-group>
         <block wx:if="{{ !product.description && !product.richDescription && !attributes.length }}">
-          <view wx:for="{{ i18n.detailItems }}" wx:key="item">• {{ item }}</view>
+          <view wx:for="{{ i18n.detailItems }}" wx:key="item" class="product-detail__placeholder">• {{ item }}</view>
         </block>
       </van-panel>
 
