@@ -7,7 +7,7 @@
     wx:for="{{ tabs }}"
     wx:key="key"
     wx:for-index="index"
-    title="{{ (i18n.tabs && i18n.tabs[index]?.title) || item.title }}"
+    title="{{ (i18n.tabs && i18n.tabs[index] && i18n.tabs[index].title) || item.title }}"
     name="{{ item.key }}"
   >
     <block wx:if="{{ loading }}">
