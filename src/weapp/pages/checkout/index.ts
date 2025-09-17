@@ -48,7 +48,13 @@ Page(withI18nPage({
     this.setData({ submitting: true })
     try {
       const payload = {
-        items: items.map((item) => ({ productId: item.id, quantity: item.qty })),
+        items: items.map((item) => {
+          const base = { productId: item.productId, quantity: item.qty }
+          if (item.skuId) {
+            return { ...base, skuId: item.skuId }
+          }
+          return base
+        }),
       }
       await createStoreOrder(payload)
       clearCart()

@@ -1,5 +1,7 @@
 export type CartItem = {
   id: string
+  productId: string
+  skuId?: string
   title: string
   price: number
   imageUrl?: string
@@ -12,7 +14,14 @@ export function loadCart(): CartItem[] {
   try {
     const stored = wx.getStorageSync(STORAGE_KEY) as CartItem[] | undefined
     if (Array.isArray(stored)) {
-      return stored.filter((item) => typeof item?.id === 'string' && typeof item?.qty === 'number')
+      const normalized = stored
+        .map((entry) => normalizeCartEntry(entry))
+        .filter((item): item is CartItem => !!item)
+      const deduped = new Map<string, CartItem>()
+      for (const item of normalized) {
+        deduped.set(item.id, item)
+      }
+      return Array.from(deduped.values())
     }
   } catch {}
   return []
@@ -24,14 +33,29 @@ export function saveCart(items: CartItem[]): void {
   } catch {}
 }
 
-export function addToCart(item: { id: string; title: string; price: number; imageUrl?: string }, qty: number = 1): CartItem[] {
-  const sanitizedQty = qty > 0 ? qty : 1
+export function addToCart(
+  item: { productId: string; skuId?: string; title: string; price: number; imageUrl?: string },
+  qty: number = 1,
+): CartItem[] {
+  const productId = typeof item.productId === 'string' ? item.productId.trim() : ''
+  if (!productId) return loadCart()
+  const skuId = typeof item.skuId === 'string' && item.skuId.trim() ? item.skuId.trim() : undefined
+  const sanitizedQty = Number.isFinite(qty) && qty > 0 ? Math.floor(qty) || 1 : 1
+  const cartId = buildCartItemId(productId, skuId)
   const cart = loadCart()
-  const index = cart.findIndex((entry) => entry.id === item.id)
+  const index = cart.findIndex((entry) => entry.id === cartId)
   if (index >= 0) {
     cart[index].qty += sanitizedQty
   } else {
-    cart.push({ id: item.id, title: item.title, price: item.price, imageUrl: item.imageUrl, qty: sanitizedQty })
+    cart.push({
+      id: cartId,
+      productId,
+      skuId,
+      title: item.title,
+      price: sanitizePrice(item.price),
+      imageUrl: item.imageUrl,
+      qty: sanitizedQty,
+    })
   }
   saveCart(cart)
   return cart
@@ -44,7 +68,8 @@ export function updateCartQuantity(id: string, qty: number): CartItem[] {
     if (qty <= 0) {
       cart.splice(index, 1)
     } else {
-      cart[index].qty = qty
+      const sanitizedQty = Number.isFinite(qty) && qty > 0 ? Math.floor(qty) || 1 : 1
+      cart[index].qty = sanitizedQty
     }
     saveCart(cart)
   }
@@ -57,4 +82,37 @@ export function removeFromCart(id: string): CartItem[] {
 
 export function clearCart(): void {
   saveCart([])
+}
+
+function buildCartItemId(productId: string, skuId?: string): string {
+  return skuId ? `${productId}__${skuId}` : productId
+}
+
+function sanitizePrice(price: number): number {
+  if (typeof price !== 'number' || !Number.isFinite(price)) return 0
+  return Math.round(price * 100) / 100
+}
+
+function normalizeCartEntry(entry: any): CartItem | null {
+  if (!entry) return null
+  const rawProductId = typeof entry.productId === 'string' ? entry.productId.trim() : typeof entry.id === 'string' ? entry.id.trim() : ''
+  if (!rawProductId) return null
+  const rawSkuId = typeof entry.skuId === 'string' ? entry.skuId.trim() : undefined
+  const skuId = rawSkuId || undefined
+  const id = buildCartItemId(rawProductId, skuId)
+  const qtyValue = Number(entry.qty)
+  const qty = Number.isFinite(qtyValue) && qtyValue > 0 ? Math.floor(qtyValue) || 1 : 1
+  const priceValue = Number(entry.price)
+  const price = Number.isFinite(priceValue) ? sanitizePrice(priceValue) : 0
+  const title = typeof entry.title === 'string' ? entry.title : ''
+  const imageUrl = typeof entry.imageUrl === 'string' && entry.imageUrl.trim() ? entry.imageUrl : undefined
+  return {
+    id,
+    productId: rawProductId,
+    skuId,
+    title,
+    price,
+    imageUrl,
+    qty,
+  }
 }

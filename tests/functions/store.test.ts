@@ -422,6 +422,41 @@ describe('functions: store endpoints', () => {
     expect(stored[0].userId).toBe('buyer-1')
   })
 
+  it('keeps different skus separate in orders', async () => {
+    const now = nowMs()
+    testCloud.setContext({ OPENID: 'buyer-2' })
+    const productId = testCloud.insert(Collections.Products, {
+      title: 'Tea Blend',
+      images: [{ fileId: 'tea', url: 'https://example.com/tea.jpg' }],
+      category: 'grocery',
+      price: { currency: 'CNY', priceYuan: 20 },
+      stock: 0,
+      skus: [
+        { skuId: 'small', priceYuan: 10, stock: 5, isActive: true },
+        { skuId: 'large', priceYuan: 15, stock: 3, isActive: true },
+      ],
+      isActive: true,
+      createdAt: now - 50,
+      updatedAt: now - 25,
+    })
+
+    const res = await main({
+      action: 'v1.store.order.create',
+      items: [
+        { productId, skuId: 'small', quantity: 1 },
+        { productId, skuId: 'large', quantity: 2 },
+      ],
+    })
+
+    expect(res.success).toBe(true)
+    expect(res.order.items).toHaveLength(2)
+    const small = res.order.items.find((item: any) => item.skuId === 'small')
+    const large = res.order.items.find((item: any) => item.skuId === 'large')
+    expect(small).toMatchObject({ productId, qty: 1, priceYuan: 10 })
+    expect(large).toMatchObject({ productId, qty: 2, priceYuan: 15 })
+    expect(res.order.totalYuan).toBeCloseTo(40)
+  })
+
   it('rejects invalid order payloads', async () => {
     testCloud.setContext({ OPENID: 'buyer-2' })
     const res = await main({ action: 'v1.store.order.create', items: [] })

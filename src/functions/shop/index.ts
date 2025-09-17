@@ -115,6 +115,7 @@ function parseProductDocument(doc: any) {
 
 const zOrderItemInput = z.object({
   productId: z.string().min(1),
+  skuId: z.string().min(1).optional(),
   quantity: z.number().int().min(1).max(999),
 })
 
@@ -198,6 +199,35 @@ function getProductMinPrice(product: Product) {
 
 function roundToTwo(amount: number): number {
   return Math.round(amount * 100) / 100
+}
+
+function buildCartKey(productId: string, skuId?: string): string {
+  return skuId ? `${productId}__${skuId}` : productId
+}
+
+type ProductSku = NonNullable<Product['skus']>[number]
+
+function buildOrderItemTitle(productTitle: string, sku: ProductSku): string {
+  const attributes = sku.attributes
+    ? Object.entries(sku.attributes).filter(([key, value]) => {
+        if (!key) return false
+        return value !== undefined && value !== null && value !== ''
+      })
+    : []
+  if (attributes.length === 0) {
+    return `${productTitle} (${sku.skuId.trim()})`
+  }
+  const attributeText = attributes
+    .map(([key, value]) => `${key}: ${formatSkuAttributeValue(value)}`)
+    .filter(Boolean)
+    .join(' / ')
+  return attributeText ? `${productTitle} (${attributeText})` : `${productTitle} (${sku.skuId.trim()})`
+}
+
+function formatSkuAttributeValue(value: unknown): string {
+  if (typeof value === 'boolean') return value ? 'Yes' : 'No'
+  if (value === null || value === undefined) return ''
+  return String(value)
 }
 
 function toFeaturedProduct(id: string, product: Product): StoreFeaturedProduct {
@@ -432,16 +462,35 @@ const handlers: Record<string, (event: any) => Promise<ApiResponse> | ApiRespons
     const parsedInput = zOrderCreateInput.safeParse(event)
     if (!parsedInput.success) return fail('Invalid order payload', { issues: parsedInput.error.issues })
 
-    const aggregated = new Map<string, number>()
-    for (const { productId, quantity } of parsedInput.data.items) {
-      const trimmedId = productId.trim()
-      if (!trimmedId) continue
-      aggregated.set(trimmedId, (aggregated.get(trimmedId) || 0) + quantity)
+    const aggregated = new Map<
+      string,
+      {
+        productId: string
+        skuId?: string
+        quantity: number
+      }
+    >()
+    for (const { productId, skuId, quantity } of parsedInput.data.items) {
+      const trimmedProductId = productId.trim()
+      if (!trimmedProductId) continue
+      const trimmedSkuId = typeof skuId === 'string' ? skuId.trim() : ''
+      const key = buildCartKey(trimmedProductId, trimmedSkuId || undefined)
+      const existing = aggregated.get(key)
+      if (existing) {
+        existing.quantity += quantity
+      } else {
+        aggregated.set(key, {
+          productId: trimmedProductId,
+          skuId: trimmedSkuId || undefined,
+          quantity,
+        })
+      }
     }
     if (aggregated.size === 0) return fail('No valid items provided')
 
+    const productIds = Array.from(new Set(Array.from(aggregated.values()).map((item) => item.productId)))
     const productMap = new Map<string, ProductWithId>()
-    for (const [productId] of aggregated) {
+    for (const productId of productIds) {
       const snapshot = await productsCol().where({ _id: productId }).limit(1).get()
       const doc = snapshot.data?.[0]
       if (!doc) return fail('Product not found', { productId })
@@ -452,17 +501,29 @@ const handlers: Record<string, (event: any) => Promise<ApiResponse> | ApiRespons
     }
 
     let subtotal = 0
-    const orderItems = Array.from(aggregated.entries()).map(([productId, quantity]) => {
-      const product = productMap.get(productId)!
-      const unitPrice = getProductMinPrice(product)
-      subtotal += unitPrice * quantity
-      return {
-        productId,
-        title: product.title,
-        qty: quantity,
-        priceYuan: unitPrice,
+    const orderItems: Order['items'] = []
+    for (const item of aggregated.values()) {
+      const product = productMap.get(item.productId)!
+      let unitPrice = roundToTwo(product.price.priceYuan)
+      let title = product.title
+      let skuId = item.skuId
+      if (skuId) {
+        const matchedSku = (product.skus || []).find((sku) => sku && sku.skuId.trim() === skuId)
+        if (!matchedSku) return fail('SKU not found', { productId: item.productId, skuId })
+        if (matchedSku.isActive === false) return fail('SKU unavailable', { productId: item.productId, skuId })
+        unitPrice = roundToTwo(typeof matchedSku.priceYuan === 'number' ? matchedSku.priceYuan : product.price.priceYuan)
+        title = buildOrderItemTitle(product.title, matchedSku)
+        skuId = matchedSku.skuId.trim()
       }
-    })
+      subtotal += unitPrice * item.quantity
+      orderItems.push({
+        productId: item.productId,
+        skuId,
+        title,
+        qty: item.quantity,
+        priceYuan: unitPrice,
+      })
+    }
 
     const notesValue = parsedInput.data.notes?.trim() || undefined
     const addressValue = parsedInput.data.address

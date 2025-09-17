@@ -35,18 +35,18 @@ Page(withI18nPage({
 
   onQuantityChange(event: WechatMiniprogram.CustomEvent) {
     const dataset = (event?.currentTarget as any)?.dataset || {}
-    const productId = dataset.productId as string | undefined
+    const cartId = dataset.cartId as string | undefined
     const value = Number((event?.detail as any)?.value)
-    if (!productId || !Number.isFinite(value)) return
-    const items = updateCartQuantity(productId, value)
+    if (!cartId || !Number.isFinite(value)) return
+    const items = updateCartQuantity(cartId, value)
     const total = calculateTotal(items)
     this.setData({ items, total, totalCents: Math.round(total * 100) })
   },
 
   onRemoveItem(event: WechatMiniprogram.TouchEvent) {
-    const productId = event?.currentTarget?.dataset?.productId as string | undefined
-    if (!productId) return
-    const items = removeFromCart(productId)
+    const cartId = event?.currentTarget?.dataset?.cartId as string | undefined
+    if (!cartId) return
+    const items = removeFromCart(cartId)
     const total = calculateTotal(items)
     this.setData({ items, total, totalCents: Math.round(total * 100) })
   },

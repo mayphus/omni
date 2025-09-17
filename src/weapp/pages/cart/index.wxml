@@ -22,8 +22,8 @@
         <view slot="icon">
           <van-image width="80rpx" height="80rpx" fit="cover" src="{{ item.imageUrl || 'https://img.yzcdn.cn/vant/ipad.jpeg' }}" />
         </view>
-        <view slot="right-icon" class="cart-actions" data-product-id="{{ item.id }}">
-          <van-stepper value="{{ item.qty }}" min="0" bind:change="onQuantityChange" data-product-id="{{ item.id }}" />
+        <view slot="right-icon" class="cart-actions" data-cart-id="{{ item.id }}">
+          <van-stepper value="{{ item.qty }}" min="0" bind:change="onQuantityChange" data-cart-id="{{ item.id }}" />
         </view>
       </van-cell>
       <view slot="right">
@@ -31,7 +31,7 @@
           size="small"
           type="danger"
           block
-          data-product-id="{{ item.id }}"
+          data-cart-id="{{ item.id }}"
           bind:tap="onRemoveItem"
         >
           {{ i18n.removeButton }}

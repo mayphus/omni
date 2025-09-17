@@ -7,6 +7,7 @@ export type OrderStatus = z.infer<typeof zOrderStatus>
 
 export const zOrderItem = z.object({
   productId: z.string().min(1),
+  skuId: z.string().min(1).optional(),
   title: z.string().min(1),
   qty: z.number().int().min(1),
   priceYuan: zYuan.min(0),

@@ -92,7 +92,7 @@ export function fetchStoreOrders(status?: string, limit?: number) {
 }
 
 export type CreateOrderPayload = {
-  items: Array<{ productId: string; quantity: number }>
+  items: Array<{ productId: string; skuId?: string; quantity: number }>
   notes?: string
   address?: { contact?: string; phone?: string; detail?: string }
 }

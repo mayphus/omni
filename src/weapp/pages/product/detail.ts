@@ -365,12 +365,14 @@ Page(withI18nPage({
     }
     const price = selectedSku ? selectedSku.priceYuan : formatPriceYuan(product.price.priceYuan)
     const itemTitle = selectedSku ? `${product.title} (${selectedSku.label})` : product.title
+    const primaryImage = Array.isArray(data.gallery) && data.gallery.length ? data.gallery[0] : undefined
     addToCart(
       {
-        id: product.id,
+        productId: product.id,
+        skuId: selectedSku?.skuId,
         title: itemTitle,
         price,
-        imageUrl: undefined,
+        imageUrl: primaryImage,
       },
       quantity,
     )
