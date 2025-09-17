@@ -1,0 +1,41 @@
+<view class="profile-edit">
+  <view class="profile-edit__intro">
+    {{ i18n.profileEdit.description }}
+  </view>
+
+  <van-cell-group inset>
+    <van-cell title="{{ i18n.profileEdit.avatarLabel }}" center>
+      <view class="profile-edit__avatar">
+        <button
+          class="profile-edit__avatar-button"
+          open-type="chooseAvatar"
+          bind:chooseavatar="onChooseAvatar"
+          disabled="{{ saving }}"
+        >
+          <van-image
+            wx:if="{{ avatarUrl }}"
+            round
+            width="96rpx"
+            height="96rpx"
+            fit="cover"
+            src="{{ avatarUrl }}"
+          />
+          <van-icon wx:else name="photo" size="32" color="#969799" />
+        </button>
+      </view>
+    </van-cell>
+    <van-cell title="{{ i18n.profileEdit.nicknameLabel }}" center>
+      <view class="profile-edit__nickname">
+        <input
+          type="nickname"
+          value="{{ nicknameDraft }}"
+          placeholder="{{ i18n.profileEdit.nicknamePlaceholder }}"
+          bind:input="onNicknameInput"
+          bind:blur="onNicknameBlur"
+          bind:confirm="onNicknameConfirm"
+          disabled="{{ saving }}"
+        />
+      </view>
+    </van-cell>
+  </van-cell-group>
+</view>

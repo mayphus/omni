@@ -1,0 +1,41 @@
+.profile-edit {
+  padding: 32rpx 24rpx 48rpx;
+}
+
+.profile-edit__intro {
+  margin-bottom: 24rpx;
+  color: #969799;
+  font-size: 26rpx;
+  line-height: 1.5;
+}
+
+.profile-edit__avatar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  min-width: 120rpx;
+}
+
+.profile-edit__avatar-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 120rpx;
+  height: 120rpx;
+  background: transparent;
+  border: none;
+  padding: 0;
+  margin: 0;
+}
+
+.profile-edit__avatar-button::after {
+  display: none;
+}
+
+.profile-edit__nickname input {
+  border: none;
+  background: transparent;
+  text-align: right;
+  font-size: 28rpx;
+  color: #323233;
+}

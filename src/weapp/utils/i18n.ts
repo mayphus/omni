@@ -175,6 +175,13 @@ type I18nMessages = {
       success: string
     }
   }
+  profileEdit: {
+    title: string
+    description: string
+    avatarLabel: string
+    nicknameLabel: string
+    nicknamePlaceholder: string
+  }
   toast: {
     welcome: string
     signedIn: string
@@ -459,6 +466,13 @@ const MESSAGES: Record<Locale, I18nMessages> = {
         success: 'Language updated',
       },
     },
+    profileEdit: {
+      title: 'Edit Profile',
+      description: 'Update your avatar and nickname so orders look friendly.',
+      avatarLabel: 'Avatar',
+      nicknameLabel: 'Nickname',
+      nicknamePlaceholder: 'Tap to set nickname',
+    },
     toast: {
       welcome: 'Welcome!',
       signedIn: 'Signed in',
@@ -735,6 +749,13 @@ const MESSAGES: Record<Locale, I18nMessages> = {
         cancel: '取消',
         success: '语言已更新',
       },
+    },
+    profileEdit: {
+      title: '编辑资料',
+      description: '更新头像与昵称，方便辨识订单。',
+      avatarLabel: '头像',
+      nicknameLabel: '昵称',
+      nicknamePlaceholder: '点击设置昵称',
     },
     toast: {
       welcome: '欢迎！',

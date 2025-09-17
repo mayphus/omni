@@ -6,7 +6,7 @@
       center
       size="large"
       clickable
-      is-link="{{ !isLoggedIn }}"
+      is-link="{{ isLoggedIn }}"
       bind:click="onProfileAction"
       title="{{ isLoggedIn ? ((i18n.profile.header.signedInTitle || '') + (nickname || i18n.toast.defaultNickname || 'WeChat User')) : i18n.profile.header.signedOutTitle }}"
       title-style="font-weight:600"

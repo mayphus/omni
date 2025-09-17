@@ -1,8 +1,13 @@
-import { login, updateProfile } from '../../utils/auth'
+import { login } from '../../utils/auth'
 import { fetchStoreProfileOverview } from '../../utils/api'
 import { getAvailableLocales, setLocale, withI18nPage } from '../../utils/i18n'
 
-type StoredUser = { nickname?: string; avatarUrl?: string; isVIP?: boolean }
+type StoredUser = {
+  nickname?: string
+  avatarUrl?: string
+  isVIP?: boolean
+  profile?: { nickname?: string; avatarUrl?: string }
+}
 
 Page(withI18nPage({
   data: {
@@ -40,11 +45,12 @@ Page(withI18nPage({
   },
 
   updateUserState(user: StoredUser | null) {
+    const profile = (user as any)?.profile || {}
     this.setData({
       user,
       isLoggedIn: !!user,
-      nickname: user?.nickname || '',
-      avatarUrl: user?.avatarUrl || '',
+      nickname: user?.nickname || profile.nickname || '',
+      avatarUrl: user?.avatarUrl || profile.avatarUrl || '',
       isVIP: !!user?.isVIP,
     })
   },
@@ -97,41 +103,15 @@ Page(withI18nPage({
   },
 
   /**
-   * onUpdateProfile — prompt user profile and sync to cloud
+   * onProfileAction — login if needed; otherwise open profile editor
    */
-  async onUpdateProfile() {
-    const toast = ((this.data as any).i18n?.toast) || {}
-    try {
-      // @ts-ignore: WeChat API
-      const up = await wx.getUserProfile({ desc: toast.updateProfilePrompt || 'Update your profile' })
-      const nickname = up.userInfo?.nickName || toast.defaultNickname || 'WeChat User'
-      const avatarUrl = up.userInfo?.avatarUrl || ''
-      const res = await updateProfile({ nickname, avatarUrl })
-      if (res?.success && res.user) {
-        this.updateUserState(res.user)
-        wx.showToast({ title: toast.updated || 'Updated', icon: 'success' })
-      } else {
-        wx.showToast({ title: res?.error || toast.updateFailed || 'Update failed', icon: 'none' })
-      }
-    } catch (e) {
-      const err = e as WechatMiniprogram.GeneralCallbackResult | undefined
-      const message = err?.errMsg || ''
-      if (!message || message.includes('fail cancel')) {
-        wx.showToast({ title: toast.canceled || 'Canceled', icon: 'none' })
-      } else {
-        wx.showToast({ title: toast.updateFailed || 'Update failed', icon: 'none' })
-      }
-    }
-  },
-
-  onEditProfile() {
-    this.onUpdateProfile()
-  },
-
   onProfileAction() {
     const { isLoggedIn } = this.data as any
-    if (isLoggedIn) this.onEditProfile()
-    else this.onSignIn()
+    if (!isLoggedIn) {
+      void this.onSignIn()
+      return
+    }
+    wx.navigateTo({ url: '/pages/profile/edit/index' })
   },
 
   onOpenSettings() {
