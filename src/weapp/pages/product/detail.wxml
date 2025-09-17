@@ -42,11 +42,6 @@
         </view>
       </van-card>
 
-      <van-cell-group class="product-detail__section" inset>
-        <van-cell wx:if="{{ product.spuId }}" title="{{ i18n.codeLabel }}" value="{{ product.spuId }}" />
-        <van-cell title="{{ i18n.idLabel }}" value="{{ product.id }}" />
-      </van-cell-group>
-
       <van-panel class="product-detail__section" title="{{ i18n.detailsTab }}">
         <rich-text wx:if="{{ product.richDescription }}" nodes="{{ product.richDescription }}" />
         <view wx:elif="{{ product.description }}">{{ product.description }}</view>

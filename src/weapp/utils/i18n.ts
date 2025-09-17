@@ -128,8 +128,6 @@ type I18nMessages = {
     stockSoldOut: string
     stockLeftSuffix: string
     categoryLabel: string
-    codeLabel: string
-    idLabel: string
     attributeYes: string
     attributeNo: string
     maxQuantityPrefix: string
@@ -356,8 +354,6 @@ const MESSAGES: Record<Locale, I18nMessages> = {
       stockSoldOut: 'Sold out',
       stockLeftSuffix: ' left',
       categoryLabel: 'Category',
-      codeLabel: 'Product code',
-      idLabel: 'Product ID',
       attributeYes: 'Yes',
       attributeNo: 'No',
       maxQuantityPrefix: 'Max ',
@@ -635,8 +631,6 @@ const MESSAGES: Record<Locale, I18nMessages> = {
       stockSoldOut: '已售罄',
       stockLeftSuffix: ' 件',
       categoryLabel: '分类',
-      codeLabel: '商品编码',
-      idLabel: '商品ID',
       attributeYes: '是',
       attributeNo: '否',
       maxQuantityPrefix: '最多 ',
