@@ -10,21 +10,34 @@
 
 <block wx:else>
   <van-cell-group inset>
-    <van-cell
+    <van-swipe-cell
       wx:for="{{ items }}"
       wx:key="id"
-      title="{{ item.title }}"
-      label="¥{{ item.price }}"
-      border="false"
     >
-      <view slot="icon">
-        <van-image width="80rpx" height="80rpx" fit="cover" src="{{ item.imageUrl || 'https://img.yzcdn.cn/vant/ipad.jpeg' }}" />
+      <van-cell
+        title="{{ item.title }}"
+        label="¥{{ item.price }}"
+        border="false"
+      >
+        <view slot="icon">
+          <van-image width="80rpx" height="80rpx" fit="cover" src="{{ item.imageUrl || 'https://img.yzcdn.cn/vant/ipad.jpeg' }}" />
+        </view>
+        <view slot="right-icon" class="cart-actions" data-product-id="{{ item.id }}">
+          <van-stepper value="{{ item.qty }}" min="0" bind:change="onQuantityChange" data-product-id="{{ item.id }}" />
+        </view>
+      </van-cell>
+      <view slot="right">
+        <van-button
+          size="small"
+          type="danger"
+          block
+          data-product-id="{{ item.id }}"
+          bind:tap="onRemoveItem"
+        >
+          {{ i18n.removeButton }}
+        </van-button>
       </view>
-      <view slot="right-icon" class="cart-actions" data-product-id="{{ item.id }}">
-        <van-stepper value="{{ item.qty }}" min="0" bind:change="onQuantityChange" data-product-id="{{ item.id }}" />
-        <van-button class="remove" size="mini" type="danger" plain bind:tap="onRemoveItem" data-product-id="{{ item.id }}">{{ i18n.removeButton }}</van-button>
-      </view>
-    </van-cell>
+    </van-swipe-cell>
   </van-cell-group>
   <view class="cart-actions-row">
     <van-button type="warning" size="small" bind:tap="onClearCart">{{ i18n.clearButton }}</van-button>
