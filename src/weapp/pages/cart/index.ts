@@ -46,7 +46,10 @@ Page(withI18nPage({
   onQuantityChange(event: WechatMiniprogram.CustomEvent) {
     const dataset = (event?.currentTarget as any)?.dataset || {}
     const cartId = dataset.cartId as string | undefined
-    const value = Number((event?.detail as any)?.value)
+    const detail = event?.detail as any
+    const rawValue = typeof detail === 'number' ? detail : Number(detail?.value)
+    if (!Number.isFinite(rawValue)) return
+    const value = rawValue < 1 ? 1 : Math.floor(rawValue)
     if (!cartId || !Number.isFinite(value)) return
     const items = updateCartQuantity(cartId, value)
     this.applyCartState(items, (this.data as any).selectedIds as string[])

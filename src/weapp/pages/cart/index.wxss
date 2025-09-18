@@ -3,6 +3,7 @@ page {
   box-sizing: border-box;
   padding-bottom: calc(constant(safe-area-inset-bottom) + 50px);
   padding-bottom: calc(env(safe-area-inset-bottom) + 50px);
+  background: #f7f8fa;
 }
 
 .cart-actions {
@@ -39,6 +40,7 @@ page {
   background: #fff;
   border-radius: 16rpx;
   padding: 24rpx;
+  box-shadow: 0 12rpx 40rpx rgba(0, 0, 0, 0.04);
 }
 
 .cart-item__checkbox {
@@ -84,7 +86,11 @@ page {
   align-items: center;
   justify-content: space-between;
   gap: 16rpx;
-  padding: 24rpx 32rpx 0;
+  padding: 24rpx 32rpx;
+  margin: 16rpx 32rpx 0;
+  background: #fff;
+  border-radius: 16rpx;
+  box-shadow: 0 12rpx 40rpx rgba(0, 0, 0, 0.04);
 }
 
 .cart-footer__select {
