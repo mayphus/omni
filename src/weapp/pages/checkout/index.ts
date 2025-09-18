@@ -1,4 +1,4 @@
-import { loadCart, clearCart, type CartItem } from '../../utils/cart'
+import { loadCart, loadDirectCheckout, clearCart, clearDirectCheckout, type CartItem } from '../../utils/cart'
 import { createStoreOrder } from '../../utils/api'
 import { withI18nPage } from '../../utils/i18n'
 
@@ -17,10 +17,40 @@ Page(withI18nPage({
     subtotalText: '0.00',
     totalText: '0.00',
     submitting: false,
+    checkoutMode: 'cart' as 'cart' | 'direct',
+  },
+
+  onLoad(query: Record<string, string | undefined>) {
+    const mode = query?.mode === 'direct' ? 'direct' : 'cart'
+    this.setData({ checkoutMode: mode })
   },
 
   onShow() {
-    const items = loadCart()
+    this.refreshCheckoutItems()
+  },
+
+  onUnload() {
+    if ((this.data as any).checkoutMode === 'direct') {
+      clearDirectCheckout()
+    }
+  },
+
+  onGoShopping() {
+    wx.switchTab({ url: '/pages/index/index' })
+  },
+
+  refreshCheckoutItems() {
+    const data = this.data as any
+    const mode = data.checkoutMode === 'direct' ? 'direct' : 'cart'
+    let items: CartItem[] = []
+    if (mode === 'direct') {
+      items = loadDirectCheckout()
+      if ((!items || !items.length) && Array.isArray(data.items) && data.items.length) {
+        items = data.items
+      }
+    } else {
+      items = loadCart()
+    }
     const subtotal = calculateSubtotal(items)
     const displayItems = items.map((item) => ({ ...item, totalText: (item.price * item.qty).toFixed(2) }))
     this.setData({
@@ -31,10 +61,6 @@ Page(withI18nPage({
       subtotalText: subtotal.toFixed(2),
       totalText: subtotal.toFixed(2),
     })
-  },
-
-  onGoShopping() {
-    wx.switchTab({ url: '/pages/index/index' })
   },
 
   async onSubmit() {
@@ -57,7 +83,11 @@ Page(withI18nPage({
         }),
       }
       await createStoreOrder(payload)
-      clearCart()
+      if ((this.data as any).checkoutMode === 'direct') {
+        clearDirectCheckout()
+      } else {
+        clearCart()
+      }
       this.setData({
         items: [],
         subtotal: 0,

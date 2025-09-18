@@ -1,5 +1,17 @@
 import { describe, it, expect, beforeEach, beforeAll } from 'vitest'
-import { loadCart, saveCart, addToCart, updateCartQuantity, removeFromCart, clearCart } from '../../src/weapp/utils/cart'
+import {
+  loadCart,
+  saveCart,
+  addToCart,
+  updateCartQuantity,
+  removeFromCart,
+  clearCart,
+  loadDirectCheckout,
+  saveDirectCheckout,
+  clearDirectCheckout,
+  getCartItemId,
+  type CartItem,
+} from '../../src/weapp/utils/cart'
 
 const STORAGE_KEY = 'tongmeng-plant:cart'
 const storage = new Map<string, any>()
@@ -10,6 +22,9 @@ beforeAll(() => {
   ;(wx as any).setStorageSync = (key: string, value: any) => {
     storage.set(key, value)
   }
+  ;(wx as any).removeStorageSync = (key: string) => {
+    storage.delete(key)
+  }
 })
 
 function getStorage(): any {
@@ -19,6 +34,7 @@ function getStorage(): any {
 describe('cart utils', () => {
   beforeEach(() => {
     clearCart()
+    clearDirectCheckout()
     storage.clear()
   })
 
@@ -72,5 +88,22 @@ describe('cart utils', () => {
     const blueItem = cart.find((item) => item.skuId === 'blue')
     expect(redItem?.qty).toBe(2)
     expect(blueItem?.qty).toBe(1)
+  })
+
+  it('stores direct checkout items separately', () => {
+    const directItem: CartItem = {
+      id: getCartItemId('direct-1'),
+      productId: 'direct-1',
+      title: 'Direct Item',
+      price: 5,
+      qty: 2,
+    }
+    saveDirectCheckout([directItem])
+    const direct = loadDirectCheckout()
+    expect(direct).toHaveLength(1)
+    expect(direct[0]).toMatchObject({ id: directItem.id, productId: 'direct-1', qty: 2 })
+    expect(loadCart()).toHaveLength(0)
+    clearDirectCheckout()
+    expect(loadDirectCheckout()).toHaveLength(0)
   })
 })

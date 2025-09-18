@@ -1,5 +1,5 @@
 import { fetchProductDetail } from '../../utils/api'
-import { addToCart } from '../../utils/cart'
+import { addToCart, saveDirectCheckout, getCartItemId, type CartItem } from '../../utils/cart'
 import { withI18nPage } from '../../utils/i18n'
 import type { I18nMessages } from '../../utils/i18n'
 import type { ProductWithId } from '@shared/models/product'
@@ -366,20 +366,33 @@ Page(withI18nPage({
     const price = selectedSku ? selectedSku.priceYuan : formatPriceYuan(product.price.priceYuan)
     const itemTitle = selectedSku ? `${product.title} (${selectedSku.label})` : product.title
     const primaryImage = Array.isArray(data.gallery) && data.gallery.length ? data.gallery[0] : undefined
-    addToCart(
-      {
-        productId: product.id,
-        skuId: selectedSku?.skuId,
-        title: itemTitle,
-        price,
-        imageUrl: primaryImage,
-      },
-      quantity,
-    )
-    const toastText = data.i18n?.addedToast || 'Added to cart'
-    wx.showToast({ title: toastText, icon: 'success' })
-    if (action === 'buyNow') {
-      wx.navigateTo({ url: '/pages/checkout/index' })
+    const cartItemId = getCartItemId(product.id, selectedSku?.skuId)
+    const checkoutItem: CartItem = {
+      id: cartItemId,
+      productId: product.id,
+      skuId: selectedSku?.skuId,
+      title: itemTitle,
+      price,
+      imageUrl: primaryImage,
+      qty: quantity,
+    }
+
+    if (action === 'addToCart') {
+      addToCart(
+        {
+          productId: checkoutItem.productId,
+          skuId: checkoutItem.skuId,
+          title: checkoutItem.title,
+          price: checkoutItem.price,
+          imageUrl: checkoutItem.imageUrl,
+        },
+        quantity,
+      )
+      const toastText = data.i18n?.addedToast || 'Added to cart'
+      wx.showToast({ title: toastText, icon: 'success' })
+    } else if (action === 'buyNow') {
+      saveDirectCheckout([checkoutItem])
+      wx.navigateTo({ url: '/pages/checkout/index?mode=direct' })
     }
     return true
   },

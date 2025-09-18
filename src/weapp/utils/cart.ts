@@ -9,10 +9,37 @@ export type CartItem = {
 }
 
 const STORAGE_KEY = 'tongmeng-plant:cart'
+const DIRECT_CHECKOUT_KEY = 'tongmeng-plant:checkout:direct'
+
+export function getCartItemId(productId: string, skuId?: string): string {
+  return skuId ? `${productId}__${skuId}` : productId
+}
 
 export function loadCart(): CartItem[] {
+  return readItems(STORAGE_KEY)
+}
+
+export function saveCart(items: CartItem[]): void {
+  writeItems(STORAGE_KEY, items)
+}
+
+export function loadDirectCheckout(): CartItem[] {
+  return readItems(DIRECT_CHECKOUT_KEY)
+}
+
+export function saveDirectCheckout(items: CartItem[]): void {
+  writeItems(DIRECT_CHECKOUT_KEY, items)
+}
+
+export function clearDirectCheckout(): void {
   try {
-    const stored = wx.getStorageSync(STORAGE_KEY) as CartItem[] | undefined
+    wx.removeStorageSync(DIRECT_CHECKOUT_KEY)
+  } catch {}
+}
+
+function readItems(key: string): CartItem[] {
+  try {
+    const stored = wx.getStorageSync(key) as CartItem[] | undefined
     if (Array.isArray(stored)) {
       const normalized = stored
         .map((entry) => normalizeCartEntry(entry))
@@ -27,9 +54,9 @@ export function loadCart(): CartItem[] {
   return []
 }
 
-export function saveCart(items: CartItem[]): void {
+function writeItems(key: string, items: CartItem[]): void {
   try {
-    wx.setStorageSync(STORAGE_KEY, items)
+    wx.setStorageSync(key, items)
   } catch {}
 }
 
@@ -41,7 +68,7 @@ export function addToCart(
   if (!productId) return loadCart()
   const skuId = typeof item.skuId === 'string' && item.skuId.trim() ? item.skuId.trim() : undefined
   const sanitizedQty = Number.isFinite(qty) && qty > 0 ? Math.floor(qty) || 1 : 1
-  const cartId = buildCartItemId(productId, skuId)
+  const cartId = getCartItemId(productId, skuId)
   const cart = loadCart()
   const index = cart.findIndex((entry) => entry.id === cartId)
   if (index >= 0) {
@@ -84,10 +111,6 @@ export function clearCart(): void {
   saveCart([])
 }
 
-function buildCartItemId(productId: string, skuId?: string): string {
-  return skuId ? `${productId}__${skuId}` : productId
-}
-
 function sanitizePrice(price: number): number {
   if (typeof price !== 'number' || !Number.isFinite(price)) return 0
   return Math.round(price * 100) / 100
@@ -99,7 +122,7 @@ function normalizeCartEntry(entry: any): CartItem | null {
   if (!rawProductId) return null
   const rawSkuId = typeof entry.skuId === 'string' ? entry.skuId.trim() : undefined
   const skuId = rawSkuId || undefined
-  const id = buildCartItemId(rawProductId, skuId)
+  const id = getCartItemId(rawProductId, skuId)
   const qtyValue = Number(entry.qty)
   const qty = Number.isFinite(qtyValue) && qtyValue > 0 ? Math.floor(qtyValue) || 1 : 1
   const priceValue = Number(entry.price)
