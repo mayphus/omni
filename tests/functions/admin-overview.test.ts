@@ -17,6 +17,19 @@ describe('functions: admin overview', () => {
     expect(res.error).toMatch(/Not authenticated/)
   })
 
+  it('rejects admin order status updates without authentication', async () => {
+    testCloud.setContext({ TCB_UUID: undefined, OPENID: undefined })
+    const res = await main({ action: 'v1.admin.orders.updateStatus', orderId: 'missing', status: 'paid' })
+    expect(res.success).toBe(false)
+    expect(res.error).toBe('Not authenticated')
+  })
+
+  it('fails admin order status update when the order does not exist', async () => {
+    const res = await main({ action: 'v1.admin.orders.updateStatus', orderId: 'missing-order', status: 'paid' })
+    expect(res.success).toBe(false)
+    expect(res.error).toBe('Order not found')
+  })
+
   it('lists orders sorted by createdAt desc', async () => {
     const now = nowMs()
     const firstId = testCloud.insert(Collections.Orders, {

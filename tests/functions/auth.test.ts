@@ -22,6 +22,28 @@ describe('functions: auth', () => {
     expect(users[0].profile.nickname).toBeTruthy()
   })
 
+  it('fails login when WX context lacks OPENID', async () => {
+    testCloud.setContext({ OPENID: undefined, TCB_UUID: 'ctx-missing' })
+    const res = await main({ action: 'v1.auth.login' })
+    expect(res.success).toBe(false)
+    expect(res.error).toBe('Missing OPENID in WX context')
+  })
+
+  it('returns existing user without duplicating records', async () => {
+    testCloud.setContext({ OPENID: 'repeat-openid', TCB_UUID: 'repeat-admin' })
+    const first = await main({ action: 'v1.auth.login' })
+    expect(first.success).toBe(true)
+    expect(first.isNew).toBe(true)
+
+    const second = await main({ action: 'v1.auth.login' })
+    expect(second.success).toBe(true)
+    expect(second.isNew).toBe(false)
+    expect(second.user.openid).toBe('repeat-openid')
+
+    const users = testCloud.getData(Collections.Users).filter((doc) => doc.openid === 'repeat-openid')
+    expect(users).toHaveLength(1)
+  })
+
   it('updates profile even if the user has not logged in before', async () => {
     testCloud.setContext({ OPENID: 'profile-openid', UNIONID: 'profile-union', TCB_UUID: 'profile-admin' })
     const res = await main({
@@ -40,4 +62,3 @@ describe('functions: auth', () => {
     expect(users[0].profile.nickname).toBe('Tester')
   })
 })
-

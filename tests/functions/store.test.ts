@@ -642,6 +642,100 @@ describe('functions: store endpoints', () => {
     expect(stored?.payment?.outTradeNo).toBeDefined()
   })
 
+  it('fails to prepare payment when payment service is unavailable', async () => {
+    const now = nowMs()
+    testCloud.setContext({ OPENID: 'buyer-no-service' })
+    const productId = testCloud.insert(Collections.Products, {
+      title: 'Service Toggle Item',
+      images: [{ fileId: 'svc', url: 'https://example.com/svc.jpg' }],
+      category: 'gadgets',
+      price: { currency: 'CNY', priceYuan: 12 },
+      stock: 5,
+      isActive: true,
+      createdAt: now,
+      updatedAt: now,
+    })
+
+    const createRes = await main({
+      action: 'v1.store.order.create',
+      items: [{ productId, quantity: 1 }],
+    })
+    const orderId = createRes.order.id
+
+    testCloud.setCloudPayEnabled(false)
+
+    const prepareRes = await main({ action: 'v1.store.order.payment.prepare', orderId })
+    expect(prepareRes.success).toBe(false)
+    expect(prepareRes.error).toBe('Payment service unavailable')
+
+    const stored = testCloud.getData(Collections.Orders).find((doc) => doc._id === orderId)
+    expect(stored?.payment?.status).toBe('pending')
+    expect(stored?.payment?.outTradeNo).toBeUndefined()
+  })
+
+  it('rejects payment preparation for non-pending orders', async () => {
+    const now = nowMs()
+    const orderId = testCloud.insert(Collections.Orders, {
+      userId: 'buyer-paid',
+      items: [{ productId: 'prod-paid', title: 'Paid One', qty: 1, priceYuan: 20 }],
+      subtotalYuan: 20,
+      shippingYuan: 0,
+      discountYuan: 0,
+      totalYuan: 20,
+      status: 'paid',
+      payment: {
+        method: 'wechat_pay',
+        status: 'succeeded',
+        amountYuan: 20,
+        currency: 'CNY',
+        paidAt: now - 100,
+      },
+      createdAt: now - 200,
+      updatedAt: now - 100,
+    })
+
+    testCloud.setContext({ OPENID: 'buyer-paid' })
+    const prepareRes = await main({ action: 'v1.store.order.payment.prepare', orderId })
+    expect(prepareRes.success).toBe(false)
+    expect(prepareRes.error).toBe('Order already processed')
+  })
+
+  it('propagates unified order errors during payment preparation', async () => {
+    const now = nowMs()
+    testCloud.setContext({ OPENID: 'buyer-unified-error' })
+    const productId = testCloud.insert(Collections.Products, {
+      title: 'Boom Item',
+      images: [{ fileId: 'boom', url: 'https://example.com/boom.jpg' }],
+      category: 'gadgets',
+      price: { currency: 'CNY', priceYuan: 30 },
+      stock: 5,
+      isActive: true,
+      createdAt: now,
+      updatedAt: now,
+    })
+
+    const createRes = await main({
+      action: 'v1.store.order.create',
+      items: [{ productId, quantity: 1 }],
+    })
+    const orderId = createRes.order.id
+
+    testCloud.mockCloudPay({
+      unifiedOrder: async () => {
+        throw new Error('unified-failed')
+      },
+    })
+
+    const prepareRes = await main({ action: 'v1.store.order.payment.prepare', orderId })
+    expect(prepareRes.success).toBe(false)
+    expect(prepareRes.error).toBe('Failed to prepare payment')
+    expect(prepareRes.message).toBe('unified-failed')
+
+    const stored = testCloud.getData(Collections.Orders).find((doc) => doc._id === orderId)
+    expect(stored?.payment?.status).toBe('pending')
+    expect(stored?.payment?.outTradeNo).toBeUndefined()
+  })
+
   it('confirms payment and marks order as paid', async () => {
     const now = nowMs()
     testCloud.setContext({ OPENID: 'buyer-confirm' })
@@ -711,6 +805,219 @@ describe('functions: store endpoints', () => {
     const stored = testCloud.getData(Collections.Orders).find((doc) => doc._id === orderId)
     expect(stored?.status).toBe('pending')
     expect(stored?.payment?.status).toBe('ready')
+  })
+
+  it('fails payment confirmation when payment service is unavailable', async () => {
+    const now = nowMs()
+    testCloud.setContext({ OPENID: 'buyer-confirm-no-service' })
+    const productId = testCloud.insert(Collections.Products, {
+      title: 'No Service Item',
+      images: [{ fileId: 'nosvc', url: 'https://example.com/nosvc.jpg' }],
+      category: 'gadgets',
+      price: { currency: 'CNY', priceYuan: 14 },
+      stock: 5,
+      isActive: true,
+      createdAt: now,
+      updatedAt: now,
+    })
+
+    const createRes = await main({
+      action: 'v1.store.order.create',
+      items: [{ productId, quantity: 1 }],
+    })
+    const orderId = createRes.order.id
+    await main({ action: 'v1.store.order.payment.prepare', orderId })
+
+    testCloud.setCloudPayEnabled(false)
+
+    const confirmRes = await main({ action: 'v1.store.order.payment.confirm', orderId })
+    expect(confirmRes.success).toBe(false)
+    expect(confirmRes.error).toBe('Payment service unavailable')
+  })
+
+  it('propagates payment query errors during confirmation', async () => {
+    const now = nowMs()
+    testCloud.setContext({ OPENID: 'buyer-query-error' })
+    const productId = testCloud.insert(Collections.Products, {
+      title: 'Query Error Item',
+      images: [{ fileId: 'qerr', url: 'https://example.com/qerr.jpg' }],
+      category: 'gadgets',
+      price: { currency: 'CNY', priceYuan: 22 },
+      stock: 5,
+      isActive: true,
+      createdAt: now,
+      updatedAt: now,
+    })
+
+    const createRes = await main({
+      action: 'v1.store.order.create',
+      items: [{ productId, quantity: 1 }],
+    })
+    const orderId = createRes.order.id
+    await main({ action: 'v1.store.order.payment.prepare', orderId })
+
+    testCloud.mockCloudPay({
+      queryOrder: async () => {
+        throw new Error('query-failed')
+      },
+    })
+
+    const confirmRes = await main({ action: 'v1.store.order.payment.confirm', orderId })
+    expect(confirmRes.success).toBe(false)
+    expect(confirmRes.error).toBe('Failed to verify payment')
+    expect(confirmRes.message).toBe('query-failed')
+  })
+
+  it('rejects payment confirmation when amount mismatch is detected', async () => {
+    const now = nowMs()
+    testCloud.setContext({ OPENID: 'buyer-mismatch' })
+    const productId = testCloud.insert(Collections.Products, {
+      title: 'Mismatch Item',
+      images: [{ fileId: 'mm', url: 'https://example.com/mm.jpg' }],
+      category: 'gadgets',
+      price: { currency: 'CNY', priceYuan: 16 },
+      stock: 5,
+      isActive: true,
+      createdAt: now,
+      updatedAt: now,
+    })
+
+    const createRes = await main({
+      action: 'v1.store.order.create',
+      items: [{ productId, quantity: 2 }],
+    })
+    const orderId = createRes.order.id
+    await main({ action: 'v1.store.order.payment.prepare', orderId })
+
+    testCloud.mockCloudPay({
+      queryOrder: async () => ({
+        tradeState: 'SUCCESS',
+        resultCode: 'SUCCESS',
+        returnCode: 'SUCCESS',
+        totalFee: 99,
+      }),
+    })
+
+    const confirmRes = await main({ action: 'v1.store.order.payment.confirm', orderId })
+    expect(confirmRes.success).toBe(false)
+    expect(confirmRes.error).toBe('Payment amount mismatch')
+    expect(confirmRes.totalFee).toBe(99)
+  })
+
+  it('rejects payment confirmation when payment has not been prepared', async () => {
+    const now = nowMs()
+    testCloud.setContext({ OPENID: 'buyer-no-out-trade' })
+    const productId = testCloud.insert(Collections.Products, {
+      title: 'Unprepared Item',
+      images: [{ fileId: 'unprep', url: 'https://example.com/unprep.jpg' }],
+      category: 'gadgets',
+      price: { currency: 'CNY', priceYuan: 9 },
+      stock: 5,
+      isActive: true,
+      createdAt: now,
+      updatedAt: now,
+    })
+
+    const createRes = await main({
+      action: 'v1.store.order.create',
+      items: [{ productId, quantity: 1 }],
+    })
+    const confirmRes = await main({ action: 'v1.store.order.payment.confirm', orderId: createRes.order.id })
+    expect(confirmRes.success).toBe(false)
+    expect(confirmRes.error).toBe('Payment not initialised for order')
+  })
+
+  it('rejects payment confirmation when order lacks payment information', async () => {
+    const now = nowMs()
+    const orderId = testCloud.insert(Collections.Orders, {
+      userId: 'buyer-no-payment',
+      items: [{ productId: 'prod-no-payment', title: 'No Payment', qty: 1, priceYuan: 11 }],
+      subtotalYuan: 11,
+      shippingYuan: 0,
+      discountYuan: 0,
+      totalYuan: 11,
+      status: 'pending',
+      createdAt: now - 100,
+      updatedAt: now - 100,
+    })
+
+    testCloud.setContext({ OPENID: 'buyer-no-payment' })
+    const confirmRes = await main({ action: 'v1.store.order.payment.confirm', orderId })
+    expect(confirmRes.success).toBe(false)
+    expect(confirmRes.error).toBe('Order missing payment information')
+  })
+
+  it('rejects payment confirmation for orders owned by another user', async () => {
+    const now = nowMs()
+    testCloud.setContext({ OPENID: 'actual-owner' })
+    const productId = testCloud.insert(Collections.Products, {
+      title: 'Owner Item',
+      images: [{ fileId: 'owner', url: 'https://example.com/owner.jpg' }],
+      category: 'gadgets',
+      price: { currency: 'CNY', priceYuan: 13 },
+      stock: 5,
+      isActive: true,
+      createdAt: now,
+      updatedAt: now,
+    })
+
+    const createRes = await main({
+      action: 'v1.store.order.create',
+      items: [{ productId, quantity: 1 }],
+    })
+    const orderId = createRes.order.id
+    await main({ action: 'v1.store.order.payment.prepare', orderId })
+
+    testCloud.setContext({ OPENID: 'intruder-confirm' })
+    const confirmRes = await main({ action: 'v1.store.order.payment.confirm', orderId })
+    expect(confirmRes.success).toBe(false)
+    expect(confirmRes.error).toBe('Order not found')
+  })
+
+  it('marks order and payment as refunded when provider reports refund', async () => {
+    const now = nowMs()
+    testCloud.setContext({ OPENID: 'buyer-refunded' })
+    const productId = testCloud.insert(Collections.Products, {
+      title: 'Refunded Item',
+      images: [{ fileId: 'ref', url: 'https://example.com/ref.jpg' }],
+      category: 'gadgets',
+      price: { currency: 'CNY', priceYuan: 28 },
+      stock: 5,
+      isActive: true,
+      createdAt: now,
+      updatedAt: now,
+    })
+
+    const createRes = await main({
+      action: 'v1.store.order.create',
+      items: [{ productId, quantity: 1 }],
+    })
+    const orderId = createRes.order.id
+    await main({ action: 'v1.store.order.payment.prepare', orderId })
+
+    const storedBefore = testCloud.getData(Collections.Orders).find((doc) => doc._id === orderId)
+    const expectedTotal = storedBefore?.payment?.amountYuan ?? createRes.order.totalYuan
+    const expectedCents = Math.round(expectedTotal * 100)
+
+    testCloud.mockCloudPay({
+      queryOrder: async () => ({
+        tradeState: 'REFUND',
+        tradeStateDesc: 'Refunded order',
+        resultCode: 'SUCCESS',
+        returnCode: 'SUCCESS',
+        totalFee: expectedCents,
+      }),
+    })
+
+    const confirmRes = await main({ action: 'v1.store.order.payment.confirm', orderId })
+    expect(confirmRes.success).toBe(false)
+    expect(confirmRes.error).toBe('Payment not completed')
+    expect(confirmRes.tradeState).toBe('REFUND')
+
+    const storedAfter = testCloud.getData(Collections.Orders).find((doc) => doc._id === orderId)
+    expect(storedAfter?.status).toBe('refunded')
+    expect(storedAfter?.payment?.status).toBe('refunded')
+    expect(storedAfter?.payment?.lastError).toBe('Refunded order')
   })
 
   it('allows a customer to cancel their pending order', async () => {

@@ -104,10 +104,12 @@ type CloudPayHandler = {
 
 let cloudPayHandlers: CloudPayHandler = {}
 let lastUnifiedOrders = new Map<string, { totalFee: number }>()
+let cloudPayEnabled = true
 
 function resetCloudPay() {
   cloudPayHandlers = {}
   lastUnifiedOrders = new Map()
+  cloudPayEnabled = true
 }
 
 function resetStore() {
@@ -141,50 +143,76 @@ function resetStore() {
     },
   }),
   getWXContext: () => ({ ...context }),
-  cloudPay: () => ({
-    unifiedOrder: async (payload: Record<string, any>) => {
-      const totalFee = typeof payload?.totalFee === 'number' ? payload.totalFee : 0
-      if (typeof payload?.outTradeNo === 'string') {
-        lastUnifiedOrders.set(payload.outTradeNo, { totalFee })
-      }
-      if (cloudPayHandlers.unifiedOrder) {
-        return await cloudPayHandlers.unifiedOrder(payload)
-      }
-      const outTradeNo = payload?.outTradeNo || `order-${Date.now()}`
-      return {
-        payment: {
-          timeStamp: String(Date.now()),
-          nonceStr: 'mock-nonce',
-          package: `prepay_id=${outTradeNo}`,
-          signType: 'RSA',
-          paySign: 'mock-signature',
+  cloudPay: () => {
+    if (!cloudPayEnabled) {
+      return new Proxy(
+        {},
+        {
+          get() {
+            return undefined
+          },
         },
-        prepayId: `prepay-${outTradeNo}`,
-        outTradeNo,
-      }
-    },
-    queryOrder: async (payload: Record<string, any>) => {
-      if (cloudPayHandlers.queryOrder) {
-        return await cloudPayHandlers.queryOrder(payload)
-      }
-      const info = typeof payload?.outTradeNo === 'string' ? lastUnifiedOrders.get(payload.outTradeNo) : undefined
-      const totalFee = info?.totalFee ?? 0
-      const outTradeNo = payload?.outTradeNo || 'unknown'
-      return {
-        tradeState: 'SUCCESS',
-        resultCode: 'SUCCESS',
-        returnCode: 'SUCCESS',
-        transactionId: `txn-${outTradeNo}`,
-        totalFee,
-      }
-    },
-    refund: async (payload: Record<string, any>) => {
-      if (cloudPayHandlers.refund) {
-        return await cloudPayHandlers.refund(payload)
-      }
-      return { resultCode: 'SUCCESS', returnCode: 'SUCCESS' }
-    },
-  }),
+      )
+    }
+
+    const service = {
+      unifiedOrder: async (payload: Record<string, any>) => {
+        const totalFee = typeof payload?.totalFee === 'number' ? payload.totalFee : 0
+        if (typeof payload?.outTradeNo === 'string') {
+          lastUnifiedOrders.set(payload.outTradeNo, { totalFee })
+        }
+        if (cloudPayHandlers.unifiedOrder) {
+          return await cloudPayHandlers.unifiedOrder(payload)
+        }
+        const outTradeNo = payload?.outTradeNo || `order-${Date.now()}`
+        return {
+          payment: {
+            timeStamp: String(Date.now()),
+            nonceStr: 'mock-nonce',
+            package: `prepay_id=${outTradeNo}`,
+            signType: 'RSA',
+            paySign: 'mock-signature',
+          },
+          prepayId: `prepay-${outTradeNo}`,
+          outTradeNo,
+        }
+      },
+      queryOrder: async (payload: Record<string, any>) => {
+        if (cloudPayHandlers.queryOrder) {
+          return await cloudPayHandlers.queryOrder(payload)
+        }
+        const info = typeof payload?.outTradeNo === 'string' ? lastUnifiedOrders.get(payload.outTradeNo) : undefined
+        const totalFee = info?.totalFee ?? 0
+        const outTradeNo = payload?.outTradeNo || 'unknown'
+        return {
+          tradeState: 'SUCCESS',
+          resultCode: 'SUCCESS',
+          returnCode: 'SUCCESS',
+          transactionId: `txn-${outTradeNo}`,
+          totalFee,
+        }
+      },
+      refund: async (payload: Record<string, any>) => {
+        if (cloudPayHandlers.refund) {
+          return await cloudPayHandlers.refund(payload)
+        }
+        return { resultCode: 'SUCCESS', returnCode: 'SUCCESS' }
+      },
+    }
+
+    return new Proxy(service, {
+      get(target, prop, receiver) {
+        if (!cloudPayEnabled && (prop === 'unifiedOrder' || prop === 'queryOrder' || prop === 'refund')) {
+          return undefined
+        }
+        const value = Reflect.get(target, prop, receiver)
+        if (typeof value === 'function') {
+          return value.bind(target)
+        }
+        return value
+      },
+    })
+  },
 }
 
 export const testCloud = {
@@ -204,6 +232,9 @@ export const testCloud = {
     cloudPayHandlers = { ...cloudPayHandlers, ...handlers }
   },
   getLastUnifiedOrderTotals: () => Array.from(lastUnifiedOrders.entries()),
+  setCloudPayEnabled: (enabled: boolean) => {
+    cloudPayEnabled = enabled
+  },
 }
 
 export async function importShop() {
