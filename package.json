@@ -16,7 +16,7 @@
     "deploy:admin": "pnpm run build:admin && tcb hosting deploy admin -e cloud1-1g4nt4micf670d3d",
     "deploy:functions": "pnpm run build:functions && tcb fn deploy shop --force",
     "deploy:weapp": "pnpm run build:weapp",
-    "deploy:all": "pnpm run build:weapp && pnpm run build:weapp:npm && pnpm run build:functions && pnpm run build:admin",
+    "deploy:all": "pnpm run deploy:weapp && pnpm run deploy:functions && pnpm run deploy:admin",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run && pnpm run build:all",
     "test:ci": "vitest run --reporter=dot",
