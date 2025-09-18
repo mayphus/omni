@@ -12,9 +12,10 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["src/*"],
-      "@shared/*": ["src/shared/*"]
+      "@shared/*": ["src/shared/*"],
+      "vite": ["types/vite"]
     }
   },
-  "include": ["src/**/*", "vite.config.ts", "vite.config.main.ts"],
+  "include": ["src/**/*", "vite.config.ts", "vite.config.main.ts", "types/**/*.d.ts"],
   "exclude": ["node_modules", "functions", "weapp", "admin"]
 }

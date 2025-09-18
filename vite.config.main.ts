@@ -6,7 +6,7 @@ import autoprefixer from 'autoprefixer'
 import fs from 'node:fs'
 import path from 'node:path'
 
-export default defineConfig(({ mode }) => {
+export default defineConfig(({ mode }: { mode: string }) => {
   const alias = {
     '@shared': fileURLToPath(new URL('./src/shared', import.meta.url)),
     '@': fileURLToPath(new URL('./src', import.meta.url)),
@@ -70,7 +70,7 @@ export default defineConfig(({ mode }) => {
         rollupOptions: {
           treeshake: false,
           // External only real npm packages, bundle local code
-          external: (id) => {
+          external: (id: string) => {
             // These are npm packages that should be external
             const externalPackages = ['wx-server-sdk', 'zod']
             // Check if it's one of our external packages

@@ -6,7 +6,7 @@ import path from 'path'
 // Minimal weapp-vite config with conditional clean:
 // - Do not empty output dir during `dev` to preserve `weapp/miniprogram_npm`
 // - Clean on `build` for reproducible production output
-export default defineConfig(({ command }) => ({
+export default defineConfig(({ command }: { command: 'build' | 'serve' | string }) => ({
   weapp: {
     srcRoot: './src/weapp',
     enhance: {
