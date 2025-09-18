@@ -91,6 +91,11 @@ type I18nMessages = {
     summaryTitle: string
     emptyButton: string
     successToast: string
+    paymentPendingToast: string
+    paymentUnavailable: string
+    orderCreateFailed: string
+    paymentCancelled: string
+    orderPendingHint: string
     emptyToast: string
     quantityLabel: string
     subtotalLabel: string
@@ -287,7 +292,7 @@ const MESSAGES: Record<Locale, I18nMessages> = {
       infoItems: [
         { icon: 'diamond-o', title: 'Member discounts', value: 'Releasing soon' },
         { icon: 'points', title: 'Free shipping', value: 'Available after launch' },
-        { icon: 'shield-o', title: 'Secure payments', value: 'WeChat Pay integration in progress' },
+        { icon: 'shield-o', title: 'Secure payments', value: 'Powered by WeChat Pay' },
       ],
       removeButton: 'Remove',
       clearButton: 'Clear cart',
@@ -302,19 +307,24 @@ const MESSAGES: Record<Locale, I18nMessages> = {
     checkout: {
       orderTitle: 'Order overview',
       summary: [
-        { title: 'Status', value: 'Waiting for catalogue', label: 'Add items once products are live.' },
-        { title: 'Delivery', value: 'Setup in progress' },
-        { title: 'Payment', value: 'WeChat Pay activation pending' },
+        { title: 'Status', value: 'Ready for checkout', label: 'Confirm payment to place your order.' },
+        { title: 'Delivery', value: 'Courier & pickup options coming soon' },
+        { title: 'Payment', value: 'Pay securely with WeChat Pay' },
       ],
       paymentTitle: 'Payment',
-      paymentValue: 'Unavailable until launch',
+      paymentValue: 'Pay with your linked WeChat account',
       payNow: 'Pay Now',
       emptyTitle: 'Checkout opens soon',
       emptyDescription: 'You need items in your cart before you can check out.',
       itemsTitle: 'Items',
       summaryTitle: 'Summary',
       emptyButton: 'Browse homepage',
-      successToast: 'Order placed',
+      successToast: 'Payment successful',
+      paymentPendingToast: 'Payment submitted, awaiting confirmation',
+      paymentUnavailable: 'Payment is currently unavailable',
+      orderCreateFailed: 'Failed to create order',
+      paymentCancelled: 'Payment cancelled',
+      orderPendingHint: 'Order pending payment. Check My Orders to retry.',
       emptyToast: 'Cart is empty',
       quantityLabel: 'Qty',
       subtotalLabel: 'Subtotal',
@@ -575,7 +585,7 @@ const MESSAGES: Record<Locale, I18nMessages> = {
       infoItems: [
         { icon: 'diamond-o', title: '会员优惠', value: '即将开放' },
         { icon: 'points', title: '包邮政策', value: '上线后公布' },
-        { icon: 'shield-o', title: '支付安全', value: '微信支付接入中' },
+        { icon: 'shield-o', title: '支付安全', value: '微信支付保障安全' },
       ],
       removeButton: '移除',
       clearButton: '清空购物车',
@@ -590,19 +600,24 @@ const MESSAGES: Record<Locale, I18nMessages> = {
     checkout: {
       orderTitle: '订单概览',
       summary: [
-        { title: '状态', value: '等待商品上线', label: '商品可购买后即可下单。' },
-        { title: '配送', value: '设置中' },
-        { title: '支付', value: '微信支付开通中' },
+        { title: '状态', value: '可立即结算', label: '确认支付即可创建订单。' },
+        { title: '配送', value: '快递与自提即将开放' },
+        { title: '支付', value: '支持微信支付' },
       ],
       paymentTitle: '支付方式',
-      paymentValue: '上线后启用',
+      paymentValue: '使用微信支付完成扣款',
       payNow: '立即支付',
       emptyTitle: '结算即将开启',
       emptyDescription: '购物车为空，添加商品后即可提交订单。',
       itemsTitle: '商品列表',
       summaryTitle: '订单摘要',
       emptyButton: '去首页逛逛',
-      successToast: '订单已提交',
+      successToast: '支付成功',
+      paymentPendingToast: '支付已提交，等待确认',
+      paymentUnavailable: '支付暂不可用',
+      orderCreateFailed: '创建订单失败',
+      paymentCancelled: '已取消支付',
+      orderPendingHint: '订单待支付，可在“我的订单”中继续支付。',
       emptyToast: '购物车为空',
       quantityLabel: '数量',
       subtotalLabel: '小计',

@@ -17,8 +17,8 @@ import type { User, UserProfile, UserWithId } from '@shared/models/user'
 import { zUser, zUserProfile, zUserWithId } from '@shared/models/user'
 import type { Product, ProductImage, ProductInput, ProductWithId } from '@shared/models/product'
 import { zProduct, zProductInput, zProductWithId } from '@shared/models/product'
-import type { Order, OrderWithId } from '@shared/models/order'
-import { zOrder, zOrderWithId } from '@shared/models/order'
+import type { Order, OrderWithId, Payment, PaymentStatus } from '@shared/models/order'
+import { zOrder, zOrderStatus, zOrderWithId } from '@shared/models/order'
 import type {
   SystemBannerWithId,
   SystemCategoryWithId,
@@ -30,6 +30,7 @@ import {
 } from '@shared/models/system'
 import { Collections } from '@shared/collections'
 import { fromServer, nowMs } from '@shared/base'
+import { yuanToCents } from '@shared/money'
 
 // Use wx-server-sdk directly for WeChat Mini Program cloud functions
 // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -44,9 +45,43 @@ const overrides = (globalThis as any).__SHOP_TEST_OVERRIDES__ as
   | {
       database?: () => ReturnType<typeof cloud.database>
       getWXContext?: () => Record<string, any>
+      cloudPay?: () => {
+        unifiedOrder: (payload: Record<string, any>) => Promise<any>
+        queryOrder: (payload: Record<string, any>) => Promise<any>
+        refund?: (payload: Record<string, any>) => Promise<any>
+      }
     }
 
 const db = overrides?.database ? overrides.database() : cloud.database()
+type CloudPayApi = {
+  unifiedOrder: (payload: Record<string, any>) => Promise<any>
+  queryOrder: (payload: Record<string, any>) => Promise<any>
+  refund?: (payload: Record<string, any>) => Promise<any>
+} | null
+
+const cloudPay: CloudPayApi = overrides?.cloudPay ? overrides.cloudPay() : cloud.cloudPay || null
+
+type PaymentConfig = {
+  envId?: string
+  functionName: string
+  subMchId: string
+  description: string
+  spbillCreateIp: string
+}
+
+function getPaymentConfig(): PaymentConfig {
+  const envId = process.env.WECHAT_PAY_ENV_ID || process.env.TCB_ENV || process.env.TENCENTCLOUD_ENV
+  const functionName = process.env.WECHAT_PAY_NOTIFY_FUNCTION || 'shop'
+  const subMchId = process.env.WECHAT_PAY_SUB_MCH_ID || ''
+  const description = process.env.WECHAT_PAY_BODY || 'Shop order payment'
+  const spbillCreateIp = process.env.WECHAT_PAY_IP || '127.0.0.1'
+
+  if (!subMchId) {
+    throw new Error('Missing WECHAT_PAY_SUB_MCH_ID environment variable')
+  }
+
+  return { envId, functionName, subMchId, description, spbillCreateIp }
+}
 
 /**
  * getWX — get WeChat context (OPENID/UNIONID)
@@ -131,6 +166,15 @@ const zOrderCreateInput = z.object({
     .optional(),
 })
 
+const zOrderIdPayload = z.object({
+  orderId: z.string().min(1),
+})
+
+const zAdminOrderUpdateInput = z.object({
+  orderId: z.string().min(1),
+  status: zOrderStatus,
+})
+
 async function fetchOrdersForStats(limit = 1000): Promise<OrderWithId[]> {
   const pageSize = 100
   const maxDocs = Math.max(0, limit)
@@ -161,6 +205,117 @@ async function fetchOrdersForStats(limit = 1000): Promise<OrderWithId[]> {
   }
 
   return results
+}
+
+async function findOrderById(orderId: string): Promise<OrderWithId | null> {
+  if (!orderId) return null
+  const snapshot = await ordersCol().where({ _id: orderId }).limit(1).get()
+  const doc = snapshot.data?.[0]
+  if (!doc) return null
+  const parsed = parseOrderDocument(doc)
+  if (!parsed.success) {
+    const issue = parsed.error.issues?.[0]
+    throw new Error(issue?.message || 'Invalid order data')
+  }
+  return parsed.data
+}
+
+async function requireOrderById(orderId: string): Promise<OrderWithId> {
+  const order = await findOrderById(orderId)
+  if (!order) throw new Error('Order not found')
+  return order
+}
+
+function buildOutTradeNo(orderId: string, now: number): string {
+  return `${orderId}-${now}`
+}
+
+function pickString(source: any, keys: string[]): string | undefined {
+  for (const key of keys) {
+    const value = source?.[key]
+    if (typeof value === 'string' && value.trim()) {
+      return value
+    }
+  }
+  return undefined
+}
+
+function pickNumber(source: any, keys: string[]): number | undefined {
+  for (const key of keys) {
+    const value = source?.[key]
+    if (typeof value === 'string' && value.trim()) {
+      const parsed = Number(value)
+      if (Number.isFinite(parsed)) return parsed
+    }
+    if (typeof value === 'number' && Number.isFinite(value)) return value
+  }
+  return undefined
+}
+
+function normalizeTradeState(source: any): string {
+  const state = pickString(source, ['tradeState', 'trade_state'])
+  return state ? state.toUpperCase() : ''
+}
+
+function normalizeCode(source: any, keys: string[]): string {
+  const value = pickString(source, keys)
+  return value ? value.toUpperCase() : ''
+}
+
+function isPaymentQuerySuccessful(result: any): boolean {
+  const tradeState = normalizeTradeState(result)
+  if (tradeState) return tradeState === 'SUCCESS'
+  const resultCode = normalizeCode(result, ['resultCode', 'result_code'])
+  const returnCode = normalizeCode(result, ['returnCode', 'return_code'])
+  return returnCode === 'SUCCESS' && resultCode === 'SUCCESS'
+}
+
+function buildPaymentUpdate(
+  payment: Payment,
+  updates: Partial<Payment> & { status?: PaymentStatus },
+): Payment {
+  return {
+    ...payment,
+    ...updates,
+    status: updates.status ?? payment.status,
+  }
+}
+
+function ensureOrderOwner(order: OrderWithId, openid: string) {
+  if (!openid || order.userId !== openid) {
+    const error = new Error('Order not found')
+    ;(error as any).code = 'NOT_OWNER'
+    throw error
+  }
+}
+
+function sanitizePaymentPackage(pkg: any): Payment['paymentPackage'] | undefined {
+  if (!pkg || typeof pkg !== 'object') return undefined
+  const allowed = ['timeStamp', 'nonceStr', 'package', 'signType', 'paySign']
+  const result: Record<string, string> = {}
+  for (const key of allowed) {
+    const value = pkg[key]
+    if (typeof value === 'string' && value) {
+      result[key] = value
+    }
+  }
+  return Object.keys(result).length > 0 ? (result as Payment['paymentPackage']) : undefined
+}
+
+const ORDER_STATUS_TRANSITIONS: Record<string, Set<string>> = {
+  pending: new Set(['paid', 'canceled']),
+  paid: new Set(['shipped', 'canceled', 'refunded']),
+  shipped: new Set(['completed', 'refunded']),
+  completed: new Set(['refunded']),
+  canceled: new Set(),
+  refunded: new Set(),
+}
+
+function canTransitionOrderStatus(current: string, next: string): boolean {
+  if (current === next) return true
+  const allowed = ORDER_STATUS_TRANSITIONS[current]
+  if (!allowed) return false
+  return allowed.has(next)
 }
 
 type StoreFeaturedProduct = {
@@ -199,6 +354,16 @@ function getProductMinPrice(product: Product) {
 
 function roundToTwo(amount: number): number {
   return Math.round(amount * 100) / 100
+}
+
+function createPendingPayment(amountYuan: number): Payment {
+  const total = roundToTwo(amountYuan)
+  return {
+    method: 'wechat_pay',
+    status: 'pending',
+    amountYuan: total,
+    currency: 'CNY',
+  }
 }
 
 function buildCartKey(productId: string, skuId?: string): string {
@@ -327,6 +492,107 @@ const handlers: Record<string, (event: any) => Promise<ApiResponse> | ApiRespons
     if (!OPENID) return fail('Missing OPENID in WX context')
     const { user, isNew } = await ensureUserByOpenid(OPENID, UNIONID)
     return ok({ user, isNew })
+  },
+
+  /**
+   * v1.store.order.payment.confirm
+   * Input: { orderId }
+   * Output: { order }
+   */
+  'v1.store.order.payment.confirm': async (event: any) => {
+    const { OPENID } = getWX() as any
+    if (!OPENID) return fail('Missing OPENID in WX context')
+    if (!cloudPay || typeof cloudPay.queryOrder !== 'function') {
+      return fail('Payment service unavailable')
+    }
+    const parsed = zOrderIdPayload.safeParse(event)
+    if (!parsed.success) return fail('Invalid order payload', { issues: parsed.error.issues })
+
+    let order: OrderWithId
+    try {
+      order = await requireOrderById(parsed.data.orderId.trim())
+    } catch (error) {
+      if ((error as Error).message === 'Order not found') return fail('Order not found')
+      throw error
+    }
+
+    try {
+      ensureOrderOwner(order, OPENID)
+    } catch {
+      return fail('Order not found')
+    }
+
+    if (!order.payment) return fail('Order missing payment information')
+    if (!order.payment.outTradeNo) return fail('Payment not initialised for order')
+
+    const paymentConfig = getPaymentConfig()
+    let queryResult: any
+    try {
+      queryResult = await cloudPay.queryOrder({
+        subMchId: paymentConfig.subMchId,
+        outTradeNo: order.payment.outTradeNo,
+      })
+    } catch (error: any) {
+      return fail('Failed to verify payment', { message: error?.message || String(error) })
+    }
+
+    const tradeState = normalizeTradeState(queryResult)
+    const tradeDesc = pickString(queryResult, ['tradeStateDesc', 'trade_state_desc'])
+
+    if (!isPaymentQuerySuccessful(queryResult)) {
+      if (tradeState === 'NOTPAY' || tradeState === 'USERPAYING') {
+        return fail('Payment still pending', { tradeState, description: tradeDesc })
+      }
+
+      const updatedPayment = buildPaymentUpdate(order.payment, {
+        status: tradeState === 'REFUND' ? 'refunded' : 'failed',
+        lastError: tradeDesc || tradeState || 'Payment not completed',
+      })
+      const now = nowMs()
+      const updateData: Record<string, any> = {
+        payment: updatedPayment,
+        updatedAt: now,
+      }
+      if (tradeState === 'REFUND') {
+        updateData.status = 'refunded'
+      }
+      await ordersCol().where({ _id: order.id }).update({ data: updateData })
+      return fail('Payment not completed', { tradeState, description: tradeDesc })
+    }
+
+    const totalFee = pickNumber(queryResult, ['totalFee', 'total_fee'])
+    const expectedCents = yuanToCents(order.payment.amountYuan)
+    if (typeof totalFee === 'number' && totalFee !== expectedCents) {
+      return fail('Payment amount mismatch', { totalFee, expected: expectedCents })
+    }
+
+    const transactionId = pickString(queryResult, ['transactionId', 'transaction_id'])
+    const now = nowMs()
+    const updatedPayment = buildPaymentUpdate(order.payment, {
+      status: 'succeeded',
+      transactionId: transactionId || order.payment.transactionId,
+      paidAt: now,
+      lastError: undefined,
+    })
+
+    await ordersCol()
+      .where({ _id: order.id })
+      .update({
+        data: {
+          payment: updatedPayment,
+          status: 'paid',
+          updatedAt: now,
+        },
+      })
+
+    return ok({
+      order: {
+        ...order,
+        status: 'paid',
+        payment: updatedPayment,
+        updatedAt: now,
+      },
+    })
   },
 
   /**
@@ -537,6 +803,7 @@ const handlers: Record<string, (event: any) => Promise<ApiResponse> | ApiRespons
     const now = nowMs()
     const subtotalYuan = roundToTwo(subtotal)
     await ensureUserByOpenid(OPENID, UNIONID)
+    const payment = createPendingPayment(subtotalYuan)
     const orderData = zOrder.parse({
       userId: OPENID,
       items: orderItems,
@@ -545,7 +812,7 @@ const handlers: Record<string, (event: any) => Promise<ApiResponse> | ApiRespons
       discountYuan: 0,
       totalYuan: subtotalYuan,
       status: 'pending',
-      payment: undefined,
+      payment,
       address: addressValue,
       notes: notesValue,
       createdAt: now,
@@ -555,6 +822,99 @@ const handlers: Record<string, (event: any) => Promise<ApiResponse> | ApiRespons
     const addRes = await ordersCol().add({ data: orderData })
     const order: OrderWithId = { ...orderData, id: addRes._id }
     return ok({ order })
+  },
+
+  /**
+   * v1.store.order.payment.prepare
+   * Input: { orderId }
+   * Output: { orderId, paymentPackage, payment }
+   */
+  'v1.store.order.payment.prepare': async (event: any) => {
+    const { OPENID } = getWX() as any
+    if (!OPENID) return fail('Missing OPENID in WX context')
+    if (!cloudPay || typeof cloudPay.unifiedOrder !== 'function') {
+      return fail('Payment service unavailable')
+    }
+    const parsed = zOrderIdPayload.safeParse(event)
+    if (!parsed.success) return fail('Invalid order payload', { issues: parsed.error.issues })
+
+    let order: OrderWithId
+    try {
+      order = await requireOrderById(parsed.data.orderId.trim())
+    } catch (error) {
+      if ((error as Error).message === 'Order not found') return fail('Order not found')
+      throw error
+    }
+
+    try {
+      ensureOrderOwner(order, OPENID)
+    } catch {
+      return fail('Order not found')
+    }
+
+    if (order.status !== 'pending') {
+      return fail('Order already processed', { status: order.status })
+    }
+    if (!order.payment) {
+      return fail('Order missing payment information')
+    }
+
+    const now = nowMs()
+    const paymentConfig = getPaymentConfig()
+    const totalFee = yuanToCents(order.payment.amountYuan)
+    const outTradeNo = order.payment.outTradeNo || buildOutTradeNo(order.id, now)
+
+    let unifiedResult: any
+    try {
+      unifiedResult = await cloudPay.unifiedOrder({
+        envId: paymentConfig.envId,
+        functionName: paymentConfig.functionName,
+        subMchId: paymentConfig.subMchId,
+        body: paymentConfig.description,
+        outTradeNo,
+        totalFee,
+        tradeType: 'JSAPI',
+        openId: OPENID,
+        spbillCreateIp: paymentConfig.spbillCreateIp,
+      })
+    } catch (error: any) {
+      return fail('Failed to prepare payment', { message: error?.message || String(error) })
+    }
+
+    const prepayId = pickString(unifiedResult, ['prepayId', 'prepay_id'])
+    const paymentPackage = sanitizePaymentPackage(
+      unifiedResult?.payment || unifiedResult?.paymentData || unifiedResult?.paymentParams || unifiedResult,
+    )
+    const updatedPayment = buildPaymentUpdate(order.payment, {
+      status: 'ready',
+      outTradeNo,
+      prepayId: prepayId || order.payment.prepayId,
+      preparedAt: now,
+      paymentPackage,
+      lastError: undefined,
+    })
+
+    await ordersCol()
+      .where({ _id: order.id })
+      .update({
+        data: {
+          payment: updatedPayment,
+          updatedAt: now,
+        },
+      })
+
+    return ok({
+      orderId: order.id,
+      payment: {
+        status: updatedPayment.status,
+        amountYuan: updatedPayment.amountYuan,
+        currency: updatedPayment.currency,
+        prepayId: updatedPayment.prepayId,
+        outTradeNo: updatedPayment.outTradeNo,
+        preparedAt: updatedPayment.preparedAt,
+      },
+      paymentPackage: paymentPackage || undefined,
+    })
   },
 
   /**
@@ -837,6 +1197,65 @@ const handlers: Record<string, (event: any) => Promise<ApiResponse> | ApiRespons
       orders.push(parsed.data)
     }
     return ok({ orders })
+  },
+
+  /**
+   * v1.admin.orders.updateStatus
+   * Input: { orderId, status, note? }
+   * Output: { order }
+   */
+  'v1.admin.orders.updateStatus': async (event: any) => {
+    if (!getAdminContext()) return fail('Not authenticated')
+    const parsed = zAdminOrderUpdateInput.safeParse(event)
+    if (!parsed.success) return fail('Invalid payload', { issues: parsed.error.issues })
+    const { orderId, status } = parsed.data
+
+    let order: OrderWithId
+    try {
+      order = await requireOrderById(orderId.trim())
+    } catch (error) {
+      if ((error as Error).message === 'Order not found') return fail('Order not found')
+      throw error
+    }
+
+    if (!canTransitionOrderStatus(order.status, status)) {
+      return fail('Invalid status transition', { current: order.status, next: status })
+    }
+
+    const now = nowMs()
+    const update: Record<string, any> = {
+      status,
+      updatedAt: now,
+    }
+
+    if (order.payment) {
+      if (status === 'refunded') {
+        update.payment = buildPaymentUpdate(order.payment, {
+          status: 'refunded',
+          lastError: undefined,
+        })
+      } else if (status === 'paid' && order.payment.status !== 'succeeded') {
+        update.payment = buildPaymentUpdate(order.payment, {
+          status: 'succeeded',
+          paidAt: now,
+          lastError: undefined,
+        })
+      } else if (status === 'canceled' && order.payment.status !== 'refunded') {
+        update.payment = buildPaymentUpdate(order.payment, {
+          status: 'failed',
+          lastError: order.payment.lastError,
+        })
+      }
+    }
+
+    await ordersCol().where({ _id: order.id }).update({ data: update })
+
+    return ok({
+      order: {
+        ...order,
+        ...update,
+      },
+    })
   },
 
   /**

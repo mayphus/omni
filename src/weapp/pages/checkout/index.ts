@@ -1,6 +1,33 @@
 import { loadCart, loadDirectCheckout, clearCart, clearDirectCheckout, type CartItem } from '../../utils/cart'
-import { createStoreOrder } from '../../utils/api'
+import { confirmOrderPayment, createStoreOrder, prepareOrderPayment } from '../../utils/api'
 import { withI18nPage } from '../../utils/i18n'
+import type { PaymentPackage } from '@shared/models/order'
+
+function requestPayment(packageData: PaymentPackage): Promise<void> {
+  return new Promise((resolve, reject) => {
+    if (
+      !packageData ||
+      !packageData.package ||
+      !packageData.timeStamp ||
+      !packageData.nonceStr ||
+      !packageData.paySign
+    ) {
+      reject(new Error('Invalid payment package'))
+      return
+    }
+    const signType =
+      packageData.signType === 'MD5' || packageData.signType === 'HMAC-SHA256' ? packageData.signType : 'RSA'
+    wx.requestPayment({
+      timeStamp: packageData.timeStamp || '',
+      nonceStr: packageData.nonceStr || '',
+      package: packageData.package,
+      signType,
+      paySign: packageData.paySign || '',
+      success: () => resolve(),
+      fail: (error) => reject(error),
+    })
+  })
+}
 
 type DisplayCartItem = CartItem & { totalText: string }
 
@@ -72,6 +99,7 @@ Page(withI18nPage({
       return
     }
     this.setData({ submitting: true })
+    let orderId: string | undefined
     try {
       const payload = {
         items: items.map((item) => {
@@ -82,12 +110,37 @@ Page(withI18nPage({
           return base
         }),
       }
-      await createStoreOrder(payload)
+      const createRes = await createStoreOrder(payload)
+      orderId = createRes.order?.id
+      if (!orderId) {
+        throw new Error(i18n.orderCreateFailed || 'Failed to create order')
+      }
+
+      const prepareRes = await prepareOrderPayment(orderId)
+      const paymentPackage = prepareRes?.paymentPackage
+      if (!paymentPackage) {
+        throw new Error(i18n.paymentUnavailable || 'Payment is currently unavailable')
+      }
+
+      await requestPayment(paymentPackage)
+
+      let confirmed = false
+      try {
+        await confirmOrderPayment(orderId)
+        confirmed = true
+      } catch (confirmError: any) {
+        const message = confirmError instanceof Error ? confirmError.message : confirmError?.errMsg
+        if (message) {
+          wx.showToast({ title: message, icon: 'none' })
+        }
+      }
+
       if ((this.data as any).checkoutMode === 'direct') {
         clearDirectCheckout()
       } else {
         clearCart()
       }
+
       this.setData({
         items: [],
         subtotal: 0,
@@ -96,11 +149,23 @@ Page(withI18nPage({
         subtotalText: '0.00',
         totalText: '0.00',
       })
-      wx.showToast({ title: i18n.successToast || 'Order placed', icon: 'success' })
-      setTimeout(() => wx.redirectTo({ url: '/pages/orders/index' }), 600)
+
+      const successTitle = confirmed
+        ? i18n.successToast || 'Payment successful'
+        : i18n.paymentPendingToast || 'Payment submitted'
+      wx.showToast({ title: successTitle, icon: confirmed ? 'success' : 'none' })
+      setTimeout(() => wx.redirectTo({ url: '/pages/orders/index?active=1' }), 600)
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Checkout failed'
-      wx.showToast({ title: message, icon: 'none' })
+      let message = error instanceof Error ? error.message : 'Checkout failed'
+      const errMsg = typeof (error as any)?.errMsg === 'string' ? (error as any).errMsg : ''
+      if (errMsg && errMsg.includes('cancel')) {
+        message = i18n.paymentCancelled || 'Payment cancelled'
+      }
+      if (orderId) {
+        const hint = i18n.orderPendingHint || 'Order pending payment. Check My Orders to retry.'
+        message = `${message}${message.endsWith('.') ? '' : '.'} ${hint}`
+      }
+      wx.showToast({ title: message, icon: 'none', duration: 2500 })
     } finally {
       this.setData({ submitting: false })
     }

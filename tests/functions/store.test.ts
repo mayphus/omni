@@ -1,9 +1,32 @@
-import { beforeEach, describe, expect, it } from 'vitest'
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import { importShop, testCloud } from './helpers/cloud'
 import { Collections } from '@shared/collections'
 import { nowMs } from '@shared/base'
 
 const { main } = await importShop()
+
+const originalEnv = {
+  subMchId: process.env.WECHAT_PAY_SUB_MCH_ID,
+  envId: process.env.WECHAT_PAY_ENV_ID,
+  notify: process.env.WECHAT_PAY_NOTIFY_FUNCTION,
+}
+
+beforeAll(() => {
+  process.env.WECHAT_PAY_SUB_MCH_ID = 'sub-mch-test'
+  process.env.WECHAT_PAY_ENV_ID = 'env-test'
+  process.env.WECHAT_PAY_NOTIFY_FUNCTION = 'shop'
+})
+
+afterAll(() => {
+  if (originalEnv.subMchId === undefined) delete process.env.WECHAT_PAY_SUB_MCH_ID
+  else process.env.WECHAT_PAY_SUB_MCH_ID = originalEnv.subMchId
+
+  if (originalEnv.envId === undefined) delete process.env.WECHAT_PAY_ENV_ID
+  else process.env.WECHAT_PAY_ENV_ID = originalEnv.envId
+
+  if (originalEnv.notify === undefined) delete process.env.WECHAT_PAY_NOTIFY_FUNCTION
+  else process.env.WECHAT_PAY_NOTIFY_FUNCTION = originalEnv.notify
+})
 
 beforeEach(() => {
   testCloud.reset()
@@ -469,5 +492,108 @@ describe('functions: store endpoints', () => {
     const res = await main({ action: 'v1.store.order.create', items: [{ productId: 'p', quantity: 1 }] })
     expect(res.success).toBe(false)
     expect(res.error).toMatch(/Missing OPENID/)
+  })
+
+  it('prepares payment for a pending order', async () => {
+    const now = nowMs()
+    testCloud.setContext({ OPENID: 'buyer-pay' })
+    const productId = testCloud.insert(Collections.Products, {
+      title: 'Payment Widget',
+      images: [{ fileId: 'pay', url: 'https://example.com/pay.jpg' }],
+      category: 'gadgets',
+      price: { currency: 'CNY', priceYuan: 42.5 },
+      stock: 5,
+      isActive: true,
+      createdAt: now,
+      updatedAt: now,
+    })
+
+    const createRes = await main({
+      action: 'v1.store.order.create',
+      items: [{ productId, quantity: 1 }],
+    })
+    expect(createRes.success).toBe(true)
+    const orderId = createRes.order.id
+
+    const prepareRes = await main({ action: 'v1.store.order.payment.prepare', orderId })
+    expect(prepareRes.success).toBe(true)
+    expect(prepareRes.payment.status).toBe('ready')
+    expect(prepareRes.payment.prepayId).toMatch(/prepay-/)
+    expect(prepareRes.paymentPackage.package).toContain('prepay_id')
+
+    const stored = testCloud.getData(Collections.Orders).find((doc) => doc._id === orderId)
+    expect(stored?.payment?.status).toBe('ready')
+    expect(stored?.payment?.outTradeNo).toBeDefined()
+  })
+
+  it('confirms payment and marks order as paid', async () => {
+    const now = nowMs()
+    testCloud.setContext({ OPENID: 'buyer-confirm' })
+    const productId = testCloud.insert(Collections.Products, {
+      title: 'Confirmation Item',
+      images: [{ fileId: 'confirm', url: 'https://example.com/confirm.jpg' }],
+      category: 'gadgets',
+      price: { currency: 'CNY', priceYuan: 18 },
+      stock: 5,
+      isActive: true,
+      createdAt: now,
+      updatedAt: now,
+    })
+
+    const createRes = await main({
+      action: 'v1.store.order.create',
+      items: [{ productId, quantity: 2 }],
+    })
+    const orderId = createRes.order.id
+    await main({ action: 'v1.store.order.payment.prepare', orderId })
+
+    const confirmRes = await main({ action: 'v1.store.order.payment.confirm', orderId })
+    expect(confirmRes.success).toBe(true)
+    expect(confirmRes.order.status).toBe('paid')
+    expect(confirmRes.order.payment.status).toBe('succeeded')
+    expect(confirmRes.order.payment.transactionId).toMatch(/txn-/)
+
+    const stored = testCloud.getData(Collections.Orders).find((doc) => doc._id === orderId)
+    expect(stored?.status).toBe('paid')
+    expect(stored?.payment?.status).toBe('succeeded')
+  })
+
+  it('keeps order pending when payment query is not successful', async () => {
+    const now = nowMs()
+    testCloud.setContext({ OPENID: 'buyer-fail' })
+    const productId = testCloud.insert(Collections.Products, {
+      title: 'Pending Item',
+      images: [{ fileId: 'pending', url: 'https://example.com/pending.jpg' }],
+      category: 'gadgets',
+      price: { currency: 'CNY', priceYuan: 10 },
+      stock: 5,
+      isActive: true,
+      createdAt: now,
+      updatedAt: now,
+    })
+
+    const createRes = await main({
+      action: 'v1.store.order.create',
+      items: [{ productId, quantity: 1 }],
+    })
+    const orderId = createRes.order.id
+    await main({ action: 'v1.store.order.payment.prepare', orderId })
+
+    testCloud.mockCloudPay({
+      queryOrder: async () => ({
+        tradeState: 'NOTPAY',
+        resultCode: 'SUCCESS',
+        returnCode: 'SUCCESS',
+        totalFee: 1000,
+      }),
+    })
+
+    const confirmRes = await main({ action: 'v1.store.order.payment.confirm', orderId })
+    expect(confirmRes.success).toBe(false)
+    expect(confirmRes.error).toMatch(/pending/i)
+
+    const stored = testCloud.getData(Collections.Orders).find((doc) => doc._id === orderId)
+    expect(stored?.status).toBe('pending')
+    expect(stored?.payment?.status).toBe('ready')
   })
 })

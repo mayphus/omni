@@ -1,5 +1,5 @@
 import type { ProductWithId } from '@shared/models/product'
-import type { OrderWithId } from '@shared/models/order'
+import type { OrderWithId, PaymentPackage } from '@shared/models/order'
 
 type ShopCallSuccess<T> = {
   success: true
@@ -99,6 +99,26 @@ export type CreateOrderPayload = {
 
 export function createStoreOrder(payload: CreateOrderPayload) {
   return callShopFunction<{ order: OrderWithId }>('v1.store.order.create', payload)
+}
+
+export type PreparePaymentResult = {
+  payment: {
+    status: string
+    amountYuan: number
+    currency: string
+    prepayId?: string
+    outTradeNo?: string
+    preparedAt?: number
+  }
+  paymentPackage?: PaymentPackage
+}
+
+export function prepareOrderPayment(orderId: string) {
+  return callShopFunction<PreparePaymentResult>('v1.store.order.payment.prepare', { orderId })
+}
+
+export function confirmOrderPayment(orderId: string) {
+  return callShopFunction<{ order: OrderWithId }>('v1.store.order.payment.confirm', { orderId })
 }
 
 export { callShopFunction as callShop }

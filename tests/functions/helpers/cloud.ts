@@ -96,6 +96,19 @@ const store: Record<string, Doc[]> = new Proxy({}, {
 let idCounter = 0
 const defaultContext = () => ({ OPENID: 'mock-openid', TCB_UUID: 'mock-admin' })
 let context = defaultContext()
+type CloudPayHandler = {
+  unifiedOrder?: (payload: Record<string, any>) => any
+  queryOrder?: (payload: Record<string, any>) => any
+  refund?: (payload: Record<string, any>) => any
+}
+
+let cloudPayHandlers: CloudPayHandler = {}
+let lastUnifiedOrders = new Map<string, { totalFee: number }>()
+
+function resetCloudPay() {
+  cloudPayHandlers = {}
+  lastUnifiedOrders = new Map()
+}
 
 function resetStore() {
   for (const key of Object.keys(store)) {
@@ -103,6 +116,7 @@ function resetStore() {
   }
   idCounter = 0
   context = defaultContext()
+  resetCloudPay()
 }
 
 ;(globalThis as any).__SHOP_TEST_OVERRIDES__ = {
@@ -127,6 +141,50 @@ function resetStore() {
     },
   }),
   getWXContext: () => ({ ...context }),
+  cloudPay: () => ({
+    unifiedOrder: async (payload: Record<string, any>) => {
+      const totalFee = typeof payload?.totalFee === 'number' ? payload.totalFee : 0
+      if (typeof payload?.outTradeNo === 'string') {
+        lastUnifiedOrders.set(payload.outTradeNo, { totalFee })
+      }
+      if (cloudPayHandlers.unifiedOrder) {
+        return await cloudPayHandlers.unifiedOrder(payload)
+      }
+      const outTradeNo = payload?.outTradeNo || `order-${Date.now()}`
+      return {
+        payment: {
+          timeStamp: String(Date.now()),
+          nonceStr: 'mock-nonce',
+          package: `prepay_id=${outTradeNo}`,
+          signType: 'RSA',
+          paySign: 'mock-signature',
+        },
+        prepayId: `prepay-${outTradeNo}`,
+        outTradeNo,
+      }
+    },
+    queryOrder: async (payload: Record<string, any>) => {
+      if (cloudPayHandlers.queryOrder) {
+        return await cloudPayHandlers.queryOrder(payload)
+      }
+      const info = typeof payload?.outTradeNo === 'string' ? lastUnifiedOrders.get(payload.outTradeNo) : undefined
+      const totalFee = info?.totalFee ?? 0
+      const outTradeNo = payload?.outTradeNo || 'unknown'
+      return {
+        tradeState: 'SUCCESS',
+        resultCode: 'SUCCESS',
+        returnCode: 'SUCCESS',
+        transactionId: `txn-${outTradeNo}`,
+        totalFee,
+      }
+    },
+    refund: async (payload: Record<string, any>) => {
+      if (cloudPayHandlers.refund) {
+        return await cloudPayHandlers.refund(payload)
+      }
+      return { resultCode: 'SUCCESS', returnCode: 'SUCCESS' }
+    },
+  }),
 }
 
 export const testCloud = {
@@ -142,6 +200,10 @@ export const testCloud = {
     store[name].push({ _id, ...payload })
     return _id
   },
+  mockCloudPay: (handlers: CloudPayHandler) => {
+    cloudPayHandlers = { ...cloudPayHandlers, ...handlers }
+  },
+  getLastUnifiedOrderTotals: () => Array.from(lastUnifiedOrders.entries()),
 }
 
 export async function importShop() {

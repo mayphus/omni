@@ -179,4 +179,53 @@ describe('functions: admin overview', () => {
     expect(res.coupons[0].code).toBe('SAVE10')
     expect(res.banners[0].isActive).toBe(false)
   })
+
+  it('allows admin to update order status following transition rules', async () => {
+    const now = nowMs()
+    const orderId = testCloud.insert(Collections.Orders, {
+      userId: 'openid-1',
+      items: [{ productId: 'p', title: 'Item', qty: 1, priceYuan: 10 }],
+      subtotalYuan: 10,
+      shippingYuan: 0,
+      discountYuan: 0,
+      totalYuan: 10,
+      status: 'pending',
+      payment: {
+        method: 'wechat_pay',
+        status: 'pending',
+        amountYuan: 10,
+        currency: 'CNY',
+      },
+      createdAt: now - 100,
+      updatedAt: now - 50,
+    })
+
+    const res = await main({ action: 'v1.admin.orders.updateStatus', orderId, status: 'paid' })
+    expect(res.success).toBe(true)
+    expect(res.order.status).toBe('paid')
+    expect(res.order.payment.status).toBe('succeeded')
+
+    const stored = testCloud.getData(Collections.Orders).find((doc) => doc._id === orderId)
+    expect(stored?.status).toBe('paid')
+    expect(stored?.payment?.status).toBe('succeeded')
+  })
+
+  it('rejects invalid admin order status transitions', async () => {
+    const now = nowMs()
+    const orderId = testCloud.insert(Collections.Orders, {
+      userId: 'openid-1',
+      items: [{ productId: 'p', title: 'Item', qty: 1, priceYuan: 10 }],
+      subtotalYuan: 10,
+      shippingYuan: 0,
+      discountYuan: 0,
+      totalYuan: 10,
+      status: 'completed',
+      createdAt: now - 100,
+      updatedAt: now - 50,
+    })
+
+    const res = await main({ action: 'v1.admin.orders.updateStatus', orderId, status: 'pending' })
+    expect(res.success).toBe(false)
+    expect(res.error).toMatch(/Invalid status transition/)
+  })
 })

@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui/table'
 import { Button } from '../components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../components/ui/dialog'
-import { listOrders } from '../services/orders'
+import { listOrders, updateOrderStatus } from '../services/orders'
 import { listUsers } from '../services/users'
 import type { OrderWithId } from '@shared/models/order'
 import type { UserWithId } from '@shared/models/user'
@@ -18,12 +18,47 @@ const dateFormatter = new Intl.DateTimeFormat('en-US', {
 
 type StatusFilter = 'all' | OrderWithId['status']
 
+const ORDER_STATUS_LABELS: Record<OrderWithId['status'], string> = {
+  pending: 'Pending',
+  paid: 'Paid',
+  shipped: 'Shipped',
+  completed: 'Completed',
+  canceled: 'Canceled',
+  refunded: 'Refunded',
+}
+
+const ORDER_STATUS_TRANSITIONS: Record<OrderWithId['status'], OrderWithId['status'][]> = {
+  pending: ['paid', 'canceled'],
+  paid: ['shipped', 'canceled', 'refunded'],
+  shipped: ['completed', 'refunded'],
+  completed: ['refunded'],
+  canceled: [],
+  refunded: [],
+}
+
+const STATUS_ACTION_LABELS: Record<OrderWithId['status'], string> = {
+  paid: 'Mark as paid',
+  shipped: 'Mark as shipped',
+  completed: 'Mark as completed',
+  canceled: 'Cancel order',
+  refunded: 'Mark as refunded',
+  pending: 'Set as pending',
+}
+
+const PAYMENT_STATUS_LABELS: Record<string, string> = {
+  pending: 'Pending',
+  ready: 'Ready',
+  succeeded: 'Succeeded',
+  failed: 'Failed',
+  refunded: 'Refunded',
+}
+
 function formatOrderDate(ts: number) {
   return dateFormatter.format(ts)
 }
 
 function orderStatusLabel(status: OrderWithId['status']) {
-  return status.replace(/_/g, ' ')
+  return ORDER_STATUS_LABELS[status] || status
 }
 
 export function Orders() {
@@ -34,6 +69,7 @@ export function Orders() {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
   const [query, setQuery] = useState('')
   const [selectedOrder, setSelectedOrder] = useState<OrderWithId | null>(null)
+  const [statusUpdating, setStatusUpdating] = useState(false)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -89,6 +125,23 @@ export function Orders() {
       pendingCount,
     }
   }, [orders])
+
+  const handleStatusUpdate = useCallback(
+    async (orderId: string, nextStatus: OrderWithId['status']) => {
+      setStatusUpdating(true)
+      try {
+        const updated = await updateOrderStatus(orderId, nextStatus)
+        setOrders((prev) => prev.map((order) => (order.id === orderId ? updated : order)))
+        setSelectedOrder((prev) => (prev && prev.id === orderId ? updated : prev))
+      } catch (err: any) {
+        const message = err?.message || err?.code || 'Failed to update order'
+        window.alert(typeof message === 'string' ? message : 'Failed to update order')
+      } finally {
+        setStatusUpdating(false)
+      }
+    },
+    [],
+  )
 
   const filteredOrders = useMemo(() => {
     const q = query.trim().toLowerCase()
@@ -247,6 +300,28 @@ export function Orders() {
                     <p>{formatCNY(selectedOrder.totalYuan)}</p>
                   </div>
                 </div>
+                <div>
+                  <p className="font-medium">Payment</p>
+                  <div className="space-y-1">
+                    <p>
+                      Status:{' '}
+                      {selectedOrder.payment
+                        ? PAYMENT_STATUS_LABELS[selectedOrder.payment.status] || selectedOrder.payment.status
+                        : 'Not captured'}
+                    </p>
+                    <p>Amount: {formatCNY(selectedOrder.payment?.amountYuan ?? selectedOrder.totalYuan)}</p>
+                    {selectedOrder.payment?.transactionId && (
+                      <p>Transaction: {selectedOrder.payment.transactionId}</p>
+                    )}
+                    {selectedOrder.payment?.prepayId && <p>Prepay ID: {selectedOrder.payment.prepayId}</p>}
+                  </div>
+                </div>
+                {selectedOrder.payment?.lastError && (
+                  <div>
+                    <p className="font-medium text-red-600">Payment note</p>
+                    <p>{selectedOrder.payment.lastError}</p>
+                  </div>
+                )}
                 {selectedOrder.address && (
                   <div>
                     <p className="font-medium">Shipping Address</p>
@@ -257,6 +332,24 @@ export function Orders() {
                     </p>
                   </div>
                 )}
+                {ORDER_STATUS_TRANSITIONS[selectedOrder.status]?.length ? (
+                  <div>
+                    <p className="font-medium">Actions</p>
+                    <div className="flex flex-wrap gap-2">
+                      {ORDER_STATUS_TRANSITIONS[selectedOrder.status].map((nextStatus) => (
+                        <Button
+                          key={nextStatus}
+                          variant="secondary"
+                          size="sm"
+                          disabled={statusUpdating}
+                          onClick={() => void handleStatusUpdate(selectedOrder.id, nextStatus)}
+                        >
+                          {STATUS_ACTION_LABELS[nextStatus] || `Set ${orderStatusLabel(nextStatus)}`}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
                 <div>
                   <p className="font-medium">Items</p>
                   <ul className="list-disc space-y-1 pl-5">

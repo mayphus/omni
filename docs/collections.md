@@ -35,7 +35,19 @@ Collections and fields (minimal)
   - `items` [{ `productId`, `title`, `qty`, `priceYuan` }]
   - `subtotalYuan`, `shippingYuan`, `discountYuan`, `totalYuan`
   - `status` enum('pending','paid','shipped','completed','canceled','refunded')
-  - `payment?` { method 'wechat_pay', transactionId? string }
+  - `payment?` {
+      `method`: 'wechat_pay',
+      `status`: 'pending'|'ready'|'succeeded'|'failed'|'refunded',
+      `amountYuan`: number,
+      `currency`: 'CNY',
+      `outTradeNo?`: string,
+      `prepayId?`: string,
+      `transactionId?`: string,
+      `preparedAt?`: number,
+      `paidAt?`: number,
+      `lastError?`: string,
+      `paymentPackage?`: { `timeStamp?`, `nonceStr?`, `package?`, `signType?`, `paySign?` }
+    }
   - `notes?` string
   - `createdAt`, `updatedAt`
   - Indexes: `userId`+`createdAt`; `status`+`createdAt`

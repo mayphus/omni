@@ -48,11 +48,11 @@ archive/           # optional: previous codebase snapshots (if present)
 - Miniprogram UI: Vant Weapp (integrate as needed)
 - Keep things minimal; add only when required
 
-## Hello World status
+## Current status
 
-- WeApp: minimal index page using Vant components. Build with `npm run build:weapp`, run `npm run build:weapp:npm`, then open via WeChat DevTools.
-- Functions: `shop` function provides `v1.system.ping` and basic auth endpoints `v1.auth.login`, `v1.auth.profile.update`. Build with `npm run build:functions`; deploy via `npm run deploy:functions` (requires TCB CLI auth).
-- Admin: minimal React page renders “Hello, Admin”. Run `npm run dev:admin` or build with `npm run build:admin`.
+- **WeApp** – storefront with search, categories, cart, and checkout powered by WeChat Pay. Build with `npm run build:weapp`, run `npm run build:weapp:npm`, then open via WeChat DevTools.
+- **Cloud function (`shop`)** – action router covering auth, catalogue queries, order creation, WeChat Pay preparation/confirmation, and admin order/product/system endpoints. Build with `npm run build:functions`; deploy via `npm run deploy:functions` (requires TCB CLI auth).
+- **Admin console** – Vite + React dashboard for catalogue management, analytics, and order lifecycle controls. Run `npm run dev:admin` or build with `npm run build:admin`.
 
 ## Environment
 

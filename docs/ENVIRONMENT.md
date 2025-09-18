@@ -21,6 +21,11 @@ Variables
 - `VITE_TCB_ENV_ID` – CloudBase environment ID used by Mini Program (`wx.cloud.init`).
 - `WECHAT_APP_ID`, `WECHAT_PRIVATE_KEY_PATH` – used by miniprogram-ci locally.
 - `TCB_ENV_ID`, `TCB_PRIVATE_KEY` – used by `tcb` CLI locally.
+- `WECHAT_PAY_SUB_MCH_ID` – required for CloudBase WeChat Pay integration; configure with the sub-merchant ID provisioned by WeChat Pay.
+- `WECHAT_PAY_ENV_ID` – optional override for CloudBase env used by `cloudPay` (defaults to the runtime env).
+- `WECHAT_PAY_NOTIFY_FUNCTION` – cloud function that receives asynchronous pay callbacks (defaults to `shop`).
+- `WECHAT_PAY_BODY` – payment description shown in transaction records (defaults to `Shop order payment`).
+- `WECHAT_PAY_IP` – public IP reported to WeChat Pay when creating orders (defaults to `127.0.0.1`; set to gateway IP if required).
 
 Why
 - Vite/weapp-vite only expose `VITE_*` to client code, reducing accidental secret leaks.

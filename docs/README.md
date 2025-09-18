@@ -10,21 +10,21 @@ Use this folder as a high-level guide: the docs summarise intent, current capabi
 
 ## Current capabilities snapshot
 
-- **Mini program** – read-only storefront showing featured products, categories, profile overview, and seeded content for cart/search/product detail. Authentication captures user profile basics via cloud functions.
-- **Cloud function router** – action-based API powering storefront and admin. Supports auth bootstrap, featured listings, category trees, profile order counts, and admin product/order/user/system reads plus product CRUD.
-- **Admin console** – CloudBase-authenticated web app for catalog management and operational reporting (dashboard metrics, order/user/system overviews).
-- **Shared models** – Zod schemas for users/products/orders/system items ensure consistent validation across runtimes.
+- **Mini program** – full browsing and checkout flow backed by WeChat Pay. Users can search, manage the cart, place orders, and complete payment directly inside the mini program.
+- **Cloud function router** – action-based API powering storefront and admin. Handles auth bootstrap, catalogue queries, order creation, payment preparation/confirmation, and admin-side product/user/system data plus order lifecycle mutations.
+- **Admin console** – CloudBase-authenticated console for catalogue management, dashboard metrics, and operational tooling. Operators can review payment metadata and transition orders through fulfillment states.
+- **Shared models** – Zod schemas for users/products/orders/system items (including payment contracts) to keep validation consistent across runtimes.
 
 ## Upcoming work / required APIs
 
 These items are prioritised to unlock end-to-end transactions. Track them as they graduate into ADRs or code.
 
-1. **Order lifecycle APIs** – add actions for cart checkout, order creation, status transitions, and cancellation/refund flows. Mini program pages should consume them; admin needs mutation endpoints for fulfillment updates.
-2. **Payment integration** – wire WeChat Pay (or interim mock) to confirm payments, adjust user wallets (`balanceYuan`/`frozenYuan`), and update order statuses atomically.
-3. **Admin role enforcement** – extend `getAdminContext` to verify the caller’s user record includes the `admin` role before granting access to `v1.admin.*` actions.
-4. **System content management** – implement CRUD APIs for categories/coupons/banners so admins can maintain storefront configuration through the console.
-5. **Media persistence strategy** – decide on long-lived file storage (CloudBase file IDs, CDN) and expose APIs or policies for serving product assets to the mini program.
-6. **Analytics & audit trail** – capture admin actions and key order events (e.g., `audit_logs` collection) to support future ops reviews.
+1. **Wallet and settlement ledger** – reconcile payments with user wallets (`balanceYuan`/`frozenYuan`) and record ledger entries for payouts/refunds.
+2. **Admin role enforcement** – extend `getAdminContext` to verify the caller’s user record includes the `admin` role before granting access to `v1.admin.*` actions.
+3. **System content management** – implement CRUD APIs for categories/coupons/banners so admins can maintain storefront configuration through the console.
+4. **Media persistence strategy** – decide on long-lived file storage (CloudBase file IDs, CDN) and expose APIs or policies for serving product assets to the mini program.
+5. **Analytics & audit trail** – capture admin actions and key order events (e.g., `audit_logs` collection) to support future ops reviews.
+6. **Asynchronous payment webhooks** – handle CloudBase pay notifications for redundancy and to support refunds at scale.
 
 ## Language
 
