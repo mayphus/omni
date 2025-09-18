@@ -17,7 +17,7 @@ import type { User, UserProfile, UserWithId } from '@shared/models/user'
 import { zUser, zUserProfile, zUserWithId } from '@shared/models/user'
 import type { Product, ProductImage, ProductInput, ProductWithId } from '@shared/models/product'
 import { zProduct, zProductInput, zProductWithId } from '@shared/models/product'
-import type { Order, OrderWithId, Payment, PaymentStatus } from '@shared/models/order'
+import type { Order, OrderWithId, Payment, PaymentStatus, OrderStatus } from '@shared/models/order'
 import { zOrder, zOrderStatus, zOrderWithId } from '@shared/models/order'
 import type {
   SystemBannerWithId,
@@ -591,6 +591,69 @@ const handlers: Record<string, (event: any) => Promise<ApiResponse> | ApiRespons
         status: 'paid',
         payment: updatedPayment,
         updatedAt: now,
+      },
+    })
+  },
+
+  /**
+   * v1.store.order.cancel
+   * Input: { orderId }
+   * Output: { order }
+   */
+  'v1.store.order.cancel': async (event: any) => {
+    const { OPENID } = getWX() as any
+    if (!OPENID) return fail('Missing OPENID in WX context')
+    const parsed = zOrderIdPayload.safeParse(event)
+    if (!parsed.success) return fail('Invalid order payload', { issues: parsed.error.issues })
+
+    const orderId = parsed.data.orderId.trim()
+    let order: OrderWithId
+    try {
+      order = await requireOrderById(orderId)
+    } catch (error) {
+      if ((error as Error).message === 'Order not found') return fail('Order not found')
+      throw error
+    }
+
+    try {
+      ensureOrderOwner(order, OPENID)
+    } catch {
+      return fail('Order not found')
+    }
+
+    const cancelableStatuses = new Set<OrderStatus>(['pending', 'paid'])
+    if (!cancelableStatuses.has(order.status)) {
+      return fail('Order cannot be canceled', { status: order.status })
+    }
+
+    const paymentStatus = order.payment?.status
+    if (order.status === 'paid' && paymentStatus === 'succeeded') {
+      return fail('Paid orders cannot be canceled automatically')
+    }
+
+    const now = nowMs()
+    const update: Record<string, any> = {
+      status: 'canceled',
+      updatedAt: now,
+    }
+
+    if (order.payment) {
+      const paymentUpdates: Partial<Payment> & { status?: PaymentStatus } = {}
+      if (order.payment.status !== 'failed' && order.payment.status !== 'refunded') {
+        paymentUpdates.status = 'failed'
+        paymentUpdates.lastError = 'Order canceled by user'
+      }
+      if (Object.keys(paymentUpdates).length > 0) {
+        update.payment = buildPaymentUpdate(order.payment, paymentUpdates)
+      }
+    }
+
+    await ordersCol().where({ _id: order.id }).update({ data: update })
+
+    return ok({
+      order: {
+        ...order,
+        ...update,
       },
     })
   },

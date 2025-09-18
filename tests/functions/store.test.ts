@@ -596,4 +596,117 @@ describe('functions: store endpoints', () => {
     expect(stored?.status).toBe('pending')
     expect(stored?.payment?.status).toBe('ready')
   })
+
+  it('allows a customer to cancel their pending order', async () => {
+    const now = nowMs()
+    const orderId = testCloud.insert(Collections.Orders, {
+      userId: 'buyer-cancel',
+      items: [
+        {
+          productId: 'prod-1',
+          title: 'Sample Item',
+          qty: 1,
+          priceYuan: 25,
+        },
+      ],
+      subtotalYuan: 25,
+      shippingYuan: 0,
+      discountYuan: 0,
+      totalYuan: 25,
+      status: 'pending',
+      payment: {
+        method: 'wechat_pay',
+        status: 'pending',
+        amountYuan: 25,
+        currency: 'CNY',
+      },
+      createdAt: now - 1000,
+      updatedAt: now - 1000,
+    })
+
+    testCloud.setContext({ OPENID: 'buyer-cancel' })
+    const res = await main({ action: 'v1.store.order.cancel', orderId })
+    expect(res.success).toBe(true)
+    expect(res.order.status).toBe('canceled')
+    expect(res.order.payment?.status).toBe('failed')
+    expect(res.order.payment?.lastError).toContain('canceled')
+
+    const stored = testCloud.getData(Collections.Orders).find((doc) => doc._id === orderId)
+    expect(stored?.status).toBe('canceled')
+    expect(stored?.payment?.status).toBe('failed')
+  })
+
+  it('prevents canceling orders owned by someone else', async () => {
+    const now = nowMs()
+    const orderId = testCloud.insert(Collections.Orders, {
+      userId: 'actual-owner',
+      items: [
+        {
+          productId: 'prod-2',
+          title: 'Owner Item',
+          qty: 1,
+          priceYuan: 10,
+        },
+      ],
+      subtotalYuan: 10,
+      shippingYuan: 0,
+      discountYuan: 0,
+      totalYuan: 10,
+      status: 'pending',
+      payment: {
+        method: 'wechat_pay',
+        status: 'pending',
+        amountYuan: 10,
+        currency: 'CNY',
+      },
+      createdAt: now - 2000,
+      updatedAt: now - 2000,
+    })
+
+    testCloud.setContext({ OPENID: 'intruder' })
+    const res = await main({ action: 'v1.store.order.cancel', orderId })
+    expect(res.success).toBe(false)
+    expect(res.error).toBe('Order not found')
+
+    const stored = testCloud.getData(Collections.Orders).find((doc) => doc._id === orderId)
+    expect(stored?.status).toBe('pending')
+  })
+
+  it('rejects cancellation for orders already paid', async () => {
+    const now = nowMs()
+    const orderId = testCloud.insert(Collections.Orders, {
+      userId: 'buyer-paid',
+      items: [
+        {
+          productId: 'prod-3',
+          title: 'Paid Item',
+          qty: 2,
+          priceYuan: 15,
+        },
+      ],
+      subtotalYuan: 30,
+      shippingYuan: 0,
+      discountYuan: 0,
+      totalYuan: 30,
+      status: 'paid',
+      payment: {
+        method: 'wechat_pay',
+        status: 'succeeded',
+        amountYuan: 30,
+        currency: 'CNY',
+        paidAt: now - 500,
+      },
+      createdAt: now - 2000,
+      updatedAt: now - 1500,
+    })
+
+    testCloud.setContext({ OPENID: 'buyer-paid' })
+    const res = await main({ action: 'v1.store.order.cancel', orderId })
+    expect(res.success).toBe(false)
+    expect(res.error).toBe('Paid orders cannot be canceled automatically')
+
+    const stored = testCloud.getData(Collections.Orders).find((doc) => doc._id === orderId)
+    expect(stored?.status).toBe('paid')
+    expect(stored?.payment?.status).toBe('succeeded')
+  })
 })
