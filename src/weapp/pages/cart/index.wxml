@@ -9,23 +9,30 @@
 </block>
 
 <block wx:else>
-  <van-cell-group inset>
+  <van-checkbox-group class="cart-list" value="{{ selectedIds }}" bind:change="onSelectionChange">
     <van-swipe-cell
+      class="cart-swipe"
       wx:for="{{ items }}"
       wx:key="id"
     >
-      <van-cell
-        title="{{ item.title }}"
-        label="¥{{ item.price }}"
-        border="false"
-      >
-        <view slot="icon">
-          <van-image width="80rpx" height="80rpx" fit="cover" src="{{ item.imageUrl || 'https://img.yzcdn.cn/vant/ipad.jpeg' }}" />
+      <view class="cart-item">
+        <van-checkbox
+          class="cart-item__checkbox"
+          shape="square"
+          icon-size="28rpx"
+          name="{{ item.id }}"
+        />
+        <view class="cart-item__figure">
+          <van-image width="120rpx" height="120rpx" fit="cover" src="{{ item.imageUrl || 'https://img.yzcdn.cn/vant/ipad.jpeg' }}" />
         </view>
-        <view slot="right-icon" class="cart-actions" data-cart-id="{{ item.id }}">
-          <van-stepper value="{{ item.qty }}" min="0" bind:change="onQuantityChange" data-cart-id="{{ item.id }}" />
+        <view class="cart-item__main">
+          <view class="cart-item__title">{{ item.title }}</view>
+          <view class="cart-item__meta">
+            <view class="cart-item__price">¥{{ item.price }}</view>
+            <van-stepper value="{{ item.qty }}" min="0" bind:change="onQuantityChange" data-cart-id="{{ item.id }}" />
+          </view>
         </view>
-      </van-cell>
+      </view>
       <view slot="right">
         <van-button
           size="small"
@@ -38,15 +45,32 @@
         </van-button>
       </view>
     </van-swipe-cell>
-  </van-cell-group>
+  </van-checkbox-group>
+  <view class="cart-footer">
+    <van-checkbox
+      shape="square"
+      checked="{{ allSelected }}"
+      bind:change="onToggleSelectAll"
+      class="cart-footer__select"
+    >
+      {{ allSelected ? i18n.deselectAllLabel : i18n.selectAllLabel }}
+    </van-checkbox>
+    <view class="cart-footer__summary">
+      <view class="cart-footer__count">{{ i18n.selectedLabel }} {{ selectedIds.length }}</view>
+      <view class="cart-footer__total">¥{{ selectedTotalText }}</view>
+    </view>
+    <van-button
+      class="cart-footer__checkout"
+      type="primary"
+      size="normal"
+      disabled="{{ !selectedIds.length }}"
+      bind:tap="onCheckout"
+    >
+      {{ i18n.checkoutButton }}
+    </van-button>
+  </view>
   <view class="cart-actions-row">
     <van-button type="warning" size="small" bind:tap="onClearCart">{{ i18n.clearButton }}</van-button>
     <van-button type="primary" size="small" bind:tap="onGoShopping">{{ i18n.continueButton }}</van-button>
   </view>
-  <van-submit-bar
-    price="{{ totalCents }}"
-    button-text="{{ i18n.checkoutButton }}"
-    bind:submit="onCheckout"
-    safe-area-inset-bottom
-  />
 </block>

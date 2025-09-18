@@ -74,6 +74,10 @@ type I18nMessages = {
     continueButton: string
     checkoutButton: string
     emptyToast: string
+    selectAllLabel: string
+    deselectAllLabel: string
+    selectedLabel: string
+    selectToast: string
   }
   checkout: {
     orderTitle: string
@@ -290,6 +294,10 @@ const MESSAGES: Record<Locale, I18nMessages> = {
       continueButton: 'Continue shopping',
       checkoutButton: 'Checkout',
       emptyToast: 'Cart is empty',
+      selectAllLabel: 'Select all',
+      deselectAllLabel: 'Deselect all',
+      selectedLabel: 'Selected',
+      selectToast: 'Choose items to checkout',
     },
     checkout: {
       orderTitle: 'Order overview',
@@ -574,6 +582,10 @@ const MESSAGES: Record<Locale, I18nMessages> = {
       continueButton: '继续逛逛',
       checkoutButton: '去结算',
       emptyToast: '购物车为空',
+      selectAllLabel: '全选',
+      deselectAllLabel: '取消全选',
+      selectedLabel: '已选',
+      selectToast: '请选择要结算的商品',
     },
     checkout: {
       orderTitle: '订单概览',
