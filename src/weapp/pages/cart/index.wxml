@@ -76,8 +76,7 @@
     disabled="{{ !selectedIds.length }}"
     bind:submit="onCheckout"
     placeholder
-    style="bottom: 120rpx;"
-    z-index="1200"
+    custom-class="cart-submit-bar"
     safe-area-inset-bottom
   />
 </block>

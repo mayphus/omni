@@ -117,3 +117,7 @@ page {
 .cart-submit-bar-spacer {
   height: 220rpx;
 }
+.cart-submit-bar {
+  bottom: 120rpx !important;
+  z-index: 1200 !important;
+}
