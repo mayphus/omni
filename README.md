@@ -23,24 +23,25 @@ admin/             # built admin web app
 archive/           # optional: previous codebase snapshots (if present)
 ```
 
+Each source package (`src/admin`, `src/functions/*`, `src/shared`, `src/weapp`) owns its runtime dependencies. Run `pnpm install` from the repo root so pnpm can link all workspaces correctly before building.
+
 ## Commands
 
 - WeApp
-  - `npm run dev:weapp` – author with weapp‑vite; open via DevTools. Note: dev does not clean `weapp/`, preserving `weapp/miniprogram_npm`. Run `npm run build:weapp:npm` once before preview.
-  - `npm run build:weapp` – build to `./weapp`
-  - `npm run build:weapp:npm` – trigger DevTools NPM pack (Vant, etc.)
-  - `npm run deploy:weapp` – build + npm pack + upload via miniprogram‑ci
+  - `pnpm run dev:weapp` – author with weapp‑vite; open via DevTools. Note: dev does not clean `weapp/`, preserving `weapp/miniprogram_npm`. Run `pnpm run build:weapp:npm` once before preview.
+  - `pnpm run build:weapp` – build to `./weapp`
+  - `pnpm run build:weapp:npm` – trigger DevTools NPM pack (Vant, etc.)
+  - `pnpm run deploy:weapp` – build + npm pack + upload via miniprogram‑ci
 - Functions
-  - `npm run build:functions` – build `shop` to `./functions/shop` (CJS, Node 18)
+  - `pnpm run build:functions` – build `shop` to `./functions/shop` (CJS, Node 18)
   - Note: a watch/dev task is not implemented yet.
 - Admin
-  - `npm run dev:admin` – Vite dev (Hello World)
-  - `npm run build:admin` – build to `./admin`
+  - `pnpm run dev:admin` – Vite dev (Hello World)
+  - `pnpm run build:admin` – build to `./admin`
 - All builds
-  - `npm run build:all` – build weapp (+npm), functions, and admin
-    - Requires pnpm in PATH because the script chains internal tasks with `pnpm run`. If you only have npm, run each build task individually.
+  - `pnpm run build:all` – build weapp (+npm), functions, and admin
 - Quality
-  - `npm run typecheck` / `npm run test:ci` / `npm run verify`
+  - `pnpm run typecheck` / `pnpm run test:ci` / `pnpm run verify`
 
 ## Notes
 
@@ -50,9 +51,9 @@ archive/           # optional: previous codebase snapshots (if present)
 
 ## Current status
 
-- **WeApp** – storefront with search, categories, cart, and checkout powered by WeChat Pay. Build with `npm run build:weapp`, run `npm run build:weapp:npm`, then open via WeChat DevTools.
-- **Cloud function (`shop`)** – action router covering auth, catalogue queries, order creation, WeChat Pay preparation/confirmation, and admin order/product/system endpoints. Build with `npm run build:functions`; deploy via `npm run deploy:functions` (requires TCB CLI auth).
-- **Admin console** – Vite + React dashboard for catalogue management, analytics, and order lifecycle controls. Run `npm run dev:admin` or build with `npm run build:admin`.
+- **WeApp** – storefront with search, categories, cart, and checkout powered by WeChat Pay. Build with `pnpm run build:weapp`, run `pnpm run build:weapp:npm`, then open via WeChat DevTools.
+- **Cloud function (`shop`)** – action router covering auth, catalogue queries, order creation, WeChat Pay preparation/confirmation, and admin order/product/system endpoints. Build with `pnpm run build:functions`; deploy via `pnpm run deploy:functions` (requires TCB CLI auth).
+- **Admin console** – Vite + React dashboard for catalogue management, analytics, and order lifecycle controls. Run `pnpm run dev:admin` or build with `pnpm run build:admin`.
 
 ## Environment
 

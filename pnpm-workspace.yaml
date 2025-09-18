@@ -3,3 +3,4 @@ packages:
   - "src/admin"           # React dashboard source
   - "src/functions/*"     # Each cloud function (shop, etc.)
   - "src/weapp"           # WeChat miniprogram source
+  - "src/shared"          # Shared schemas/types package

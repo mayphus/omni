@@ -34,7 +34,7 @@ function ensureMiniprogramNpm() {
 
   try {
     console.log('miniprogram_npm missing components, running build:weapp:npm...');
-    execSync('npm run build:weapp:npm', { stdio: 'inherit' });
+    execSync('pnpm run build:weapp:npm', { stdio: 'inherit' });
     if (hasVantComponents()) return;
     console.warn('build:weapp:npm completed but Vant components still missing.');
   } catch (error) {
