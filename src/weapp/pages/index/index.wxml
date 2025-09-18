@@ -11,6 +11,31 @@
 <!-- Announcement -->
 
 <!-- Banner -->
+<block wx:if="{{ banners.length }}">
+  <swiper
+    class="home-banner"
+    autoplay
+    interval="5000"
+    duration="500"
+    indicator-dots
+    indicator-color="rgba(255,255,255,0.3)"
+    indicator-active-color="#ffffff"
+  >
+    <swiper-item
+      wx:for="{{ banners }}"
+      wx:key="id"
+    >
+      <view
+        class="home-banner__slide"
+        data-link="{{ item.linkUrl || '' }}"
+        bind:tap="onBannerTap"
+      >
+        <image class="home-banner__image" mode="aspectFill" src="{{ item.imageUrl }}" />
+        <view wx:if="{{ item.title }}" class="home-banner__title">{{ item.title }}</view>
+      </view>
+    </swiper-item>
+  </swiper>
+</block>
 
 <!-- Featured products -->
 <block wx:if="{{ featuredLoading && !featuredLoaded }}">

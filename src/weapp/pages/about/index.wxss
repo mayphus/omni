@@ -1,0 +1,76 @@
+page {
+  min-height: 100vh;
+  background: #f7f8fa;
+}
+
+.about-page {
+  padding: 32rpx;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 24rpx;
+}
+
+.about-hero {
+  background: linear-gradient(135deg, #1989fa, #6ec1ff);
+  color: #fff;
+  padding: 48rpx 40rpx;
+  border-radius: 24rpx;
+  box-shadow: 0 20rpx 60rpx rgba(25, 137, 250, 0.25);
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+}
+
+.about-hero__badge {
+  font-size: 22rpx;
+  letter-spacing: 2rpx;
+  text-transform: uppercase;
+  opacity: 0.8;
+}
+
+.about-hero__title {
+  font-size: 40rpx;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.about-hero__subtitle {
+  font-size: 26rpx;
+  opacity: 0.9;
+}
+
+.about-section {
+  background: #fff;
+  border-radius: 20rpx;
+  padding: 28rpx 32rpx;
+  box-shadow: 0 12rpx 40rpx rgba(0, 0, 0, 0.04);
+}
+
+.about-section__title {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #111827;
+  margin-bottom: 16rpx;
+}
+
+.about-section__content {
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
+}
+
+.about-paragraph {
+  font-size: 26rpx;
+  color: #374151;
+  line-height: 1.6;
+}
+
+.van-collapse-item__title {
+  font-size: 28rpx !important;
+}
+
+.van-cell__value {
+  max-width: 400rpx;
+  white-space: normal;
+}

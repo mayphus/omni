@@ -1,5 +1,5 @@
 import { definePage } from '@vue-mini/core'
-import { fetchStoreHome, type StoreFeaturedProduct } from '../../utils/api'
+import { fetchStoreHome, type StoreBanner, type StoreFeaturedProduct } from '../../utils/api'
 import type { ProductWithId } from '@shared/models/product'
 import { withI18nPage } from '../../utils/i18n'
 
@@ -10,6 +10,13 @@ type FeaturedCard = {
   price: string
   imageUrl: string
   hasStock: boolean
+}
+
+type BannerCard = {
+  id: string
+  imageUrl: string
+  title?: string
+  linkUrl?: string
 }
 
 const DEFAULT_IMAGE = 'https://img.yzcdn.cn/vant/ipad.jpeg'
@@ -50,6 +57,7 @@ function toFeaturedCard(item: StoreFeaturedProduct | ProductWithId): FeaturedCar
 definePage(withI18nPage({
   data: {
     featuredProducts: [] as FeaturedCard[],
+    banners: [] as BannerCard[],
     featuredLoading: false,
     featuredLoaded: false,
     featuredError: '',
@@ -75,10 +83,19 @@ definePage(withI18nPage({
     if (featuredLoading) return
     this.setData({ featuredLoading: true, featuredError: '' })
     try {
-      const { featuredProducts } = await fetchStoreHome()
+      const { featuredProducts, banners } = await fetchStoreHome()
       const mapped = (featuredProducts || []).map(toFeaturedCard)
+      const bannerCards = (banners || [])
+        .filter((banner): banner is StoreBanner => Boolean(banner && banner.imageUrl))
+        .map((banner) => ({
+          id: banner.id,
+          imageUrl: banner.imageUrl,
+          title: banner.title,
+          linkUrl: banner.linkUrl,
+        }))
       this.setData({
         featuredProducts: mapped,
+        banners: bannerCards,
         featuredLoaded: true,
       })
     } catch (error) {
@@ -117,5 +134,22 @@ definePage(withI18nPage({
     const productId = event?.currentTarget?.dataset?.productId as string | undefined
     if (!productId || typeof productId !== 'string') return
     wx.navigateTo({ url: `/pages/product/detail?id=${encodeURIComponent(productId)}` })
+  },
+
+  onBannerTap(event: WechatMiniprogram.TouchEvent) {
+    const dataset = event?.currentTarget?.dataset || {}
+    const link = typeof dataset.link === 'string' ? dataset.link : ''
+    if (!link) return
+    if (link.startsWith('/')) {
+      wx.navigateTo({ url: link })
+      return
+    }
+    wx.setClipboardData({
+      data: link,
+      success: () => {
+        const message = ((this.data as any)?.i18n?.bannerLinkCopied) || 'Link copied'
+        wx.showToast({ title: message, icon: 'success' })
+      },
+    })
   },
 }, ({ messages }) => messages.index))

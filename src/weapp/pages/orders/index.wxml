@@ -23,10 +23,13 @@
           wx:key="id"
           title="{{ i18n.orderLabel }} {{ item.id }}"
           value="¥{{ item.totalYuan }}"
+          is-link
+          link-type="navigateTo"
+          url="/pages/order/detail?orderId={{ item.id }}"
         >
           <view slot="label" class="order-label">
             <view>{{ item.formattedDate }}</view>
-            <view class="order-status">{{ i18n.statusLabel }}: {{ item.status }}</view>
+            <view class="order-status">{{ i18n.statusLabel }}: {{ i18n.statusLabels[item.status] || item.status }}</view>
           </view>
         </van-cell>
       </van-cell-group>

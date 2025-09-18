@@ -48,6 +48,7 @@ type I18nMessages = {
     endDivider: string
     searchResultsTitle: string
     loadingText: string
+    bannerLinkCopied: string
   }
   search: {
     placeholder: string
@@ -77,6 +78,7 @@ type I18nMessages = {
     selectAllLabel: string
     deselectAllLabel: string
     selectedLabel: string
+    selectLabel: string
     selectToast: string
   }
   checkout: {
@@ -108,6 +110,34 @@ type I18nMessages = {
     emptyDescription: string
     orderLabel: string
     statusLabel: string
+    statusLabels: Record<'pending' | 'paid' | 'shipped' | 'completed' | 'canceled' | 'refunded', string>
+  }
+  orderDetail: {
+    retryButton: string
+    orderLabel: string
+    placedOn: string
+    cancelButton: string
+    cannotCancelHint: string
+    copyId: string
+    itemsTitle: string
+    summaryTitle: string
+    subtotalLabel: string
+    discountLabel: string
+    shippingLabel: string
+    totalLabel: string
+    addressTitle: string
+    paymentTitle: string
+    paymentStatusLabel: string
+    paymentReferenceLabel: string
+    statusLabels: Record<'pending' | 'paid' | 'shipped' | 'completed' | 'canceled' | 'refunded', string>
+    paymentStatus: Record<'pending' | 'ready' | 'succeeded' | 'failed' | 'refunded', string>
+    cancelConfirm: {
+      title: string
+      message: string
+      confirm: string
+      cancel: string
+      success: string
+    }
   }
   product: {
     productTitle: string
@@ -201,6 +231,20 @@ type I18nMessages = {
     updateFailed: string
     canceled: string
   }
+  about: {
+    tagline: string
+    title: string
+    subtitle: string
+    sections: Array<{ key: string; title: string; paragraphs: string[] }>
+    policies: {
+      title: string
+      items: Array<{ key: string; title: string; paragraphs: string[] }>
+    }
+    contact: {
+      title: string
+      items: Array<{ key: string; label: string; value: string; description?: string }>
+    }
+  }
 }
 
 type Locale = 'en' | 'zh'
@@ -266,6 +310,7 @@ const MESSAGES: Record<Locale, I18nMessages> = {
       endDivider: 'More updates soon',
       searchResultsTitle: 'Search results',
       loadingText: 'Loading…',
+      bannerLinkCopied: 'Link copied',
     },
     search: {
       placeholder: 'Search upcoming products',
@@ -302,6 +347,7 @@ const MESSAGES: Record<Locale, I18nMessages> = {
       selectAllLabel: 'Select all',
       deselectAllLabel: 'Deselect all',
       selectedLabel: 'Selected',
+      selectLabel: 'Select',
       selectToast: 'Choose items to checkout',
     },
     checkout: {
@@ -344,6 +390,54 @@ const MESSAGES: Record<Locale, I18nMessages> = {
       emptyDescription: 'You have no orders yet. Place your first order to see it here.',
       orderLabel: 'Order',
       statusLabel: 'Status',
+      statusLabels: {
+        pending: 'Pending payment',
+        paid: 'Paid',
+        shipped: 'Shipped',
+        completed: 'Completed',
+        canceled: 'Canceled',
+        refunded: 'Refunded',
+      },
+    },
+    orderDetail: {
+      retryButton: 'Reload',
+      orderLabel: 'Order',
+      placedOn: 'Placed on',
+      cancelButton: 'Cancel order',
+      cannotCancelHint: 'This order can no longer be canceled online.',
+      copyId: 'Copy ID',
+      itemsTitle: 'Items',
+      summaryTitle: 'Order summary',
+      subtotalLabel: 'Subtotal',
+      discountLabel: 'Discount',
+      shippingLabel: 'Shipping',
+      totalLabel: 'Total',
+      addressTitle: 'Shipping address',
+      paymentTitle: 'Payment',
+      paymentStatusLabel: 'Payment status',
+      paymentReferenceLabel: 'Payment reference',
+      statusLabels: {
+        pending: 'Pending payment',
+        paid: 'Paid',
+        shipped: 'Shipped',
+        completed: 'Completed',
+        canceled: 'Canceled',
+        refunded: 'Refunded',
+      },
+      paymentStatus: {
+        pending: 'Pending',
+        ready: 'Awaiting payment',
+        succeeded: 'Paid',
+        failed: 'Failed',
+        refunded: 'Refunded',
+      },
+      cancelConfirm: {
+        title: 'Cancel this order?',
+        message: 'Please confirm you want to cancel this order. This action cannot be undone.',
+        confirm: 'Cancel order',
+        cancel: 'Keep order',
+        success: 'Order canceled',
+      },
     },
     product: {
       productTitle: 'Product preview',
@@ -447,6 +541,86 @@ const MESSAGES: Record<Locale, I18nMessages> = {
           ],
         },
       ],
+    },
+    about: {
+      tagline: 'Our story',
+      title: 'About Tongmeng Plant',
+      subtitle: 'We build digital retail experiences that feel familiar, trusted, and ready for everyday life in China.',
+      sections: [
+        {
+          key: 'mission',
+          title: 'Mission',
+          paragraphs: [
+            'Tongmeng Plant exists to make curated, family-friendly commerce effortless. We connect local suppliers with community shoppers through experiences that highlight quality, value, and service.',
+          ],
+        },
+        {
+          key: 'approach',
+          title: 'How we work',
+          paragraphs: [
+            'Our teams operate across merchandising, operations, and technology. Every release focuses on clear communication, reliable fulfilment, and responsive support so customers always know what to expect.',
+            'We iterate quickly, listen to feedback carefully, and publish transparent roadmaps so partners can co-create the platform with us.',
+          ],
+        },
+        {
+          key: 'sustainability',
+          title: 'Sustainability & community',
+          paragraphs: [
+            'We prioritise responsible sourcing, recyclable packaging, and efficient logistics. Part of every order funds neighbourhood programmes that encourage greener living.',
+          ],
+        },
+      ],
+      policies: {
+        title: 'Policies',
+        items: [
+          {
+            key: 'privacy',
+            title: 'Privacy Policy',
+            paragraphs: [
+              'We collect only the data required to fulfil orders, provide support, and comply with regulations. All personal information is stored securely in mainland China and encrypted in transit.',
+              'You may request data export or deletion by contacting customer service. We honour all requests within 15 working days unless law requires retention.',
+            ],
+          },
+          {
+            key: 'terms',
+            title: 'Terms of Service',
+            paragraphs: [
+              'Placing an order implies acceptance of our payment, delivery, and after-sale processes. Prices are listed in CNY and include applicable taxes unless noted.',
+              'We reserve the right to update pricing, availability, or policies. Any significant changes are announced in-app and on our official channels.',
+            ],
+          },
+          {
+            key: 'returns',
+            title: 'Returns & refunds',
+            paragraphs: [
+              'Most unopened items can be returned within 7 days of receipt. Contact support to arrange pickup or drop-off. Refunds post to the original payment method within 3-5 business days after inspection.',
+              'If an item arrives damaged or incorrect, notify us within 48 hours so we can prioritise a replacement or refund.',
+            ],
+          },
+        ],
+      },
+      contact: {
+        title: 'Contact',
+        items: [
+          {
+            key: 'support',
+            label: 'Customer service',
+            value: 'support@tongmeng-plant.com',
+            description: 'Email us anytime — we reply within 1 business day.',
+          },
+          {
+            key: 'hours',
+            label: 'Service hours',
+            value: '09:00–18:00 (GMT+8, Mon–Sat)',
+            description: 'Live agents are available during these hours.',
+          },
+          {
+            key: 'address',
+            label: 'Office',
+            value: 'Tongmeng Industrial Park, Shenzhen',
+          },
+        ],
+      },
     },
     profile: {
       header: {
@@ -562,6 +736,7 @@ const MESSAGES: Record<Locale, I18nMessages> = {
       endDivider: '更多更新即将到来',
       searchResultsTitle: '搜索结果',
       loadingText: '加载中…',
+      bannerLinkCopied: '链接已复制',
     },
     search: {
       placeholder: '搜索即将上线的商品',
@@ -595,6 +770,7 @@ const MESSAGES: Record<Locale, I18nMessages> = {
       selectAllLabel: '全选',
       deselectAllLabel: '取消全选',
       selectedLabel: '已选',
+      selectLabel: '选择',
       selectToast: '请选择要结算的商品',
     },
     checkout: {
@@ -637,6 +813,54 @@ const MESSAGES: Record<Locale, I18nMessages> = {
       emptyDescription: '暂无订单，完成购买后即可在此查看。',
       orderLabel: '订单',
       statusLabel: '状态',
+      statusLabels: {
+        pending: '待付款',
+        paid: '已付款',
+        shipped: '配送中',
+        completed: '已完成',
+        canceled: '已取消',
+        refunded: '已退款',
+      },
+    },
+    orderDetail: {
+      retryButton: '重新加载',
+      orderLabel: '订单',
+      placedOn: '下单时间',
+      cancelButton: '取消订单',
+      cannotCancelHint: '当前状态暂不支持取消，如需帮助请联系客服。',
+      copyId: '复制编号',
+      itemsTitle: '商品明细',
+      summaryTitle: '订单汇总',
+      subtotalLabel: '商品小计',
+      discountLabel: '优惠',
+      shippingLabel: '运费',
+      totalLabel: '应付总额',
+      addressTitle: '收货信息',
+      paymentTitle: '支付信息',
+      paymentStatusLabel: '支付状态',
+      paymentReferenceLabel: '付款单号',
+      statusLabels: {
+        pending: '待付款',
+        paid: '已付款',
+        shipped: '配送中',
+        completed: '已完成',
+        canceled: '已取消',
+        refunded: '已退款',
+      },
+      paymentStatus: {
+        pending: '待处理',
+        ready: '待支付',
+        succeeded: '已支付',
+        failed: '支付失败',
+        refunded: '已退款',
+      },
+      cancelConfirm: {
+        title: '确定要取消订单？',
+        message: '取消后订单无法恢复，如需再次购买请重新下单。',
+        confirm: '确认取消',
+        cancel: '我再想想',
+        success: '订单已取消',
+      },
     },
     product: {
       productTitle: '商品预览',
@@ -740,6 +964,70 @@ const MESSAGES: Record<Locale, I18nMessages> = {
           ],
         },
       ],
+    },
+    about: {
+      tagline: '品牌故事',
+      title: '关于同梦植',
+      subtitle: '我们致力于打造可信赖的社区零售体验，让家庭采购更轻松、更安心。',
+      sections: [
+        {
+          key: 'mission',
+          title: '使命',
+          paragraphs: ['同梦植希望通过精选供应链与数字运营，为社区家庭带来物美价廉、透明可追溯的好商品。'],
+        },
+        {
+          key: 'approach',
+          title: '我们的方式',
+          paragraphs: ['团队覆盖选品、运营、技术等领域，每一次更新都围绕清晰沟通、稳定履约与周到服务展开。', '我们保持快速迭代，重视用户反馈，并通过公开路线图与合作伙伴携手共创。'],
+        },
+        {
+          key: 'sustainability',
+          title: '可持续与社区',
+          paragraphs: ['我们关注环保包装与高效物流，并将部分收益投入社区公益项目，鼓励绿色生活方式。'],
+        },
+      ],
+      policies: {
+        title: '平台政策',
+        items: [
+          {
+            key: 'privacy',
+            title: '隐私政策',
+            paragraphs: ['我们仅收集履行订单、提供客服与满足法规所需的最少信息，所有数据均存储于中国境内并在传输过程中加密。', '如需导出或删除个人信息，可通过客服提交，我们将在15个工作日内处理（法律另有规定的除外）。'],
+          },
+          {
+            key: 'terms',
+            title: '服务条款',
+            paragraphs: ['提交订单即表示同意我们的支付、配送与售后流程。所有价格以人民币标注，税费说明以页面信息为准。', '若出现价格、库存或政策调整，我们会提前在小程序及官方渠道公告。'],
+          },
+          {
+            key: 'returns',
+            title: '退换货政策',
+            paragraphs: ['未拆封商品在签收7日内可申请退货，客服会协助安排上门取件或自送。验收通过后，退款将在3-5个工作日原路退回。', '若收到商品破损或错发，请在48小时内联系客户服务，我们将优先处理换货或退款。'],
+          },
+        ],
+      },
+      contact: {
+        title: '联系我们',
+        items: [
+          {
+            key: 'support',
+            label: '客服邮箱',
+            value: 'support@tongmeng-plant.com',
+            description: '工作日24小时内回复。',
+          },
+          {
+            key: 'hours',
+            label: '服务时间',
+            value: '周一至周六 09:00-18:00',
+            description: '人工客服在此时段在线。',
+          },
+          {
+            key: 'address',
+            label: '办公地址',
+            value: '深圳市同梦产业园',
+          },
+        ],
+      },
     },
     profile: {
       header: {

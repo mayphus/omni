@@ -1,0 +1,109 @@
+<view class="order-detail">
+  <block wx:if="{{ loading }}">
+    <van-skeleton title row="5" loading />
+  </block>
+
+  <block wx:elif="{{ error }}">
+    <van-empty image="error" description="{{ error }}">
+      <van-button slot="bottom" type="primary" size="small" bind:tap="onPullDownRefresh">
+        {{ i18n.retryButton }}
+      </van-button>
+    </van-empty>
+  </block>
+
+  <block wx:elif="{{ order }}">
+    <view class="order-section order-section--hero">
+      <view class="order-hero">
+        <view class="order-hero__status">
+          <van-tag type="{{ order.statusTag }}" size="medium">
+            {{ i18n.statusLabels[order.status] || order.status }}
+          </van-tag>
+          <van-button
+            size="mini"
+            type="primary"
+            plain
+            class="order-hero__copy"
+            bind:tap="onCopyOrderId"
+          >
+            {{ i18n.copyId }}
+          </van-button>
+        </view>
+        <view class="order-hero__id">{{ i18n.orderLabel }} {{ order.id }}</view>
+        <view class="order-hero__date">{{ i18n.placedOn }} {{ order.formattedDate }}</view>
+      </view>
+      <van-button
+        wx:if="{{ order.canCancel }}"
+        type="danger"
+        block
+        loading="{{ canceling }}"
+        bind:tap="onCancelOrder"
+      >
+        {{ i18n.cancelButton }}
+      </van-button>
+      <van-tag wx:else type="default" plain size="small">
+        {{ i18n.cannotCancelHint }}
+      </van-tag>
+    </view>
+
+    <view class="order-section">
+      <view class="order-section__title">{{ i18n.itemsTitle }}</view>
+      <van-card
+        wx:for="{{ order.items }}"
+        wx:key="itemKey"
+        title="{{ item.title }}"
+        desc="x{{ item.qty }}"
+        price="{{ item.lineTotalText }}"
+        currency="¥"
+      >
+        <view slot="tags" class="order-item-price">¥{{ item.unitPriceText }} × {{ item.qty }}</view>
+      </van-card>
+    </view>
+
+    <view class="order-section">
+      <view class="order-section__title">{{ i18n.summaryTitle }}</view>
+      <view class="order-summary-row">
+        <text>{{ i18n.subtotalLabel }}</text>
+        <text>¥{{ order.subtotalText }}</text>
+      </view>
+      <view class="order-summary-row" wx:if="{{ order.discountText !== '0.00' }}">
+        <text>{{ i18n.discountLabel }}</text>
+        <text>-¥{{ order.discountText }}</text>
+      </view>
+      <view class="order-summary-row" wx:if="{{ order.shippingText !== '0.00' }}">
+        <text>{{ i18n.shippingLabel }}</text>
+        <text>¥{{ order.shippingText }}</text>
+      </view>
+      <view class="order-summary-row order-summary-row--total">
+        <text>{{ i18n.totalLabel }}</text>
+        <text>¥{{ order.totalText }}</text>
+      </view>
+    </view>
+
+    <view class="order-section" wx:if="{{ order.address }}">
+      <view class="order-section__title">{{ i18n.addressTitle }}</view>
+      <view class="order-address">
+        <view wx:if="{{ order.address.contact }}" class="order-address__line">
+          {{ order.address.contact }}
+        </view>
+        <view wx:if="{{ order.address.phone }}" class="order-address__line">
+          {{ order.address.phone }}
+        </view>
+        <view wx:if="{{ order.address.detail }}" class="order-address__line order-address__line--muted">
+          {{ order.address.detail }}
+        </view>
+      </view>
+    </view>
+
+    <view class="order-section">
+      <view class="order-section__title">{{ i18n.paymentTitle }}</view>
+      <view class="order-summary-row">
+        <text>{{ i18n.paymentStatusLabel }}</text>
+        <text>{{ i18n.paymentStatus[order.paymentStatus] || order.paymentStatus }}</text>
+      </view>
+      <view class="order-summary-row" wx:if="{{ order.payment && order.payment.outTradeNo }}">
+        <text>{{ i18n.paymentReferenceLabel }}</text>
+        <text>{{ order.payment.outTradeNo }}</text>
+      </view>
+    </view>
+  </block>
+</view>

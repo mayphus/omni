@@ -2,6 +2,14 @@ import { z } from 'zod'
 import { zBaseDoc } from '../base'
 import { zYuan } from '../money'
 
+const zLinkTarget = z
+  .string()
+  .trim()
+  .min(1)
+  .refine((value) => value.startsWith('/') || /^https?:\/\//i.test(value), {
+    message: 'Link must be an http(s) URL or internal mini program path',
+  })
+
 export const zSystemCategory = z
   .object({
     kind: z.literal('category'),
@@ -39,7 +47,7 @@ export const zSystemBanner = z
     kind: z.literal('banner'),
     imageUrl: z.string().url(),
     title: z.string().optional(),
-    linkUrl: z.string().url().optional(),
+    linkUrl: zLinkTarget.optional(),
     sort: z.number().int().default(0),
     isActive: z.boolean().default(true),
     startAt: z.number().int().optional(),

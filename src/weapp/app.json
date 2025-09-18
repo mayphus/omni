@@ -8,6 +8,8 @@
     "pages/product/detail",
     "pages/search/index",
     "pages/orders/index",
+    "pages/order/detail",
+    "pages/about/index",
     "pages/checkout/index"
   ],
   "window": {

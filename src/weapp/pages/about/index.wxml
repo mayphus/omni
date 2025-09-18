@@ -1,0 +1,43 @@
+<view class="about-page">
+  <view class="about-hero">
+    <view class="about-hero__badge">{{ i18n.tagline }}</view>
+    <view class="about-hero__title">{{ i18n.title }}</view>
+    <view class="about-hero__subtitle">{{ i18n.subtitle }}</view>
+  </view>
+
+  <view class="about-section" wx:for="{{ i18n.sections }}" wx:key="key">
+    <view class="about-section__title">{{ item.title }}</view>
+    <view class="about-section__content">
+      <view wx:for="{{ item.paragraphs }}" wx:key="index" class="about-paragraph">{{ paragraph }}</view>
+    </view>
+  </view>
+
+  <view class="about-section">
+    <view class="about-section__title">{{ i18n.policies.title }}</view>
+    <van-collapse value="{{ policyActiveKey }}" bind:change="onPolicyChange" accordion>
+      <van-collapse-item
+        wx:for="{{ i18n.policies.items }}"
+        wx:key="key"
+        name="{{ item.key }}"
+        title="{{ item.title }}"
+      >
+        <view class="about-section__content">
+          <view wx:for="{{ item.paragraphs }}" wx:key="index" class="about-paragraph">{{ paragraph }}</view>
+        </view>
+      </van-collapse-item>
+    </van-collapse>
+  </view>
+
+  <view class="about-section">
+    <view class="about-section__title">{{ i18n.contact.title }}</view>
+    <van-cell-group inset>
+      <van-cell
+        wx:for="{{ i18n.contact.items }}"
+        wx:key="key"
+        title="{{ item.label }}"
+        label="{{ item.description || '' }}"
+        value="{{ item.value }}"
+      />
+    </van-cell-group>
+  </view>
+</view>

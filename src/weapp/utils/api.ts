@@ -1,5 +1,6 @@
 import type { ProductWithId } from '@shared/models/product'
 import type { OrderWithId, PaymentPackage } from '@shared/models/order'
+import type { SystemBannerWithId } from '@shared/models/system'
 
 type ShopCallSuccess<T> = {
   success: true
@@ -58,8 +59,10 @@ export type StoreProfileOverview = {
   }
 }
 
+export type StoreBanner = SystemBannerWithId
+
 export function fetchStoreHome() {
-  return callShopFunction<{ featuredProducts: StoreFeaturedProduct[] }>('v1.store.home')
+  return callShopFunction<{ featuredProducts: StoreFeaturedProduct[]; banners?: StoreBanner[] }>('v1.store.home')
 }
 
 export function fetchStoreCategories() {
@@ -89,6 +92,39 @@ export function fetchStoreOrders(status?: string, limit?: number) {
   if (status) payload.status = status
   if (typeof limit === 'number') payload.limit = limit
   return callShopFunction<{ orders: OrderWithId[] }>('v1.store.orders.list', payload)
+}
+
+export async function fetchStoreOrderDetail(orderId: string) {
+  try {
+    return await callShopFunction<{ order: OrderWithId }>('v1.store.order.detail', { orderId })
+  } catch (error) {
+    const message = error instanceof Error ? error.message : ''
+    if (typeof message === 'string' && message.includes('Unknown action')) {
+      const fallback = await fetchStoreOrders(undefined, 200)
+      const order = (fallback.orders || []).find((item) => item.id === orderId)
+      if (!order) throw new Error('Order not found')
+      return {
+        success: true,
+        action: 'fallback.store.order.detail',
+        timestamp: new Date().toISOString(),
+        executionTime: 0,
+        order,
+      }
+    }
+    throw error
+  }
+}
+
+export async function cancelStoreOrder(orderId: string) {
+  try {
+    return await callShopFunction<{ order: OrderWithId }>('v1.store.order.cancel', { orderId })
+  } catch (error) {
+    const message = error instanceof Error ? error.message : ''
+    if (typeof message === 'string' && message.includes('Unknown action')) {
+      throw new Error('Order cancellation is not yet available')
+    }
+    throw error
+  }
 }
 
 export type CreateOrderPayload = {

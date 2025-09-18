@@ -69,16 +69,9 @@
   </van-grid>
 </van-cell-group>
 
-<!-- Settings & About -->
+<!-- About -->
 <van-divider />
 <van-cell-group inset>
-  <van-cell
-    title="{{ i18n.profile.settingsTitle }}"
-    value="{{ i18n.currentLanguageLabel }}"
-    is-link
-    clickable
-    bind:click="onOpenSettings"
-  />
   <van-cell
     title="{{ i18n.profile.aboutTitle }}"
     is-link

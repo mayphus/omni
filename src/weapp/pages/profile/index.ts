@@ -1,6 +1,6 @@
 import { login } from '../../utils/auth'
 import { fetchStoreProfileOverview } from '../../utils/api'
-import { getAvailableLocales, setLocale, withI18nPage } from '../../utils/i18n'
+import { withI18nPage } from '../../utils/i18n'
 
 type StoredUser = {
   nickname?: string
@@ -114,33 +114,7 @@ Page(withI18nPage({
     wx.navigateTo({ url: '/pages/profile/edit/index' })
   },
 
-  onOpenSettings() {
-    const i18n = (this.data as any).i18n || {}
-    const options = i18n.languageOptions || []
-    if (!options.length) return
-    wx.showActionSheet({
-      itemList: options.map((opt: any) => opt.label),
-      alertText: i18n.profile?.languageAction?.description || '',
-      success: (res) => {
-        const option = options[res.tapIndex]
-        if (!option || option.value === i18n.locale) return
-        setLocale(option.value)
-        try {
-          const app = getApp<{ globalData: Record<string, any> }>()
-          app.globalData ||= {}
-          app.globalData.locale = option.value
-        } catch {}
-        wx.showToast({ title: i18n.profile?.languageAction?.success || 'Updated', icon: 'success' })
-      },
-    })
-  },
-}, ({ messages, locale }) => ({
+}, ({ messages }) => ({
   profile: messages.profile,
   toast: messages.toast,
-  languageOptions: getAvailableLocales().map((value) => ({
-    value,
-    label: messages.languages[value] || value,
-  })),
-  locale,
-  currentLanguageLabel: messages.languages[locale] || locale,
 })))

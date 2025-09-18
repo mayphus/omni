@@ -13,9 +13,9 @@ function createId() {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`
 }
 
-function buildCloudPath(file: File) {
+function buildCloudPath(file: File, prefix: string) {
   const ext = getExtension(file.name) || file.type.replace('image/', '') || 'jpg'
-  return `admin/products/${createId()}.${ext}`
+  return `${prefix}/${createId()}.${ext}`
 }
 
 export function isImageFile(file: File) {
@@ -25,13 +25,13 @@ export function isImageFile(file: File) {
   return ['png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp', 'svg'].includes(ext)
 }
 
-export async function uploadProductImage(file: File): Promise<{ fileId: string; url: string }> {
+async function uploadImageToCloud(file: File, prefix: string): Promise<{ fileId: string; url: string }> {
   if (!isImageFile(file)) throw new Error('Please choose an image file')
   const app = getCloudBaseApp() as any
   if (typeof app.uploadFile !== 'function') {
     throw new Error('CloudBase upload is not configured')
   }
-  const cloudPath = buildCloudPath(file)
+  const cloudPath = buildCloudPath(file, prefix)
   async function performUpload(method: 'put' | 'post') {
     const params: any = {
       cloudPath,
@@ -69,4 +69,12 @@ export async function uploadProductImage(file: File): Promise<{ fileId: string; 
   const url = urlEntry?.tempFileURL
   if (!url) throw new Error('Failed to obtain image URL')
   return { fileId: fileID, url }
+}
+
+export async function uploadProductImage(file: File): Promise<{ fileId: string; url: string }> {
+  return uploadImageToCloud(file, 'admin/products')
+}
+
+export async function uploadBannerImage(file: File): Promise<{ fileId: string; url: string }> {
+  return uploadImageToCloud(file, 'admin/banners')
 }
