@@ -42,7 +42,7 @@
     url="/pages/orders/index"
     link-type="navigateTo"
   />
-  <van-grid column-num="4" clickable border="{{ false }}" icon-size="26">
+  <van-grid column-num="5" clickable border="{{ false }}" icon-size="26">
     <van-grid-item
       wx:for="{{ i18n.profile.orderTabs }}"
       wx:key="url"

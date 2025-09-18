@@ -284,6 +284,7 @@ describe('functions: store endpoints', () => {
     testCloud.insert(Collections.Orders, { ...common, userId: 'user-1', status: 'pending' })
     testCloud.insert(Collections.Orders, { ...common, userId: 'user-1', status: 'paid' })
     testCloud.insert(Collections.Orders, { ...common, userId: 'user-1', status: 'shipped' })
+    testCloud.insert(Collections.Orders, { ...common, userId: 'user-1', status: 'completed' })
     testCloud.insert(Collections.Orders, { ...common, userId: 'user-1', status: 'refunded' })
     testCloud.insert(Collections.Orders, { ...common, userId: 'user-1', status: 'canceled' })
     testCloud.insert(Collections.Orders, { ...common, userId: 'user-2', status: 'pending' })
@@ -293,6 +294,7 @@ describe('functions: store endpoints', () => {
     expect(res.orderCounts.toPay).toBe(1)
     expect(res.orderCounts.toShip).toBe(1)
     expect(res.orderCounts.toReceive).toBe(1)
+    expect(res.orderCounts.completed).toBe(1)
     expect(res.orderCounts.afterSale).toBe(2)
   })
 

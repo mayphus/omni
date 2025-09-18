@@ -55,6 +55,7 @@ export type StoreProfileOverview = {
     toPay: number
     toShip: number
     toReceive: number
+    completed: number
     afterSale: number
   }
 }

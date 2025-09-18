@@ -2,8 +2,15 @@ import { z } from 'zod'
 import { zBaseDoc, zTimestamp } from '../base'
 import { zYuan } from '../money'
 
-export const zOrderStatus = z.enum(['pending', 'paid', 'shipped', 'completed', 'canceled', 'refunded'])
-export type OrderStatus = z.infer<typeof zOrderStatus>
+export const ORDER_STATUS_VALUES = ['pending', 'paid', 'shipped', 'completed', 'canceled', 'refunded'] as const
+export type OrderStatus = (typeof ORDER_STATUS_VALUES)[number]
+export const zOrderStatus = z.enum(ORDER_STATUS_VALUES)
+export const ORDER_STATUS_FLOW: readonly OrderStatus[] = ORDER_STATUS_VALUES.filter(
+  (status): status is OrderStatus => status !== 'canceled' && status !== 'refunded',
+)
+export const ORDER_AFTER_SALE_STATUSES: readonly OrderStatus[] = ORDER_STATUS_VALUES.filter(
+  (status): status is OrderStatus => status === 'canceled' || status === 'refunded',
+)
 
 export const zOrderItem = z.object({
   productId: z.string().min(1),

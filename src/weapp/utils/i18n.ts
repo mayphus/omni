@@ -200,7 +200,12 @@ type I18nMessages = {
     ordersTitle: string
     myOrdersTitle: string
     myOrdersValue: string
-    orderTabs: Array<{ url: string; text: string; icon: string; countKey: 'toPay' | 'toShip' | 'toReceive' | 'afterSale' }>
+    orderTabs: Array<{
+      url: string
+      text: string
+      icon: string
+      countKey: 'toPay' | 'toShip' | 'toReceive' | 'completed' | 'afterSale'
+    }>
     moreTitle: string
     wallet: { label: string; badge: string; url: string }
     support: { label: string; url: string }
@@ -643,7 +648,8 @@ const MESSAGES: Record<Locale, I18nMessages> = {
         { url: '/pages/orders/index?active=1', text: 'To Pay', icon: 'pending-payment', countKey: 'toPay' },
         { url: '/pages/orders/index?active=2', text: 'To Ship', icon: 'tosend', countKey: 'toShip' },
         { url: '/pages/orders/index?active=3', text: 'To Receive', icon: 'logistics', countKey: 'toReceive' },
-        { url: '/pages/orders/index?active=4', text: 'After-sale', icon: 'after-sale', countKey: 'afterSale' },
+        { url: '/pages/orders/index?active=4', text: 'Completed', icon: 'passed', countKey: 'completed' },
+        { url: '/pages/orders/index?active=5', text: 'After-sale', icon: 'after-sale', countKey: 'afterSale' },
       ],
       moreTitle: 'More services',
       wallet: { label: 'Member centre', badge: 'Soon', url: '' },
@@ -1050,7 +1056,8 @@ const MESSAGES: Record<Locale, I18nMessages> = {
         { url: '/pages/orders/index?active=1', text: '待付款', icon: 'pending-payment', countKey: 'toPay' },
         { url: '/pages/orders/index?active=2', text: '待发货', icon: 'tosend', countKey: 'toShip' },
         { url: '/pages/orders/index?active=3', text: '待收货', icon: 'logistics', countKey: 'toReceive' },
-        { url: '/pages/orders/index?active=4', text: '售后/退款', icon: 'after-sale', countKey: 'afterSale' },
+        { url: '/pages/orders/index?active=4', text: '已完成', icon: 'passed', countKey: 'completed' },
+        { url: '/pages/orders/index?active=5', text: '售后/退款', icon: 'after-sale', countKey: 'afterSale' },
       ],
       moreTitle: '更多服务',
       wallet: { label: '会员中心', badge: '敬请期待', url: '' },

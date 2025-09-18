@@ -1,14 +1,25 @@
 import { fetchStoreOrders } from '../../utils/api'
 import { withI18nPage } from '../../utils/i18n'
-import type { OrderWithId } from '@shared/models/order'
+import { ORDER_AFTER_SALE_STATUSES, ORDER_STATUS_FLOW } from '@shared/models/order'
+import type { OrderStatus, OrderWithId } from '@shared/models/order'
 
-const STATUS_TABS = [
-  { key: 'all', title: 'All' },
-  { key: 'pending', title: 'Pending' },
-  { key: 'paid', title: 'Paid' },
-  { key: 'shipped', title: 'Shipped' },
-  { key: 'completed', title: 'Completed' },
-  { key: 'afterSale', title: 'After-sale' },
+type TabKey = OrderStatus | 'all' | 'afterSale'
+
+const STATUS_LABEL_MAP: Record<TabKey, string> = {
+  all: 'All',
+  pending: 'Pending',
+  paid: 'Paid',
+  shipped: 'Shipped',
+  completed: 'Completed',
+  canceled: 'Canceled',
+  refunded: 'Refunded',
+  afterSale: 'After-sale',
+}
+
+const STATUS_TABS: Array<{ key: TabKey; title: string }> = [
+  { key: 'all', title: STATUS_LABEL_MAP.all },
+  ...ORDER_STATUS_FLOW.map((status) => ({ key: status, title: STATUS_LABEL_MAP[status] })),
+  { key: 'afterSale', title: STATUS_LABEL_MAP.afterSale },
 ]
 
 type DisplayOrder = OrderWithId & { formattedDate: string }
@@ -23,7 +34,7 @@ function formatDate(ts: number): string {
 Page(withI18nPage({
   data: {
     tabs: STATUS_TABS,
-    active: 'all',
+    active: 'all' as TabKey,
     activeIndex: 0,
     orders: [] as DisplayOrder[],
     filtered: [] as DisplayOrder[],
@@ -60,7 +71,7 @@ Page(withI18nPage({
 
   onTabChange(event: WechatMiniprogram.CustomEvent) {
     const detail: any = event?.detail || {}
-    const name = typeof detail.name === 'string' ? detail.name : ''
+    const name = typeof detail.name === 'string' ? (detail.name as TabKey) : 'all'
     const index = STATUS_TABS.findIndex((tab) => tab.key === name)
     const nextIndex = index >= 0 ? index : 0
     const tab = STATUS_TABS[nextIndex]
@@ -70,14 +81,15 @@ Page(withI18nPage({
 
   applyFilter(data: any, source?: DisplayOrder[]) {
     const orders = source || (data.orders as DisplayOrder[])
-    const key = data.active || 'all'
+    const key: TabKey = data.active || 'all'
     let filtered: DisplayOrder[]
     if (key === 'all') {
       filtered = orders
     } else if (key === 'afterSale') {
-      filtered = orders.filter((order) => order.status === 'canceled' || order.status === 'refunded')
+      filtered = orders.filter((order) => ORDER_AFTER_SALE_STATUSES.includes(order.status))
     } else {
-      filtered = orders.filter((order) => order.status === key)
+      const statusKey = key as OrderStatus
+      filtered = orders.filter((order) => order.status === statusKey)
     }
     this.setData({ filtered })
   },

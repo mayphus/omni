@@ -1517,6 +1517,7 @@ const handlers: Record<string, (event: any) => Promise<ApiResponse> | ApiRespons
       toPay: 0,
       toShip: 0,
       toReceive: 0,
+      completed: 0,
       afterSale: 0,
     }
 
@@ -1524,6 +1525,7 @@ const handlers: Record<string, (event: any) => Promise<ApiResponse> | ApiRespons
       { status: 'pending', key: 'toPay' },
       { status: 'paid', key: 'toShip' },
       { status: 'shipped', key: 'toReceive' },
+      { status: 'completed', key: 'completed' },
       { status: 'refunded', key: 'afterSale' },
       { status: 'canceled', key: 'afterSale' },
     ]
