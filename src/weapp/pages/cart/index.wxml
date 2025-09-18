@@ -12,7 +12,7 @@
   <view class="cart-toolbar">
     <van-checkbox
       shape="square"
-      checked="{{ allSelected }}"
+      value="{{ allSelected }}"
       bind:change="onToggleSelectAll"
       class="cart-toolbar__checkbox"
     >

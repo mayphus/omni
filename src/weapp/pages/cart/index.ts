@@ -97,18 +97,22 @@ Page(withI18nPage({
     wx.navigateTo({ url: '/pages/checkout/index?mode=direct' })
   },
 
-  onSelectionChange(event: WechatMiniprogram.CustomEvent) {
-    const detail = event?.detail as any
-    const value = Array.isArray(detail?.value) ? (detail.value as string[]) : []
-    this.applyCartState((this.data as any).items as CartItem[], value)
-  },
-
   onToggleSelectAll(event: WechatMiniprogram.CustomEvent) {
     const detail = event?.detail as any
     const checked = typeof detail === 'boolean' ? detail : Boolean(detail?.value)
     const items = (this.data as any).items as CartItem[]
     const selectedIds = checked ? items.map((item) => item.id) : []
     this.applyCartState(items, selectedIds)
+  },
+
+  onSelectionChange(event: WechatMiniprogram.CustomEvent) {
+    const detail = event?.detail as any
+    const value = Array.isArray(detail)
+      ? (detail as string[])
+      : Array.isArray(detail?.value)
+        ? (detail.value as string[])
+        : []
+    this.applyCartState((this.data as any).items as CartItem[], value)
   },
 
   applyCartState(items: CartItem[], preferredSelection?: string[]) {
