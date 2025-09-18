@@ -12,8 +12,9 @@ src/
 tests/        # Vitest unit/integration tests
 ```
 
-- English‑only code. Export only pure TypeScript from `src/shared`.
+- English-only code. Export only pure TypeScript from `src/shared`.
 - Cloud function name: `shop` (single action router; e.g., `v1.system.ping`).
+- Package manager: `pnpm` only—do not run `npm` or `npx` to avoid breaking workspace installs.
 
 ## Build, Test, and Development Commands
 
