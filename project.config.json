@@ -1,44 +1,44 @@
 {
-  "miniprogramRoot": "weapp/",
-  "cloudfunctionRoot": "functions/",
-  "compileType": "miniprogram",
-  "appid": "wxc83ef584aa609be0",
-  "projectname": "tongmeng-plant",
-  "setting": {
-    "urlCheck": true,
-    "es6": true,
-    "enhance": true,
-    "postcss": true,
-    "minified": true,
-    "packNpmManually": true,
-    "compileWorklet": false,
-    "uglifyFileName": false,
-    "uploadWithSourceMap": true,
-    "packNpmRelationList": [
-      {
-        "packageJsonPath": "./src/weapp/package.json",
-        "miniprogramNpmDistDir": "./weapp/"
-      }
-    ],
-    "minifyWXSS": true,
-    "minifyWXML": true,
-    "localPlugins": false,
-    "disableUseStrict": false,
-    "useCompilerPlugins": false,
-    "condition": false,
-    "swc": false,
-    "disableSWC": true,
-    "babelSetting": {
-      "ignore": [],
-      "disablePlugins": [],
-      "outputPath": ""
-    }
-  },
-  "condition": {},
-  "simulatorPluginLibVersion": {},
-  "packOptions": {
-    "ignore": [],
-    "include": []
-  },
-  "editorSetting": {}
+    "miniprogramRoot": "weapp/",
+    "cloudfunctionRoot": "functions/",
+    "compileType": "miniprogram",
+    "appid": "wxc83ef584aa609be0",
+    "projectname": "tongmeng-plant",
+    "setting": {
+        "urlCheck": true,
+        "es6": true,
+        "enhance": true,
+        "postcss": true,
+        "minified": true,
+        "packNpmManually": true,
+        "compileWorklet": false,
+        "uglifyFileName": false,
+        "uploadWithSourceMap": true,
+        "packNpmRelationList": [
+            {
+                "packageJsonPath": "./src/weapp/package.json",
+                "miniprogramNpmDistDir": "./weapp/"
+            }
+        ],
+        "minifyWXSS": true,
+        "minifyWXML": true,
+        "localPlugins": false,
+        "disableUseStrict": false,
+        "useCompilerPlugins": false,
+        "condition": false,
+        "swc": false,
+        "disableSWC": true,
+        "babelSetting": {
+            "ignore": [],
+            "disablePlugins": [],
+            "outputPath": ""
+        }
+    },
+    "condition": {},
+    "simulatorPluginLibVersion": {},
+    "packOptions": {
+        "ignore": [],
+        "include": []
+    },
+    "editorSetting": {}
 }
