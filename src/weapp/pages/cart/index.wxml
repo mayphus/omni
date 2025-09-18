@@ -69,11 +69,15 @@
     </van-swipe-cell>
   </van-checkbox-group>
 
+  <view class="cart-submit-bar-spacer"></view>
   <van-submit-bar
     price="{{ selectedTotalCents }}"
     button-text="{{ i18n.checkoutButton }}"
     disabled="{{ !selectedIds.length }}"
     bind:submit="onCheckout"
+    placeholder
+    style="bottom: 120rpx;"
+    z-index="1200"
     safe-area-inset-bottom
   />
 </block>

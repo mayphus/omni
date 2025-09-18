@@ -1,8 +1,6 @@
 /* Reserve space for custom tab bar */
 page {
   box-sizing: border-box;
-  padding-bottom: calc(constant(safe-area-inset-bottom) + 50px);
-  padding-bottom: calc(env(safe-area-inset-bottom) + 50px);
   background: #f7f8fa;
 }
 
@@ -115,4 +113,7 @@ page {
 
 .cart-secondary-actions .van-button {
   flex: 1;
+}
+.cart-submit-bar-spacer {
+  height: 220rpx;
 }
