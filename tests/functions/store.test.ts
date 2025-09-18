@@ -83,6 +83,48 @@ describe('functions: store endpoints', () => {
     expect(res.featuredProducts[0].hasStock).toBe(true)
     expect(res.featuredProducts[1].id).toBe(firstId)
     expect(res.featuredProducts[1].priceYuan).toBeCloseTo(15.5)
+    expect(Array.isArray(res.banners)).toBe(true)
+    expect(res.banners).toHaveLength(0)
+  })
+
+  it('includes active banners with schedule filtering on the home response', async () => {
+    const now = nowMs()
+    testCloud.insert(Collections.System, {
+      kind: 'banner',
+      imageUrl: 'https://example.com/active.jpg',
+      title: 'Welcome',
+      sort: 5,
+      isActive: true,
+      startAt: now - 1000,
+      endAt: now + 1000,
+      createdAt: now - 500,
+      updatedAt: now - 400,
+    })
+    testCloud.insert(Collections.System, {
+      kind: 'banner',
+      imageUrl: 'https://example.com/future.jpg',
+      title: 'Future',
+      sort: 10,
+      isActive: true,
+      startAt: now + 5000,
+      createdAt: now - 300,
+      updatedAt: now - 200,
+    })
+    testCloud.insert(Collections.System, {
+      kind: 'banner',
+      imageUrl: 'https://example.com/inactive.jpg',
+      title: 'Inactive',
+      sort: 1,
+      isActive: false,
+      createdAt: now - 800,
+      updatedAt: now - 700,
+    })
+
+    const res = await main({ action: 'v1.store.home' })
+    expect(res.success).toBe(true)
+    expect(res.banners).toHaveLength(1)
+    expect(res.banners[0].title).toBe('Welcome')
+    expect(res.banners[0].imageUrl).toBe('https://example.com/active.jpg')
   })
 
   it('returns active categories grouped by parent', async () => {
@@ -440,6 +482,11 @@ describe('functions: store endpoints', () => {
     expect(res.order.items[0]).toMatchObject({ productId, qty: 3, priceYuan: 12.5 })
     expect(res.order.totalYuan).toBeCloseTo(37.5)
 
+    const storedProduct = testCloud
+      .getData(Collections.Products)
+      .find((doc) => doc._id === productId)
+    expect(storedProduct?.stock).toBe(17)
+
     const stored = testCloud.getData(Collections.Orders)
     expect(stored).toHaveLength(1)
     expect(stored[0].userId).toBe('buyer-1')
@@ -476,8 +523,75 @@ describe('functions: store endpoints', () => {
     const small = res.order.items.find((item: any) => item.skuId === 'small')
     const large = res.order.items.find((item: any) => item.skuId === 'large')
     expect(small).toMatchObject({ productId, qty: 1, priceYuan: 10 })
-    expect(large).toMatchObject({ productId, qty: 2, priceYuan: 15 })
-    expect(res.order.totalYuan).toBeCloseTo(40)
+   expect(large).toMatchObject({ productId, qty: 2, priceYuan: 15 })
+   expect(res.order.totalYuan).toBeCloseTo(40)
+
+    const storedProduct = testCloud
+      .getData(Collections.Products)
+      .find((doc) => doc._id === productId)
+    const storedSmall = storedProduct?.skus?.find((sku: any) => sku?.skuId === 'small')
+    const storedLarge = storedProduct?.skus?.find((sku: any) => sku?.skuId === 'large')
+    expect(storedSmall?.stock).toBe(4)
+    expect(storedLarge?.stock).toBe(1)
+  })
+
+  it('fails order creation when product stock is insufficient', async () => {
+    const now = nowMs()
+    testCloud.setContext({ OPENID: 'buyer-stock' })
+    const productId = testCloud.insert(Collections.Products, {
+      title: 'Limited Edition Mug',
+      images: [{ fileId: 'mug', url: 'https://example.com/mug.jpg' }],
+      category: 'gifts',
+      price: { currency: 'CNY', priceYuan: 88 },
+      stock: 1,
+      isActive: true,
+      createdAt: now - 100,
+      updatedAt: now - 100,
+    })
+
+    const res = await main({
+      action: 'v1.store.order.create',
+      items: [{ productId, quantity: 2 }],
+    })
+
+    expect(res.success).toBe(false)
+    expect(res.error).toBe('Insufficient stock')
+    const storedProduct = testCloud
+      .getData(Collections.Products)
+      .find((doc) => doc._id === productId)
+    expect(storedProduct?.stock).toBe(1)
+  })
+
+  it('fails order creation when sku stock is insufficient', async () => {
+    const now = nowMs()
+    testCloud.setContext({ OPENID: 'buyer-sku-stock' })
+    const productId = testCloud.insert(Collections.Products, {
+      title: 'Collector Tee',
+      images: [{ fileId: 'tee', url: 'https://example.com/tee.jpg' }],
+      category: 'apparel',
+      price: { currency: 'CNY', priceYuan: 120 },
+      stock: 0,
+      skus: [
+        { skuId: 'small', priceYuan: 120, stock: 1, isActive: true },
+        { skuId: 'medium', priceYuan: 120, stock: 0, isActive: true },
+      ],
+      isActive: true,
+      createdAt: now - 100,
+      updatedAt: now - 100,
+    })
+
+    const res = await main({
+      action: 'v1.store.order.create',
+      items: [{ productId, skuId: 'small', quantity: 2 }],
+    })
+
+    expect(res.success).toBe(false)
+    expect(res.error).toBe('Insufficient stock')
+    const storedProduct = testCloud
+      .getData(Collections.Products)
+      .find((doc) => doc._id === productId)
+    const storedSmall = storedProduct?.skus?.find((sku: any) => sku?.skuId === 'small')
+    expect(storedSmall?.stock).toBe(1)
   })
 
   it('rejects invalid order payloads', async () => {
@@ -599,11 +713,21 @@ describe('functions: store endpoints', () => {
 
   it('allows a customer to cancel their pending order', async () => {
     const now = nowMs()
+    const productId = testCloud.insert(Collections.Products, {
+      title: 'Sample Item',
+      images: [{ fileId: 'item', url: 'https://example.com/item.jpg' }],
+      category: 'daily',
+      price: { currency: 'CNY', priceYuan: 25 },
+      stock: 0,
+      isActive: true,
+      createdAt: now - 2000,
+      updatedAt: now - 2000,
+    })
     const orderId = testCloud.insert(Collections.Orders, {
       userId: 'buyer-cancel',
       items: [
         {
-          productId: 'prod-1',
+          productId,
           title: 'Sample Item',
           qty: 1,
           priceYuan: 25,
@@ -630,6 +754,11 @@ describe('functions: store endpoints', () => {
     expect(res.order.status).toBe('canceled')
     expect(res.order.payment?.status).toBe('failed')
     expect(res.order.payment?.lastError).toContain('canceled')
+
+    const storedProduct = testCloud
+      .getData(Collections.Products)
+      .find((doc) => doc._id === productId)
+    expect(storedProduct?.stock).toBe(1)
 
     const stored = testCloud.getData(Collections.Orders).find((doc) => doc._id === orderId)
     expect(stored?.status).toBe('canceled')
@@ -672,13 +801,23 @@ describe('functions: store endpoints', () => {
     expect(stored?.status).toBe('pending')
   })
 
-  it('rejects cancellation for orders already paid', async () => {
+  it('refunds paid orders during cancellation and restores stock', async () => {
     const now = nowMs()
+    const productId = testCloud.insert(Collections.Products, {
+      title: 'Paid Item',
+      images: [{ fileId: 'paid', url: 'https://example.com/paid.jpg' }],
+      category: 'gadgets',
+      price: { currency: 'CNY', priceYuan: 15 },
+      stock: 0,
+      isActive: true,
+      createdAt: now - 3000,
+      updatedAt: now - 2500,
+    })
     const orderId = testCloud.insert(Collections.Orders, {
       userId: 'buyer-paid',
       items: [
         {
-          productId: 'prod-3',
+          productId,
           title: 'Paid Item',
           qty: 2,
           priceYuan: 15,
@@ -695,6 +834,7 @@ describe('functions: store endpoints', () => {
         amountYuan: 30,
         currency: 'CNY',
         paidAt: now - 500,
+        outTradeNo: 'out-trade-123',
       },
       createdAt: now - 2000,
       updatedAt: now - 1500,
@@ -702,8 +842,73 @@ describe('functions: store endpoints', () => {
 
     testCloud.setContext({ OPENID: 'buyer-paid' })
     const res = await main({ action: 'v1.store.order.cancel', orderId })
+    expect(res.success).toBe(true)
+    expect(res.order.status).toBe('refunded')
+    expect(res.order.payment?.status).toBe('refunded')
+
+    const storedProduct = testCloud
+      .getData(Collections.Products)
+      .find((doc) => doc._id === productId)
+    expect(storedProduct?.stock).toBe(2)
+
+    const stored = testCloud.getData(Collections.Orders).find((doc) => doc._id === orderId)
+    expect(stored?.status).toBe('refunded')
+    expect(stored?.payment?.status).toBe('refunded')
+  })
+
+  it('fails cancellation when refund API returns an error', async () => {
+    const now = nowMs()
+    const productId = testCloud.insert(Collections.Products, {
+      title: 'Refund Failure Item',
+      images: [{ fileId: 'rf', url: 'https://example.com/rf.jpg' }],
+      category: 'gadgets',
+      price: { currency: 'CNY', priceYuan: 40 },
+      stock: 0,
+      isActive: true,
+      createdAt: now - 3000,
+      updatedAt: now - 2500,
+    })
+    const orderId = testCloud.insert(Collections.Orders, {
+      userId: 'buyer-refund-fail',
+      items: [
+        {
+          productId,
+          title: 'Refund Failure Item',
+          qty: 1,
+          priceYuan: 40,
+        },
+      ],
+      subtotalYuan: 40,
+      shippingYuan: 0,
+      discountYuan: 0,
+      totalYuan: 40,
+      status: 'paid',
+      payment: {
+        method: 'wechat_pay',
+        status: 'succeeded',
+        amountYuan: 40,
+        currency: 'CNY',
+        outTradeNo: 'out-trade-err',
+      },
+      createdAt: now - 2000,
+      updatedAt: now - 1500,
+    })
+
+    testCloud.mockCloudPay({
+      refund: async () => {
+        throw new Error('refund-failed')
+      },
+    })
+
+    testCloud.setContext({ OPENID: 'buyer-refund-fail' })
+    const res = await main({ action: 'v1.store.order.cancel', orderId })
     expect(res.success).toBe(false)
-    expect(res.error).toBe('Paid orders cannot be canceled automatically')
+    expect(res.error).toBe('Failed to refund order')
+
+    const storedProduct = testCloud
+      .getData(Collections.Products)
+      .find((doc) => doc._id === productId)
+    expect(storedProduct?.stock).toBe(0)
 
     const stored = testCloud.getData(Collections.Orders).find((doc) => doc._id === orderId)
     expect(stored?.status).toBe('paid')

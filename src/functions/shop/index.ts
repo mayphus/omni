@@ -26,6 +26,8 @@ import type {
   SystemItem,
 } from '@shared/models/system'
 import {
+  zSystemBanner,
+  zSystemCategory,
   zSystemItemWithId,
 } from '@shared/models/system'
 import { Collections } from '@shared/collections'
@@ -173,6 +175,42 @@ const zOrderIdPayload = z.object({
 const zAdminOrderUpdateInput = z.object({
   orderId: z.string().min(1),
   status: zOrderStatus,
+})
+
+const zOptionalTrimmedString = z
+  .string()
+  .trim()
+  .transform((value) => (value ? value : undefined))
+  .optional()
+
+const zAdminBannerSaveInput = z.object({
+  id: z.string().trim().min(1).optional(),
+  imageUrl: z.string().trim().url(),
+  title: zOptionalTrimmedString,
+  linkUrl: zOptionalTrimmedString,
+  sort: z.number().int().optional(),
+  isActive: z.boolean().optional(),
+  startAt: z.number().int().min(0).optional(),
+  endAt: z.number().int().min(0).optional(),
+})
+
+const zAdminBannerDeleteInput = z.object({
+  id: z.string().trim().min(1),
+})
+
+const zAdminCategorySaveInput = z.object({
+  id: z.string().trim().min(1).optional(),
+  name: z.string().trim().min(1),
+  slug: z.string().trim().min(1),
+  parentId: z.string().trim().min(1).optional(),
+  sort: z.number().int().optional(),
+  isActive: z.boolean().optional(),
+  imageUrl: zOptionalTrimmedString,
+  description: zOptionalTrimmedString,
+})
+
+const zAdminCategoryDeleteInput = z.object({
+  id: z.string().trim().min(1),
 })
 
 async function fetchOrdersForStats(limit = 1000): Promise<OrderWithId[]> {
@@ -370,6 +408,26 @@ function buildCartKey(productId: string, skuId?: string): string {
   return skuId ? `${productId}__${skuId}` : productId
 }
 
+function optionalTrimmed(value: unknown): string | undefined {
+  if (typeof value !== 'string') return undefined
+  const trimmed = value.trim()
+  return trimmed ? trimmed : undefined
+}
+
+function isValidLinkTarget(value: string): boolean {
+  return value.startsWith('/') || /^https?:\/\//i.test(value)
+}
+
+function isValidUrl(value: string): boolean {
+  try {
+    // eslint-disable-next-line no-new
+    new URL(value)
+    return true
+  } catch {
+    return false
+  }
+}
+
 type ProductSku = NonNullable<Product['skus']>[number]
 
 function buildOrderItemTitle(productTitle: string, sku: ProductSku): string {
@@ -395,6 +453,156 @@ function formatSkuAttributeValue(value: unknown): string {
   return String(value)
 }
 
+const STOCK_ERROR_CODE = 'STOCK_ERROR'
+
+type StockMutationType = 'decrement' | 'increment'
+
+type StockMutation = {
+  productId: string
+  skuId?: string
+  quantity: number
+  type: StockMutationType
+}
+
+type SkuStockEntry = {
+  value: number
+  changed: boolean
+}
+
+type ProductStockUpdate = {
+  product: ProductWithId
+  stock: number
+  stockChanged: boolean
+  skuStocks: Map<string, SkuStockEntry>
+}
+
+function createProductStockUpdate(product: ProductWithId): ProductStockUpdate {
+  const skuStocks = new Map<string, SkuStockEntry>()
+  if (Array.isArray(product.skus)) {
+    for (const sku of product.skus) {
+      if (!sku) continue
+      const skuId = sku.skuId.trim()
+      if (!skuId) continue
+      skuStocks.set(skuId, { value: sku.stock ?? 0, changed: false })
+    }
+  }
+  return {
+    product,
+    stock: product.stock ?? 0,
+    stockChanged: false,
+    skuStocks,
+  }
+}
+
+function createStockError(message: string, details: { productId: string; skuId?: string }) {
+  const error = new Error(message)
+  ;(error as any).code = STOCK_ERROR_CODE
+  ;(error as any).details = details
+  return error
+}
+
+function collectStockUpdates(
+  mutations: StockMutation[],
+  productMap: Map<string, ProductWithId>,
+): Map<string, ProductStockUpdate> {
+  const updates = new Map<string, ProductStockUpdate>()
+
+  for (const mutation of mutations) {
+    const product = productMap.get(mutation.productId)
+    if (!product) throw createStockError('Product not found', { productId: mutation.productId })
+
+    let existing = updates.get(product.id)
+    if (!existing) {
+      existing = createProductStockUpdate(product)
+      updates.set(product.id, existing)
+    }
+
+    if (mutation.quantity <= 0) continue
+
+    if (mutation.skuId) {
+      const skuId = mutation.skuId.trim()
+      if (!skuId) throw createStockError('SKU not found', { productId: product.id })
+      const matchedSku = product.skus?.find((sku) => sku && sku.skuId.trim() === skuId)
+      if (!matchedSku) throw createStockError('SKU not found', { productId: product.id, skuId })
+      const entry = existing.skuStocks.get(skuId) ?? { value: matchedSku.stock ?? 0, changed: false }
+      const nextValue = mutation.type === 'decrement' ? entry.value - mutation.quantity : entry.value + mutation.quantity
+      if (nextValue < 0) throw createStockError('Insufficient stock', { productId: product.id, skuId })
+      existing.skuStocks.set(skuId, { value: nextValue, changed: true })
+    } else {
+      const current = existing.stock
+      const nextValue = mutation.type === 'decrement' ? current - mutation.quantity : current + mutation.quantity
+      if (nextValue < 0) throw createStockError('Insufficient stock', { productId: product.id })
+      existing.stock = nextValue
+      existing.stockChanged = true
+    }
+  }
+
+  return updates
+}
+
+async function applyProductStockUpdates(
+  updates: Map<string, ProductStockUpdate>,
+  timestamp: number,
+): Promise<void> {
+  for (const update of updates.values()) {
+    const hasSkuChange = Array.from(update.skuStocks.values()).some((entry) => entry.changed)
+    if (!update.stockChanged && !hasSkuChange) {
+      continue
+    }
+
+    const data: Record<string, any> = {}
+    const nextUpdatedAt = Math.max(timestamp, (update.product.updatedAt ?? timestamp) + 1)
+    data.updatedAt = nextUpdatedAt
+
+    if (update.stockChanged) {
+      data.stock = Math.max(0, Math.trunc(update.stock))
+    }
+
+    if (Array.isArray(update.product.skus) && update.product.skus.length > 0) {
+      let skuChanged = false
+      const nextSkus = update.product.skus.map((sku) => {
+        const skuId = sku?.skuId.trim()
+        if (!skuId) return sku
+        const entry = update.skuStocks.get(skuId)
+        if (entry && entry.changed) {
+          skuChanged = true
+          return {
+            ...sku,
+            stock: Math.max(0, Math.trunc(entry.value)),
+          }
+        }
+        return sku
+      })
+      if (skuChanged) {
+        data.skus = nextSkus
+      }
+    }
+
+    await productsCol()
+      .where({ _id: update.product.id })
+      .update({ data })
+  }
+}
+
+function buildRevertStockUpdates(updates: Map<string, ProductStockUpdate>): Map<string, ProductStockUpdate> {
+  const revert = new Map<string, ProductStockUpdate>()
+  for (const update of updates.values()) {
+    const base = createProductStockUpdate(update.product)
+    base.stockChanged = update.stockChanged
+    if (update.stockChanged) {
+      base.stock = update.product.stock ?? 0
+    }
+    for (const [skuId, entry] of update.skuStocks.entries()) {
+      if (!entry.changed) continue
+      const original = base.skuStocks.get(skuId)
+      const originalValue = original ? original.value : 0
+      base.skuStocks.set(skuId, { value: originalValue, changed: true })
+    }
+    revert.set(update.product.id, base)
+  }
+  return revert
+}
+
 function toFeaturedProduct(id: string, product: Product): StoreFeaturedProduct {
   return {
     id,
@@ -405,6 +613,13 @@ function toFeaturedProduct(id: string, product: Product): StoreFeaturedProduct {
     imageUrl: getPrimaryProductImage(product)?.url,
     hasStock: (product.stock ?? 0) > 0 || Boolean(product.skus?.some((sku) => (sku.stock ?? 0) > 0 && sku.isActive !== false)),
   }
+}
+
+function sortBanners(a: SystemBannerWithId, b: SystemBannerWithId) {
+  const aSort = typeof a.sort === 'number' ? a.sort : 0
+  const bSort = typeof b.sort === 'number' ? b.sort : 0
+  if (aSort !== bSort) return aSort - bSort
+  return (b.updatedAt ?? 0) - (a.updatedAt ?? 0)
 }
 
 function sortCategories<T extends { sort?: number; name: string }>(a: T, b: T) {
@@ -627,19 +842,114 @@ const handlers: Record<string, (event: any) => Promise<ApiResponse> | ApiRespons
     }
 
     const paymentStatus = order.payment?.status
-    if (order.status === 'paid' && paymentStatus === 'succeeded') {
-      return fail('Paid orders cannot be canceled automatically')
+    const requiresRefund = order.status === 'paid' && paymentStatus === 'succeeded'
+    if (requiresRefund && (!cloudPay || typeof cloudPay.refund !== 'function')) {
+      return fail('Paid orders require manual refund')
+    }
+
+    const productIds = Array.from(new Set(order.items.map((item) => item.productId)))
+    const productMap = new Map<string, ProductWithId>()
+    for (const productId of productIds) {
+      const snapshot = await productsCol().where({ _id: productId }).limit(1).get()
+      const doc = snapshot.data?.[0]
+      if (!doc) {
+        console.warn('[shop] missing product while canceling order', { orderId: order.id, productId })
+        continue
+      }
+      const parsedProduct = parseProductDocument(doc)
+      if (!parsedProduct.success) {
+        console.warn('[shop] invalid product while canceling order', {
+          orderId: order.id,
+          productId,
+          issues: parsedProduct.error.issues,
+        })
+        continue
+      }
+      productMap.set(productId, parsedProduct.data)
+    }
+
+    const restockMutations: StockMutation[] = []
+    for (const item of order.items) {
+      const product = productMap.get(item.productId)
+      if (!product) continue
+      const skuId = item.skuId?.trim()
+      if (skuId) {
+        const hasSku = product.skus?.some((sku) => sku && sku.skuId.trim() === skuId)
+        if (!hasSku) {
+          console.warn('[shop] missing sku while canceling order', {
+            orderId: order.id,
+            productId: item.productId,
+            skuId,
+          })
+          continue
+        }
+      }
+      restockMutations.push({
+        productId: item.productId,
+        skuId,
+        quantity: item.qty,
+        type: 'increment',
+      })
+    }
+
+    let restockUpdates: Map<string, ProductStockUpdate> | null = null
+    if (restockMutations.length > 0) {
+      try {
+        restockUpdates = collectStockUpdates(restockMutations, productMap)
+      } catch (error: any) {
+        if (error?.code === STOCK_ERROR_CODE) {
+          console.warn('[shop] failed to prepare restock while canceling order', {
+            orderId: order.id,
+            details: error.details,
+            message: error.message,
+          })
+          restockUpdates = null
+        } else {
+          throw error
+        }
+      }
+    }
+
+    if (requiresRefund) {
+      const paymentConfig = getPaymentConfig()
+      const payment = order.payment!
+      const totalFee = yuanToCents(typeof payment.amountYuan === 'number' ? payment.amountYuan : order.totalYuan)
+      const refundPayloadEntries = Object.entries({
+        subMchId: paymentConfig.subMchId,
+        outTradeNo: payment.outTradeNo,
+        transactionId: payment.transactionId,
+        totalFee,
+        refundFee: totalFee,
+      }).filter(([, value]) => value !== undefined && value !== null)
+      try {
+        await cloudPay!.refund!(Object.fromEntries(refundPayloadEntries))
+      } catch (error: any) {
+        return fail('Failed to refund order', { message: error?.message || String(error) })
+      }
     }
 
     const now = nowMs()
+    let restockApplied = false
+    if (restockUpdates && restockUpdates.size > 0) {
+      try {
+        await applyProductStockUpdates(restockUpdates, now)
+        restockApplied = true
+      } catch (error) {
+        return fail('Failed to restock inventory', { message: error instanceof Error ? error.message : String(error) })
+      }
+    }
+
     const update: Record<string, any> = {
-      status: 'canceled',
+      status: requiresRefund ? 'refunded' : 'canceled',
       updatedAt: now,
     }
 
     if (order.payment) {
       const paymentUpdates: Partial<Payment> & { status?: PaymentStatus } = {}
-      if (order.payment.status !== 'failed' && order.payment.status !== 'refunded') {
+      if (requiresRefund) {
+        paymentUpdates.status = 'refunded'
+        paymentUpdates.lastError = undefined
+      } else if (order.payment.status !== 'failed' && order.payment.status !== 'refunded') {
         paymentUpdates.status = 'failed'
         paymentUpdates.lastError = 'Order canceled by user'
       }
@@ -648,7 +958,19 @@ const handlers: Record<string, (event: any) => Promise<ApiResponse> | ApiRespons
       }
     }
 
-    await ordersCol().where({ _id: order.id }).update({ data: update })
+    try {
+      await ordersCol().where({ _id: order.id }).update({ data: update })
+    } catch (error) {
+      if (restockApplied && restockUpdates && restockUpdates.size > 0) {
+        try {
+          const revertUpdates = buildRevertStockUpdates(restockUpdates)
+          await applyProductStockUpdates(revertUpdates, nowMs())
+        } catch (revertError) {
+          console.error('[shop] failed to revert restock after cancel error', revertError)
+        }
+      }
+      throw error
+    }
 
     return ok({
       order: {
@@ -675,7 +997,7 @@ const handlers: Record<string, (event: any) => Promise<ApiResponse> | ApiRespons
   /**
    * v1.store.home
    * Input: none
-   * Output: { featuredProducts }
+   * Output: { featuredProducts, banners }
    */
   'v1.store.home': async () => {
     const FEATURED_LIMIT = 8
@@ -694,7 +1016,40 @@ const handlers: Record<string, (event: any) => Promise<ApiResponse> | ApiRespons
       if (featured.length >= FEATURED_LIMIT) break
     }
 
-    return ok({ featuredProducts: featured })
+    const now = nowMs()
+    const bannerSnapshot = await systemCol().where({ kind: 'banner' }).limit(100).get()
+    const banners: SystemBannerWithId[] = []
+    const invalidBanners: Array<{ docId?: string; issues: ZodIssue[] }> = []
+
+    for (const doc of bannerSnapshot.data || []) {
+      const parsed = parseSystemDocument(doc)
+      if (!parsed.success) {
+        invalidBanners.push({ docId: (doc as any)?._id, issues: parsed.error.issues })
+        continue
+      }
+      if (parsed.data.kind !== 'banner') continue
+      if (parsed.data.isActive === false) continue
+      if (typeof parsed.data.startAt === 'number' && parsed.data.startAt > now) continue
+      if (typeof parsed.data.endAt === 'number' && parsed.data.endAt < now) continue
+      banners.push(parsed.data)
+    }
+
+    if (invalidBanners.length > 0) {
+      const summary = invalidBanners.slice(0, 5).map(({ docId, issues }) => ({
+        docId,
+        issues: issues.map((issue) => ({ path: issue.path, message: issue.message })),
+      }))
+      const remaining = invalidBanners.length - summary.length
+      if (remaining > 0) {
+        console.warn('[shop] skipped invalid banner documents', summary, { truncated: remaining })
+      } else {
+        console.warn('[shop] skipped invalid banner documents', summary)
+      }
+    }
+
+    banners.sort(sortBanners)
+
+    return ok({ featuredProducts: featured, banners })
   },
 
   /**
@@ -829,6 +1184,23 @@ const handlers: Record<string, (event: any) => Promise<ApiResponse> | ApiRespons
       productMap.set(productId, productParsed.data)
     }
 
+    let stockUpdates: Map<string, ProductStockUpdate> | null = null
+    try {
+      const stockMutations: StockMutation[] = Array.from(aggregated.values()).map((item) => ({
+        productId: item.productId,
+        skuId: item.skuId,
+        quantity: item.quantity,
+        type: 'decrement',
+      }))
+      stockUpdates = collectStockUpdates(stockMutations, productMap)
+    } catch (error: any) {
+      if (error?.code === STOCK_ERROR_CODE) {
+        const details = typeof error.details === 'object' && error.details ? error.details : {}
+        return fail(error.message || 'Insufficient stock', details)
+      }
+      throw error
+    }
+
     let subtotal = 0
     const orderItems: Order['items'] = []
     for (const item of aggregated.values()) {
@@ -863,9 +1235,19 @@ const handlers: Record<string, (event: any) => Promise<ApiResponse> | ApiRespons
         }
       : undefined
 
-    const now = nowMs()
-    const subtotalYuan = roundToTwo(subtotal)
     await ensureUserByOpenid(OPENID, UNIONID)
+    const now = nowMs()
+
+    if (stockUpdates && stockUpdates.size > 0) {
+      try {
+        await applyProductStockUpdates(stockUpdates, now)
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error)
+        return fail('Failed to update stock', { message })
+      }
+    }
+
+    const subtotalYuan = roundToTwo(subtotal)
     const payment = createPendingPayment(subtotalYuan)
     const orderData = zOrder.parse({
       userId: OPENID,
@@ -882,7 +1264,21 @@ const handlers: Record<string, (event: any) => Promise<ApiResponse> | ApiRespons
       updatedAt: now,
     })
 
-    const addRes = await ordersCol().add({ data: orderData })
+    let addRes: { _id: string }
+    try {
+      addRes = await ordersCol().add({ data: orderData })
+    } catch (error) {
+      if (stockUpdates && stockUpdates.size > 0) {
+        try {
+          const revertUpdates = buildRevertStockUpdates(stockUpdates)
+          await applyProductStockUpdates(revertUpdates, nowMs())
+        } catch (revertError) {
+          console.error('[shop] failed to revert stock after order creation error', revertError)
+        }
+      }
+      throw error
+    }
+
     const order: OrderWithId = { ...orderData, id: addRes._id }
     return ok({ order })
   },
@@ -1368,6 +1764,200 @@ const handlers: Record<string, (event: any) => Promise<ApiResponse> | ApiRespons
       }
     }
     return ok({ categories, coupons, banners })
+  },
+
+  /**
+   * v1.admin.banners.save
+   * Input: { id?, imageUrl, title?, linkUrl?, sort?, isActive?, startAt?, endAt? }
+   * Output: { banner }
+   */
+  'v1.admin.banners.save': async (event: any) => {
+    if (!getAdminContext()) return fail('Not authenticated')
+    const parsed = zAdminBannerSaveInput.safeParse(event)
+    if (!parsed.success) return fail('Invalid banner payload', { issues: parsed.error.issues })
+
+    const input = parsed.data
+    const linkUrl = input.linkUrl
+    if (linkUrl && !isValidLinkTarget(linkUrl)) {
+      return fail('Invalid banner link', { linkUrl })
+    }
+    if (input.startAt && input.endAt && input.endAt < input.startAt) {
+      return fail('Invalid schedule range', { startAt: input.startAt, endAt: input.endAt })
+    }
+
+    const now = nowMs()
+
+    if (input.id) {
+      const snapshot = await systemCol().where({ _id: input.id }).limit(1).get()
+      const doc = snapshot.data?.[0]
+      if (!doc) return fail('Banner not found')
+      const parsedDoc = parseSystemDocument(doc)
+      if (!parsedDoc.success || parsedDoc.data.kind !== 'banner') return fail('Banner not found')
+      const existing = parsedDoc.data
+
+      const banner = zSystemBanner.parse({
+        kind: 'banner',
+        imageUrl: input.imageUrl,
+        title: input.title ?? existing.title,
+        linkUrl: linkUrl ?? existing.linkUrl,
+        sort: typeof input.sort === 'number' ? input.sort : existing.sort,
+        isActive: typeof input.isActive === 'boolean' ? input.isActive : existing.isActive,
+        startAt: input.startAt ?? existing.startAt,
+        endAt: input.endAt ?? existing.endAt,
+        createdAt: existing.createdAt,
+        updatedAt: Math.max(now, existing.updatedAt + 1),
+      })
+
+      await systemCol().where({ _id: input.id }).update({ data: banner })
+      return ok({ banner: { ...banner, id: input.id } })
+    }
+
+    const banner = zSystemBanner.parse({
+      kind: 'banner',
+      imageUrl: input.imageUrl,
+      title: input.title,
+      linkUrl,
+      sort: typeof input.sort === 'number' ? input.sort : 0,
+      isActive: typeof input.isActive === 'boolean' ? input.isActive : true,
+      startAt: input.startAt,
+      endAt: input.endAt,
+      createdAt: now,
+      updatedAt: now,
+    })
+
+    const addRes = await systemCol().add({ data: banner })
+    return ok({ banner: { ...banner, id: addRes._id } })
+  },
+
+  /**
+   * v1.admin.banners.delete
+   * Input: { id }
+   * Output: { bannerId }
+   */
+  'v1.admin.banners.delete': async (event: any) => {
+    if (!getAdminContext()) return fail('Not authenticated')
+    const parsed = zAdminBannerDeleteInput.safeParse(event)
+    if (!parsed.success) return fail('Invalid banner payload', { issues: parsed.error.issues })
+
+    const bannerId = parsed.data.id
+    const snapshot = await systemCol().where({ _id: bannerId }).limit(1).get()
+    const doc = snapshot.data?.[0]
+    if (!doc) return fail('Banner not found')
+    const parsedDoc = parseSystemDocument(doc)
+    if (!parsedDoc.success || parsedDoc.data.kind !== 'banner') return fail('Banner not found')
+
+    await systemCol().where({ _id: bannerId }).remove()
+    return ok({ bannerId })
+  },
+
+  /**
+   * v1.admin.categories.save
+   * Input: { id?, name, slug, parentId?, sort?, isActive?, imageUrl?, description? }
+   * Output: { category }
+   */
+  'v1.admin.categories.save': async (event: any) => {
+    if (!getAdminContext()) return fail('Not authenticated')
+    const parsed = zAdminCategorySaveInput.safeParse(event)
+    if (!parsed.success) return fail('Invalid category payload', { issues: parsed.error.issues })
+
+    const input = parsed.data
+    const name = input.name.trim()
+    const slug = input.slug.trim()
+    const parentId = optionalTrimmed(input.parentId)
+    const imageUrl = optionalTrimmed(input.imageUrl)
+    const description = optionalTrimmed(input.description)
+
+    if (imageUrl && !isValidUrl(imageUrl)) {
+      return fail('Invalid category image URL', { imageUrl })
+    }
+    if (input.id && parentId && parentId === input.id) {
+      return fail('Category cannot be its own parent')
+    }
+
+    if (parentId) {
+      const parentSnap = await systemCol().where({ _id: parentId }).limit(1).get()
+      const parentDoc = parentSnap.data?.[0]
+      if (!parentDoc) return fail('Parent category not found', { parentId })
+      const parentParsed = parseSystemDocument(parentDoc)
+      if (!parentParsed.success || parentParsed.data.kind !== 'category') {
+        return fail('Parent category not found', { parentId })
+      }
+    }
+
+    const now = nowMs()
+
+    if (input.id) {
+      const snapshot = await systemCol().where({ _id: input.id }).limit(1).get()
+      const doc = snapshot.data?.[0]
+      if (!doc) return fail('Category not found')
+      const parsedDoc = parseSystemDocument(doc)
+      if (!parsedDoc.success || parsedDoc.data.kind !== 'category') return fail('Category not found')
+      const existing = parsedDoc.data
+
+      const category = zSystemCategory.parse({
+        kind: 'category',
+        name,
+        slug,
+        parentId: parentId ?? undefined,
+        sort: typeof input.sort === 'number' ? input.sort : existing.sort,
+        isActive: typeof input.isActive === 'boolean' ? input.isActive : existing.isActive,
+        imageUrl: imageUrl ?? existing.imageUrl,
+        description: description ?? existing.description,
+        createdAt: existing.createdAt,
+        updatedAt: Math.max(now, existing.updatedAt + 1),
+      })
+
+      await systemCol().where({ _id: input.id }).update({ data: category })
+      return ok({ category: { ...category, id: input.id } })
+    }
+
+    const category = zSystemCategory.parse({
+      kind: 'category',
+      name,
+      slug,
+      parentId: parentId ?? undefined,
+      sort: typeof input.sort === 'number' ? input.sort : 0,
+      isActive: typeof input.isActive === 'boolean' ? input.isActive : true,
+      imageUrl,
+      description,
+      createdAt: now,
+      updatedAt: now,
+    })
+
+    const addRes = await systemCol().add({ data: category })
+    return ok({ category: { ...category, id: addRes._id } })
+  },
+
+  /**
+   * v1.admin.categories.delete
+   * Input: { id }
+   * Output: { categoryId }
+   */
+  'v1.admin.categories.delete': async (event: any) => {
+    if (!getAdminContext()) return fail('Not authenticated')
+    const parsed = zAdminCategoryDeleteInput.safeParse(event)
+    if (!parsed.success) return fail('Invalid category payload', { issues: parsed.error.issues })
+
+    const categoryId = parsed.data.id
+    const snapshot = await systemCol().where({ _id: categoryId }).limit(1).get()
+    const doc = snapshot.data?.[0]
+    if (!doc) return fail('Category not found')
+    const parsedDoc = parseSystemDocument(doc)
+    if (!parsedDoc.success || parsedDoc.data.kind !== 'category') return fail('Category not found')
+    const existing = parsedDoc.data
+
+    const childSnapshot = await systemCol().where({ parentId: categoryId }).limit(1).get()
+    if (childSnapshot.data && childSnapshot.data.length > 0) {
+      return fail('Category has child categories')
+    }
+
+    const productSnapshot = await productsCol().where({ category: existing.slug }).limit(1).get()
+    if (productSnapshot.data && productSnapshot.data.length > 0) {
+      return fail('Category has products')
+    }
+
+    await systemCol().where({ _id: categoryId }).remove()
+    return ok({ categoryId })
   },
 
   /**
