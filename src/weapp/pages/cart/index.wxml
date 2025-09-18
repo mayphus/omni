@@ -69,17 +69,11 @@
     </van-swipe-cell>
   </van-checkbox-group>
 
-  <view class="cart-secondary-actions">
-    <van-button plain type="default" size="small" bind:tap="onClearCart">{{ i18n.clearButton }}</van-button>
-    <van-button type="primary" size="small" bind:tap="onGoShopping">{{ i18n.continueButton }}</van-button>
-  </view>
-
   <van-submit-bar
     price="{{ selectedTotalCents }}"
     button-text="{{ i18n.checkoutButton }}"
     disabled="{{ !selectedIds.length }}"
     bind:submit="onCheckout"
-    tip="{{ i18n.selectedLabel }} {{ selectedIds.length }}"
     safe-area-inset-bottom
   />
 </block>
