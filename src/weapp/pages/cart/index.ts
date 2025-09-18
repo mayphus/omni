@@ -20,6 +20,7 @@ Page(withI18nPage({
     selectedTotal: 0,
     selectedTotalCents: 0,
     selectedTotalText: '0.00',
+    selectedLookup: {} as Record<string, boolean>,
     allSelected: false,
     selectionInitialized: false,
   },
@@ -72,6 +73,7 @@ Page(withI18nPage({
       selectedTotal: 0,
       selectedTotalCents: 0,
       selectedTotalText: '0.00',
+      selectedLookup: {},
       allSelected: false,
       selectionInitialized: false,
     })
@@ -126,6 +128,10 @@ Page(withI18nPage({
     const selectedTotal = calculateSelectedTotal(items, selectedIds)
     const selectedTotalCents = Math.round(selectedTotal * 100)
     const allSelected = items.length > 0 && selectedIds.length === items.length
+    const selectedLookup = selectedIds.reduce((map, id) => {
+      map[id] = true
+      return map
+    }, {} as Record<string, boolean>)
     this.setData({
       items,
       total,
@@ -134,6 +140,7 @@ Page(withI18nPage({
       selectedTotal,
       selectedTotalCents,
       selectedTotalText: selectedTotal.toFixed(2),
+      selectedLookup,
       allSelected,
       selectionInitialized: true,
     })

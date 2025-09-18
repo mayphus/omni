@@ -9,17 +9,32 @@
 </block>
 
 <block wx:else>
+  <view class="cart-toolbar">
+    <van-checkbox
+      shape="square"
+      checked="{{ allSelected }}"
+      bind:change="onToggleSelectAll"
+      class="cart-toolbar__checkbox"
+    >
+      {{ allSelected ? i18n.deselectAllLabel : i18n.selectAllLabel }}
+    </van-checkbox>
+    <view class="cart-toolbar__summary">
+      <view>{{ i18n.selectedLabel }} {{ selectedIds.length }}</view>
+      <view class="cart-toolbar__total">¥{{ selectedTotalText }}</view>
+    </view>
+  </view>
+
   <van-checkbox-group class="cart-list" value="{{ selectedIds }}" bind:change="onSelectionChange">
     <van-swipe-cell
       class="cart-swipe"
       wx:for="{{ items }}"
       wx:key="id"
     >
-      <view class="cart-item">
+      <view class="cart-item {{ selectedLookup[item.id] ? 'cart-item--active' : '' }}">
         <van-checkbox
           class="cart-item__checkbox"
           shape="square"
-          icon-size="28rpx"
+          icon-size="32rpx"
           name="{{ item.id }}"
         />
         <view class="cart-item__figure">
@@ -53,31 +68,18 @@
       </view>
     </van-swipe-cell>
   </van-checkbox-group>
-  <view class="cart-footer">
-    <van-checkbox
-      shape="square"
-      checked="{{ allSelected }}"
-      bind:change="onToggleSelectAll"
-      class="cart-footer__select"
-    >
-      {{ allSelected ? i18n.deselectAllLabel : i18n.selectAllLabel }}
-    </van-checkbox>
-    <view class="cart-footer__summary">
-      <view class="cart-footer__count">{{ i18n.selectedLabel }} {{ selectedIds.length }}</view>
-      <view class="cart-footer__total">¥{{ selectedTotalText }}</view>
-    </view>
-    <van-button
-      class="cart-footer__checkout"
-      type="primary"
-      size="normal"
-      disabled="{{ !selectedIds.length }}"
-      bind:tap="onCheckout"
-    >
-      {{ i18n.checkoutButton }}
-    </van-button>
-  </view>
-  <view class="cart-actions-row">
-    <van-button type="warning" size="small" bind:tap="onClearCart">{{ i18n.clearButton }}</van-button>
+
+  <view class="cart-secondary-actions">
+    <van-button plain type="default" size="small" bind:tap="onClearCart">{{ i18n.clearButton }}</van-button>
     <van-button type="primary" size="small" bind:tap="onGoShopping">{{ i18n.continueButton }}</van-button>
   </view>
+
+  <van-submit-bar
+    price="{{ selectedTotalCents }}"
+    button-text="{{ i18n.checkoutButton }}"
+    disabled="{{ !selectedIds.length }}"
+    bind:submit="onCheckout"
+    tip="{{ i18n.selectedLabel }} {{ selectedIds.length }}"
+    safe-area-inset-bottom
+  />
 </block>
