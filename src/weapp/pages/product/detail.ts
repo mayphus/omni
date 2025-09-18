@@ -1,6 +1,7 @@
 import { fetchProductDetail } from '../../utils/api'
 import { addToCart, saveDirectCheckout, getCartItemId, type CartItem } from '../../utils/cart'
 import { withI18nPage } from '../../utils/i18n'
+import { sanitizeRichDescription } from '../../utils/rich-description'
 import type { I18nMessages } from '../../utils/i18n'
 import type { ProductWithId } from '@shared/models/product'
 
@@ -123,6 +124,7 @@ Page(withI18nPage({
     purchasable: false,
     attributes: [] as AttributeEntry[],
     lowStockLabel: '',
+    richDescriptionHtml: '',
     skuOptions: [] as SkuOption[],
     selectedSkuId: '',
     selectedSkuPrice: 0,
@@ -153,6 +155,7 @@ Page(withI18nPage({
       purchasable: false,
       attributes: [],
       lowStockLabel: '',
+      richDescriptionHtml: '',
       skuOptions: [],
       selectedSkuId: '',
       selectedSkuPrice: 0,
@@ -177,6 +180,7 @@ Page(withI18nPage({
       const selectedSkuStock = selectedSku ? selectedSku.stock : product.stock
       const adjustedQuantity = selectedSkuStock && selectedSkuStock > 0 ? Math.min(quantity, selectedSkuStock) : quantity
       const selectedSkuPrice = selectedSku ? selectedSku.priceYuan : formatPriceYuan(product.price.priceYuan)
+      const richDescriptionHtml = sanitizeRichDescription(product?.richDescription)
       this.setData({
         product,
         gallery,
@@ -184,6 +188,7 @@ Page(withI18nPage({
         purchasable,
         attributes,
         lowStockLabel,
+        richDescriptionHtml,
         skuOptions,
         selectedSkuId: defaultSkuId,
         selectedSkuPrice,

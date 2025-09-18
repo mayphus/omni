@@ -42,12 +42,17 @@
       </van-card>
 
       <van-panel class="product-detail__section product-detail__panel-padding" title="{{ i18n.detailsTab }}">
-        <rich-text wx:if="{{ product.richDescription }}" nodes="{{ product.richDescription }}" />
+        <rich-text
+          wx:if="{{ richDescriptionHtml }}"
+          class="product-detail__rich-text"
+          space="nbsp"
+          nodes="{{ richDescriptionHtml }}"
+        />
         <view wx:elif="{{ product.description }}" class="product-detail__description">{{ product.description }}</view>
         <van-cell-group wx:if="{{ attributes.length }}" inset>
           <van-cell wx:for="{{ attributes }}" wx:key="key" title="{{ item.key }}" value="{{ item.value }}" />
         </van-cell-group>
-        <block wx:if="{{ !product.description && !product.richDescription && !attributes.length }}">
+        <block wx:if="{{ !product.description && !richDescriptionHtml && !attributes.length }}">
           <view wx:for="{{ i18n.detailItems }}" wx:key="item" class="product-detail__placeholder">• {{ item }}</view>
         </block>
       </van-panel>
