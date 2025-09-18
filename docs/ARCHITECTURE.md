@@ -16,7 +16,7 @@ admin/             # Static web assets for console
 ```
 
 Build pipeline
-- WeApp: `weapp-vite` compiles `src/weapp` → `weapp/` (includes `weapp/miniprogram_npm`). Vant components are copied post-build via `scripts/ensure-weapp-npm.js` when DevTools packing is unavailable.
+- WeApp: `weapp-vite` compiles `src/weapp` → `weapp/` (includes `weapp/miniprogram_npm`). Vant components are copied post-build via `scripts/weapp-npm.js` when DevTools packing is unavailable.
 - Functions: Vite builds `src/functions/shop` to CJS Node18 → `functions/shop/index.js` with its own `package.json`. The bundle keeps `wx-server-sdk`/`zod` external and mirrors the single router file.
 - Admin: Vite builds `src/admin` → `admin/`. Tailwind configuration is scoped to the admin app.
 
