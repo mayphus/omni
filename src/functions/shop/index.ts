@@ -121,17 +121,69 @@ function buildProductFromInput(input: ProductInput, now: number, existing?: Prod
   return zProduct.parse(base)
 }
 
-function getAdminContext() {
-  const ctx = getWX() as any
-  if (ctx?.TCB_UUID || ctx?.OPENID) return ctx
+async function findUserByOpenid(openid: string): Promise<UserWithId | null> {
+  const snapshot = await usersCol().where({ openid }).limit(1).get()
+  const doc = snapshot.data?.[0]
+  if (!doc) return null
+  const parsed = parseUserDocument(doc)
+  if (!parsed.success) {
+    const issue = parsed.error.issues?.[0]
+    throw new Error(issue?.message || 'Invalid user data')
+  }
+  return parsed.data
+}
 
-  const envUuid = process.env.TCB_UUID || process.env.TCB_CUSTOM_USER_ID
-  const envOpenid = process.env.OPENID || process.env.TCB_OPENID
-  if (envUuid || envOpenid) {
-    return { ...ctx, TCB_UUID: envUuid, OPENID: envOpenid }
+function parseOptionalString(value: unknown): string | undefined {
+  if (typeof value !== 'string') return undefined
+  const trimmed = value.trim()
+  return trimmed ? trimmed : undefined
+}
+
+
+function getAdminUuidAllowlist(): string[] {
+  return (process.env.SHOP_ADMIN_UUIDS || '')
+    .split(',')
+    .map((value) => value.trim())
+    .filter(Boolean)
+}
+
+type AdminPrincipal = {
+  context: Record<string, any>
+  user?: UserWithId
+}
+
+async function resolveAdminPrincipal(): Promise<AdminPrincipal | null> {
+  const ctx = getWX() as any
+  const openid =
+    parseOptionalString(ctx?.OPENID) || parseOptionalString(process.env.OPENID) || parseOptionalString(process.env.TCB_OPENID)
+
+  if (openid) {
+    const user = await findUserByOpenid(openid)
+    if (user && Array.isArray(user.roles) && user.roles.includes('admin')) {
+      return { context: ctx, user }
+    }
+  }
+
+  const uuidCandidates = [ctx?.TCB_UUID, ctx?.TCB_CUSTOM_USER_ID, process.env.TCB_UUID, process.env.TCB_CUSTOM_USER_ID]
+  const uuid = uuidCandidates.map(parseOptionalString).find(Boolean)
+
+  const allowlist = getAdminUuidAllowlist()
+  if (uuid && allowlist.length > 0) {
+    if (allowlist.includes(uuid)) {
+      return { context: ctx }
+    }
   }
 
   return null
+}
+
+async function requireAdminAccess(): Promise<AdminPrincipal | null> {
+  try {
+    return await resolveAdminPrincipal()
+  } catch (error) {
+    console.error('[shop] failed to resolve admin principal', error)
+    return null
+  }
 }
 
 function parseOrderDocument(doc: any) {
@@ -474,6 +526,7 @@ type ProductStockUpdate = {
   stock: number
   stockChanged: boolean
   skuStocks: Map<string, SkuStockEntry>
+  expectedUpdatedAt?: number
 }
 
 function createProductStockUpdate(product: ProductWithId): ProductStockUpdate {
@@ -491,6 +544,7 @@ function createProductStockUpdate(product: ProductWithId): ProductStockUpdate {
     stock: product.stock ?? 0,
     stockChanged: false,
     skuStocks,
+    expectedUpdatedAt: typeof product.updatedAt === 'number' ? product.updatedAt : undefined,
   }
 }
 
@@ -578,9 +632,21 @@ async function applyProductStockUpdates(
       }
     }
 
-    await productsCol()
-      .where({ _id: update.product.id })
-      .update({ data })
+    const condition: Record<string, any> = { _id: update.product.id }
+    if (typeof update.expectedUpdatedAt === 'number') {
+      condition.updatedAt = update.expectedUpdatedAt
+    }
+
+    const result = await productsCol().where(condition).update({ data })
+    const updatedCount = typeof (result as any)?.stats?.updated === 'number' ? (result as any).stats.updated : 0
+    if (updatedCount === 0) {
+      const conflict = new Error('Product stock update conflict')
+      ;(conflict as any).code = STOCK_ERROR_CODE
+      ;(conflict as any).details = { productId: update.product.id, reason: 'conflict' }
+      throw conflict
+    }
+
+    update.expectedUpdatedAt = nextUpdatedAt
   }
 }
 
@@ -589,6 +655,7 @@ function buildRevertStockUpdates(updates: Map<string, ProductStockUpdate>): Map<
   for (const update of updates.values()) {
     const base = createProductStockUpdate(update.product)
     base.stockChanged = update.stockChanged
+    base.expectedUpdatedAt = undefined
     if (update.stockChanged) {
       base.stock = update.product.stock ?? 0
     }
@@ -1569,9 +1636,10 @@ const handlers: Record<string, (event: any) => Promise<ApiResponse> | ApiRespons
    * v1.admin.products.list
    * Input: none
    * Output: { products }
-   */
+  */
   'v1.admin.products.list': async () => {
-    if (!getAdminContext()) return fail('Not authenticated')
+    const admin = await requireAdminAccess()
+    if (!admin) return fail('Not authenticated')
     const snapshot = await productsCol().orderBy('updatedAt', 'desc').limit(200).get()
     const products: Array<Product & { id: string }> = []
     for (const doc of snapshot.data) {
@@ -1589,9 +1657,10 @@ const handlers: Record<string, (event: any) => Promise<ApiResponse> | ApiRespons
    * v1.admin.products.create
    * Input: { product }
    * Output: { product }
-   */
+  */
   'v1.admin.products.create': async (event: any) => {
-    if (!getAdminContext()) return fail('Not authenticated')
+    const admin = await requireAdminAccess()
+    if (!admin) return fail('Not authenticated')
     const input = zProductInput.safeParse(event?.product)
     if (!input.success) return fail('Invalid product payload', { issues: input.error.issues })
     const now = nowMs()
@@ -1604,9 +1673,10 @@ const handlers: Record<string, (event: any) => Promise<ApiResponse> | ApiRespons
    * v1.admin.products.update
    * Input: { productId, product }
    * Output: { product }
-   */
+  */
   'v1.admin.products.update': async (event: any) => {
-    if (!getAdminContext()) return fail('Not authenticated')
+    const admin = await requireAdminAccess()
+    if (!admin) return fail('Not authenticated')
     const productId = typeof event?.productId === 'string' ? event.productId.trim() : ''
     if (!productId) return fail('Missing productId')
     const input = zProductInput.safeParse(event?.product)
@@ -1629,9 +1699,10 @@ const handlers: Record<string, (event: any) => Promise<ApiResponse> | ApiRespons
    * v1.admin.products.delete
    * Input: { productId }
    * Output: { productId }
-   */
+  */
   'v1.admin.products.delete': async (event: any) => {
-    if (!getAdminContext()) return fail('Not authenticated')
+    const admin = await requireAdminAccess()
+    if (!admin) return fail('Not authenticated')
     const productId = typeof event?.productId === 'string' ? event.productId.trim() : ''
     if (!productId) return fail('Missing productId')
 
@@ -1647,9 +1718,10 @@ const handlers: Record<string, (event: any) => Promise<ApiResponse> | ApiRespons
    * v1.admin.orders.list
    * Input: none
    * Output: { orders }
-   */
+  */
   'v1.admin.orders.list': async () => {
-    if (!getAdminContext()) return fail('Not authenticated')
+    const admin = await requireAdminAccess()
+    if (!admin) return fail('Not authenticated')
     const snapshot = await ordersCol().orderBy('createdAt', 'desc').limit(200).get()
     const orders: OrderWithId[] = []
     for (const doc of snapshot.data || []) {
@@ -1664,9 +1736,10 @@ const handlers: Record<string, (event: any) => Promise<ApiResponse> | ApiRespons
    * v1.admin.orders.updateStatus
    * Input: { orderId, status, note? }
    * Output: { order }
-   */
+  */
   'v1.admin.orders.updateStatus': async (event: any) => {
-    if (!getAdminContext()) return fail('Not authenticated')
+    const admin = await requireAdminAccess()
+    if (!admin) return fail('Not authenticated')
     const parsed = zAdminOrderUpdateInput.safeParse(event)
     if (!parsed.success) return fail('Invalid payload', { issues: parsed.error.issues })
     const { orderId, status } = parsed.data
@@ -1723,9 +1796,10 @@ const handlers: Record<string, (event: any) => Promise<ApiResponse> | ApiRespons
    * v1.admin.users.list
    * Input: none
    * Output: { users }
-   */
+  */
   'v1.admin.users.list': async () => {
-    if (!getAdminContext()) return fail('Not authenticated')
+    const admin = await requireAdminAccess()
+    if (!admin) return fail('Not authenticated')
     const snapshot = await usersCol().orderBy('createdAt', 'desc').limit(200).get()
     const users: UserWithId[] = []
     for (const doc of snapshot.data || []) {
@@ -1740,9 +1814,10 @@ const handlers: Record<string, (event: any) => Promise<ApiResponse> | ApiRespons
    * v1.admin.system.list
    * Input: none
    * Output: { categories, coupons, banners }
-   */
+  */
   'v1.admin.system.list': async () => {
-    if (!getAdminContext()) return fail('Not authenticated')
+    const admin = await requireAdminAccess()
+    if (!admin) return fail('Not authenticated')
     const snapshot = await systemCol().orderBy('updatedAt', 'desc').limit(200).get()
     const categories: SystemCategoryWithId[] = []
     const coupons: SystemCouponWithId[] = []
@@ -1772,9 +1847,10 @@ const handlers: Record<string, (event: any) => Promise<ApiResponse> | ApiRespons
    * v1.admin.banners.save
    * Input: { id?, imageUrl, title?, linkUrl?, sort?, isActive?, startAt?, endAt? }
    * Output: { banner }
-   */
+  */
   'v1.admin.banners.save': async (event: any) => {
-    if (!getAdminContext()) return fail('Not authenticated')
+    const admin = await requireAdminAccess()
+    if (!admin) return fail('Not authenticated')
     const parsed = zAdminBannerSaveInput.safeParse(event)
     if (!parsed.success) return fail('Invalid banner payload', { issues: parsed.error.issues })
 
@@ -1835,9 +1911,10 @@ const handlers: Record<string, (event: any) => Promise<ApiResponse> | ApiRespons
    * v1.admin.banners.delete
    * Input: { id }
    * Output: { bannerId }
-   */
+  */
   'v1.admin.banners.delete': async (event: any) => {
-    if (!getAdminContext()) return fail('Not authenticated')
+    const admin = await requireAdminAccess()
+    if (!admin) return fail('Not authenticated')
     const parsed = zAdminBannerDeleteInput.safeParse(event)
     if (!parsed.success) return fail('Invalid banner payload', { issues: parsed.error.issues })
 
@@ -1856,9 +1933,10 @@ const handlers: Record<string, (event: any) => Promise<ApiResponse> | ApiRespons
    * v1.admin.categories.save
    * Input: { id?, name, slug, parentId?, sort?, isActive?, imageUrl?, description? }
    * Output: { category }
-   */
+  */
   'v1.admin.categories.save': async (event: any) => {
-    if (!getAdminContext()) return fail('Not authenticated')
+    const admin = await requireAdminAccess()
+    if (!admin) return fail('Not authenticated')
     const parsed = zAdminCategorySaveInput.safeParse(event)
     if (!parsed.success) return fail('Invalid category payload', { issues: parsed.error.issues })
 
@@ -1934,9 +2012,10 @@ const handlers: Record<string, (event: any) => Promise<ApiResponse> | ApiRespons
    * v1.admin.categories.delete
    * Input: { id }
    * Output: { categoryId }
-   */
+  */
   'v1.admin.categories.delete': async (event: any) => {
-    if (!getAdminContext()) return fail('Not authenticated')
+    const admin = await requireAdminAccess()
+    if (!admin) return fail('Not authenticated')
     const parsed = zAdminCategoryDeleteInput.safeParse(event)
     if (!parsed.success) return fail('Invalid category payload', { issues: parsed.error.issues })
 
@@ -1966,9 +2045,10 @@ const handlers: Record<string, (event: any) => Promise<ApiResponse> | ApiRespons
    * v1.admin.dashboard.summary
    * Input: none
    * Output: { summary, recentOrders }
-   */
+  */
   'v1.admin.dashboard.summary': async () => {
-    if (!getAdminContext()) return fail('Not authenticated')
+    const admin = await requireAdminAccess()
+    if (!admin) return fail('Not authenticated')
 
     let ordersForStats: OrderWithId[] = []
     try {
@@ -2027,4 +2107,10 @@ export const main = async (event: any) => {
   } catch (e: any) {
     return fail(`Internal error: ${e?.message || e}`)
   }
+}
+
+export const __test__ = {
+  collectStockUpdates,
+  applyProductStockUpdates,
+  createProductStockUpdate,
 }

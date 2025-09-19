@@ -3,7 +3,7 @@ import { importShop, testCloud } from './helpers/cloud'
 import { Collections } from '@shared/collections'
 import { nowMs } from '@shared/base'
 
-const { main } = await importShop()
+const { main, __test__ } = await importShop()
 
 const originalEnv = {
   subMchId: process.env.WECHAT_PAY_SUB_MCH_ID,
@@ -562,6 +562,38 @@ describe('functions: store endpoints', () => {
       .getData(Collections.Products)
       .find((doc) => doc._id === productId)
     expect(storedProduct?.stock).toBe(1)
+  })
+
+  it('fails stock mutation when product was updated concurrently', async () => {
+    const now = nowMs()
+    const productId = testCloud.insert(Collections.Products, {
+      title: 'Concurrent Widget',
+      images: [{ fileId: 'widget', url: 'https://example.com/widget.jpg' }],
+      category: 'gadgets',
+      price: { currency: 'CNY', priceYuan: 5 },
+      stock: 1,
+      isActive: true,
+      createdAt: now - 100,
+      updatedAt: now - 50,
+    })
+
+    const productDoc = testCloud.getData(Collections.Products).find((doc) => doc._id === productId)
+    if (!productDoc) throw new Error('missing product doc')
+    const { _id: _ignored, ...rest } = productDoc as any
+    const product = { id: productId, ...(rest as Record<string, any>) }
+
+    const productMap = new Map<string, any>([[productId, product]])
+    const stockMutations = [{ productId, quantity: 1, type: 'decrement' as const }]
+    const updates = __test__.collectStockUpdates(stockMutations, productMap)
+
+    testCloud.patch(Collections.Products, productId, {
+      updatedAt: (product.updatedAt ?? now) + 10_000,
+      stock: 3,
+    })
+
+    await expect(__test__.applyProductStockUpdates(updates, nowMs())).rejects.toMatchObject({
+      message: expect.stringContaining('conflict'),
+    })
   })
 
   it('fails order creation when sku stock is insufficient', async () => {

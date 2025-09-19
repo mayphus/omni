@@ -1,9 +1,20 @@
-import { beforeEach, describe, expect, it } from 'vitest'
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import { importShop, testCloud } from './helpers/cloud'
 import { Collections } from '@shared/collections'
 import { nowMs } from '@shared/base'
 
 const { main } = await importShop()
+
+const originalAdminUuidAllow = process.env.SHOP_ADMIN_UUIDS
+
+beforeAll(() => {
+  process.env.SHOP_ADMIN_UUIDS = 'mock-admin'
+})
+
+afterAll(() => {
+  if (originalAdminUuidAllow === undefined) delete process.env.SHOP_ADMIN_UUIDS
+  else process.env.SHOP_ADMIN_UUIDS = originalAdminUuidAllow
+})
 
 beforeEach(() => {
   testCloud.reset()
@@ -15,6 +26,23 @@ describe('functions: admin overview', () => {
     const res = await main({ action: 'v1.admin.orders.list' })
     expect(res.success).toBe(false)
     expect(res.error).toMatch(/Not authenticated/)
+  })
+
+  it('rejects authenticated callers without admin role', async () => {
+    const now = nowMs()
+    const regularOpenid = 'regular-openid'
+    testCloud.insert(Collections.Users, {
+      openid: regularOpenid,
+      roles: ['user'],
+      profile: { nickname: 'Regular User', avatarUrl: '' },
+      wallet: { currency: 'CNY', balanceYuan: 0, frozenYuan: 0 },
+      createdAt: now,
+      updatedAt: now,
+    })
+    testCloud.setContext({ OPENID: regularOpenid, TCB_UUID: undefined, TCB_CUSTOM_USER_ID: undefined })
+    const res = await main({ action: 'v1.admin.orders.list' })
+    expect(res.success).toBe(false)
+    expect(res.error).toBe('Not authenticated')
   })
 
   it('rejects admin order status updates without authentication', async () => {

@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { Collections } from '@shared/collections'
 import { importShop, testCloud } from '../functions/helpers/cloud'
 
@@ -30,10 +30,29 @@ const { fetchDashboardSummary } = await import('../../src/admin/services/dashboa
 const now = Date.now()
 
 describe('admin services integration', () => {
+  const originalAdminUuidAllow = process.env.SHOP_ADMIN_UUIDS
+
+  beforeAll(() => {
+    process.env.SHOP_ADMIN_UUIDS = 'admin-uuid'
+  })
+
+  afterAll(() => {
+    if (originalAdminUuidAllow === undefined) delete process.env.SHOP_ADMIN_UUIDS
+    else process.env.SHOP_ADMIN_UUIDS = originalAdminUuidAllow
+  })
+
   beforeEach(() => {
     testCloud.reset()
     callShopSpy.mockClear()
     testCloud.setContext({ OPENID: 'admin-openid', TCB_UUID: 'admin-uuid' })
+    testCloud.insert(Collections.Users, {
+      openid: 'admin-openid',
+      roles: ['user', 'admin'],
+      profile: { nickname: 'Integration Admin', avatarUrl: '' },
+      wallet: { currency: 'CNY', balanceYuan: 0, frozenYuan: 0 },
+      createdAt: now,
+      updatedAt: now,
+    })
   })
 
   it('round-trips product CRUD through the cloud function', async () => {

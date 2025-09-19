@@ -228,6 +228,12 @@ export const testCloud = {
     store[name].push({ _id, ...payload })
     return _id
   },
+  patch: (name: string, id: string, changes: Doc) => {
+    const doc = store[name].find((item) => item._id === id)
+    if (doc) {
+      Object.assign(doc, clone(changes))
+    }
+  },
   mockCloudPay: (handlers: CloudPayHandler) => {
     cloudPayHandlers = { ...cloudPayHandlers, ...handlers }
   },
