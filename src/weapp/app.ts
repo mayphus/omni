@@ -5,6 +5,8 @@ import { initI18n } from './utils/i18n'
 import { login, updateProfile } from './utils/auth'
 import { bootstrapAutomatorBridge } from './utils/automator-bridge'
 
+// Normalize system info before any pages mount so layout calculations (safe
+// areas, notch detection) stay consistent.
 patchSystemInfo()
 
 async function bootstrapAuth() {
@@ -26,6 +28,8 @@ async function bootstrapAuth() {
 
 App({
   onLaunch() {
+    // Automator bridge keeps end-to-end tests stable; we stash the reapply
+    // callback on the app instance so later lifecycle hooks can trigger it.
     const reapplyAutomatorBridge = bootstrapAutomatorBridge()
     ;(this as any).reapplyAutomatorBridge = reapplyAutomatorBridge
     const locale = initI18n()
@@ -36,6 +40,7 @@ App({
       return
     }
     reapplyAutomatorBridge?.()
+    // Mini program and cloud function share the same env id for data reads.
     wx.cloud.init({ env: VITE_TCB_ENV_ID, traceUser: true })
     void bootstrapAuth()
   },

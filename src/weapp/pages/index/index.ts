@@ -3,6 +3,10 @@ import { fetchStoreHome, type StoreBanner, type StoreFeaturedProduct } from '../
 import type { ProductWithId } from '@shared/models/product'
 import { withI18nPage } from '../../utils/i18n'
 
+// Landing page surfaces featured products and time-sensitive banners curated by
+// the admin dashboard. It keeps a light client-side cache so the storefront
+// feels responsive even on spotty mobile networks.
+
 type FeaturedCard = {
   id: string
   title: string
@@ -81,6 +85,8 @@ definePage(withI18nPage({
   async loadFeaturedProducts() {
     const { featuredLoading } = this.data as any
     if (featuredLoading) return
+    // When customers pull to refresh we reset the error state but reuse cached
+    // cards; this keeps skeletons consistent while awaiting new data.
     this.setData({ featuredLoading: true, featuredError: '' })
     try {
       const { featuredProducts, banners } = await fetchStoreHome()
@@ -106,6 +112,8 @@ definePage(withI18nPage({
       }
       wx.showToast({ title: message, icon: 'none' })
     } finally {
+      // Reset the loading flag regardless of outcome so the UI can re-enable
+      // refresh affordances.
       this.setData({ featuredLoading: false })
     }
   },

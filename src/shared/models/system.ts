@@ -2,6 +2,11 @@ import { z } from 'zod'
 import { zBaseDoc } from '../base'
 import { zYuan } from '../money'
 
+// System items power the marketing layer of the store: navigation, banners,
+// coupons. Admins curate these records to influence what customers see first.
+
+// Allow either internal mini program routes or external URLs so marketing can
+// deep-link to specific experiences.
 const zLinkTarget = z
   .string()
   .trim()
@@ -10,6 +15,8 @@ const zLinkTarget = z
     message: 'Link must be an http(s) URL or internal mini program path',
   })
 
+// Category nodes power both storefront filters and admin navigation. We keep
+// them separate from product documents so merchandising can iterate freely.
 export const zSystemCategory = z
   .object({
     kind: z.literal('category'),
@@ -25,6 +32,8 @@ export const zSystemCategory = z
 
 export type SystemCategory = z.infer<typeof zSystemCategory>
 
+// Coupons are defined as generic incentives. Enforcement happens in the cloud
+// function; here we only store the parameters marketing configures.
 export const zSystemCoupon = z
   .object({
     kind: z.literal('coupon'),
@@ -42,6 +51,8 @@ export const zSystemCoupon = z
 
 export type SystemCoupon = z.infer<typeof zSystemCoupon>
 
+// Home page banners rotate promotions. Optional scheduling keeps flash sales
+// lightweight without introducing another service.
 export const zSystemBanner = z
   .object({
     kind: z.literal('banner'),

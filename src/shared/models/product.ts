@@ -2,6 +2,10 @@ import { z } from 'zod'
 import { zBaseDoc } from '../base'
 import { zYuan } from '../money'
 
+// Product documents describe what we sell in the mini program catalogue.
+// They drive both the storefront (cards, detail pages) and admin tooling,
+// so we keep the schema focused on merchandising fields and stock control.
+
 export const zProductImage = z.object({
   fileId: z.string().min(1),
   url: z.string().url(),
@@ -22,6 +26,9 @@ export const zPrice = z.object({
   priceYuan: zYuan.min(0),
 })
 
+// Main catalogue entry. SKUs are optional because many products ship with a
+// single configuration, but when present each SKU records pricing/stock so
+// operations can manage variants independently.
 export const zProduct = z
   .object({
     title: z.string().min(1),

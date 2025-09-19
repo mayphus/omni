@@ -14,6 +14,7 @@ export function Layout({ children, user, onSignOut }: LayoutProps) {
   const displayName = getUserDisplayName(user)
   return (
     <div className="flex min-h-screen">
+      {/* Sidebar anchors the admin information architecture (dashboard, catalog, etc.) */}
       <Sidebar current={route} userName={displayName} onSignOut={onSignOut} />
       <main className="min-w-0 flex-1 p-4">
         <div className="mb-4 flex items-start justify-between gap-3 rounded-md border bg-muted/40 p-3 text-sm text-muted-foreground md:hidden">

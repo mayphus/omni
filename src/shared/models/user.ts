@@ -2,6 +2,9 @@ import { z } from 'zod'
 import { zBaseDoc } from '../base'
 import { zYuan } from '../money'
 
+// User documents bridge WeChat identities with our CRM needs. Wallet balances
+// remain in yuan to align with the mini program purchase experience.
+
 export const zUserRole = z.enum(['user', 'admin'])
 export type UserRole = z.infer<typeof zUserRole>
 
@@ -19,6 +22,8 @@ export const zUserProfile = z.object({
 })
 export type UserProfile = z.infer<typeof zUserProfile>
 
+// Core profile for anyone interacting with the shop. Roles gate admin
+// experiences, while wallet/referral fields unlock future growth tactics.
 export const zUser = z
   .object({
     openid: z.string().min(1),

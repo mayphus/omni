@@ -9,12 +9,17 @@ import { useHashRoute } from './lib/router'
 import { Login } from './pages/Login'
 import { ensureLoginState, signOut, type CloudbaseUser } from './lib/cloudbase'
 
+// Admin shell orchestrates authentication and simple hash-based routing between
+// dashboard areas. Once a CloudBase session is confirmed we render the
+// corresponding management view.
 export default function App() {
   const { route } = useHashRoute()
   const [user, setUser] = React.useState<CloudbaseUser | null | undefined>(undefined)
 
   React.useEffect(() => {
     let alive = true
+    // CloudBase auto-refreshes sessions; we mirror that on mount so operators
+    // land directly in the dashboard if they already logged in via another tab.
     ensureLoginState()
       .then((currentUser) => alive && setUser(currentUser))
       .catch(() => alive && setUser(null))
@@ -29,6 +34,8 @@ export default function App() {
     } catch (err) {
       console.error('Failed to sign out', err)
     } finally {
+      // Force a re-render into the Login screen even if the network request
+      // fails—the CloudBase SDK will clear local tokens as part of signOut.
       setUser(null)
     }
   }, [])

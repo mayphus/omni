@@ -42,6 +42,9 @@ cloud.init({
   env: cloud.DYNAMIC_CURRENT_ENV
 })
 
+// Test harnesses can inject faux database/context/cloud pay clients to model
+// end-to-end flows without touching Tencent Cloud. Production relies on the
+// default wx-server-sdk implementations.
 const overrides = (globalThis as any).__SHOP_TEST_OVERRIDES__ as
   | undefined
   | {
@@ -72,6 +75,10 @@ type PaymentConfig = {
 }
 
 function getPaymentConfig(): PaymentConfig {
+  // All WeChat Pay requests must echo these identifiers so Tencent can route
+  // callbacks and settlements correctly. We tolerate missing optional fields
+  // but block execution if the sub-merchant id is absent to avoid silent
+  // payment failures.
   const envId = process.env.WECHAT_PAY_ENV_ID || process.env.TCB_ENV || process.env.TENCENTCLOUD_ENV
   const functionName = process.env.WECHAT_PAY_NOTIFY_FUNCTION || 'shop'
   const subMchId = process.env.WECHAT_PAY_SUB_MCH_ID || ''
@@ -153,6 +160,9 @@ type AdminPrincipal = {
 }
 
 async function resolveAdminPrincipal(): Promise<AdminPrincipal | null> {
+  // Admin calls may arrive from WeChat Mini Program (openid) or from the
+  // Tencent Cloud console (UUID). We resolve both so operations can automate
+  // tasks without creating separate API keys.
   const ctx = getWX() as any
   const openid =
     parseOptionalString(ctx?.OPENID) || parseOptionalString(process.env.OPENID) || parseOptionalString(process.env.TCB_OPENID)
@@ -178,6 +188,8 @@ async function resolveAdminPrincipal(): Promise<AdminPrincipal | null> {
 }
 
 async function requireAdminAccess(): Promise<AdminPrincipal | null> {
+  // We swallow errors here and return null so the handler can respond with a
+  // clean auth error rather than leaking internal resolution issues.
   try {
     return await resolveAdminPrincipal()
   } catch (error) {
@@ -265,6 +277,9 @@ const zAdminCategoryDeleteInput = z.object({
   id: z.string().trim().min(1),
 })
 
+// Pulls a recent slice of orders to feed dashboards and revenue analytics.
+// We paginate manually because the database SDK does not support offsets with
+// `count` natively, and we want predictable bounds for admin queries.
 async function fetchOrdersForStats(limit = 1000): Promise<OrderWithId[]> {
   const pageSize = 100
   const maxDocs = Math.max(0, limit)
@@ -555,6 +570,9 @@ function createStockError(message: string, details: { productId: string; skuId?:
   return error
 }
 
+// Flattens a batch of stock mutations into the minimal set of product updates.
+// We validate eagerly so the order flow fails before committing any writes,
+// keeping inventory consistent even under concurrent purchases.
 function collectStockUpdates(
   mutations: StockMutation[],
   productMap: Map<string, ProductWithId>,
@@ -594,6 +612,9 @@ function collectStockUpdates(
   return updates
 }
 
+// Persists the pre-validated stock adjustments. Each write includes an
+// optimistic lock on `updatedAt` so racing orders trigger a retry instead of
+// overselling.
 async function applyProductStockUpdates(
   updates: Map<string, ProductStockUpdate>,
   timestamp: number,
@@ -650,6 +671,9 @@ async function applyProductStockUpdates(
   }
 }
 
+// If the order write fails we build a mirror update to roll inventory back to
+// its previous values. This keeps finance reports aligned with actual stock on
+// shelves even when the last DB write throws.
 function buildRevertStockUpdates(updates: Map<string, ProductStockUpdate>): Map<string, ProductStockUpdate> {
   const revert = new Map<string, ProductStockUpdate>()
   for (const update of updates.values()) {
@@ -760,6 +784,12 @@ async function updateUserProfile(openid: string, profile: UserProfile, unionid?:
 }
 
 // Handlers (single-action router)
+// Naming convention mirrors the client requests. Segments roughly map to
+// business capabilities:
+// - v1.system.* → health checks for monitoring/CI probes
+// - v1.auth.*   → identity bootstrap from the mini program session
+// - v1.store.*  → customer-facing catalogue, cart, checkout
+// - v1.admin.*  → back-office tools for merchandising and operations
 const handlers: Record<string, (event: any) => Promise<ApiResponse> | ApiResponse> = {
   // v1.system.* — baseline health
   'v1.system.ping': async () => ok({ message: 'pong' }),
@@ -807,6 +837,9 @@ const handlers: Record<string, (event: any) => Promise<ApiResponse> | ApiRespons
     if (!order.payment) return fail('Order missing payment information')
     if (!order.payment.outTradeNo) return fail('Payment not initialised for order')
 
+    // This call double-checks with WeChat Pay so customer support can trust
+    // that a "paid" status reflects the provider's source of truth, not just
+    // the client signalling success.
     const paymentConfig = getPaymentConfig()
     let queryResult: any
     try {
@@ -961,6 +994,9 @@ const handlers: Record<string, (event: any) => Promise<ApiResponse> | ApiRespons
 
     let restockUpdates: Map<string, ProductStockUpdate> | null = null
     if (restockMutations.length > 0) {
+      // Cancelling should return inventory back to shelves so other customers
+      // can purchase immediately. We reuse the stock update pipeline to keep
+      // the business rules identical to order creation.
       try {
         restockUpdates = collectStockUpdates(restockMutations, productMap)
       } catch (error: any) {
@@ -1068,6 +1104,9 @@ const handlers: Record<string, (event: any) => Promise<ApiResponse> | ApiRespons
    */
   'v1.store.home': async () => {
     const FEATURED_LIMIT = 8
+    // Merchandising wants the freshest active inventory on the landing page,
+    // but we fetch extra rows so we can filter out inactive or low-stock
+    // products before returning the curated list to the client.
     const snapshot = await productsCol().orderBy('updatedAt', 'desc').limit(FEATURED_LIMIT * 3).get()
     const featured: StoreFeaturedProduct[] = []
 
@@ -1096,6 +1135,9 @@ const handlers: Record<string, (event: any) => Promise<ApiResponse> | ApiRespons
       }
       if (parsed.data.kind !== 'banner') continue
       if (parsed.data.isActive === false) continue
+      // Scheduled banners let operations configure campaigns without new code.
+      // We discard ones outside the active window so the client receives only
+      // timely promotions.
       if (typeof parsed.data.startAt === 'number' && parsed.data.startAt > now) continue
       if (typeof parsed.data.endAt === 'number' && parsed.data.endAt < now) continue
       banners.push(parsed.data)
@@ -1132,6 +1174,9 @@ const handlers: Record<string, (event: any) => Promise<ApiResponse> | ApiRespons
     const products: ProductWithId[] = []
     const normalizedKeyword = keyword.toLowerCase()
     const pageSize = 100
+    // Firestore-style queries lack full-text search, so we scan batches ordered
+    // by `updatedAt`. This keeps results fresh while still letting customers
+    // find catalogue text matches.
 
     for (let offset = 0; products.length < limit; offset += pageSize) {
       const snapshot = await productsCol().orderBy('updatedAt', 'desc').skip(offset).limit(pageSize).get()
@@ -1213,6 +1258,12 @@ const handlers: Record<string, (event: any) => Promise<ApiResponse> | ApiRespons
     const parsedInput = zOrderCreateInput.safeParse(event)
     if (!parsedInput.success) return fail('Invalid order payload', { issues: parsedInput.error.issues })
 
+    // Checkout flow in a nutshell:
+    // 1. Aggregate cart items to collapse duplicates sent by the client.
+    // 2. Load the latest product/SKU snapshots to validate price and stock.
+    // 3. Reserve inventory optimistically, aborting on any constraint breach.
+    // 4. Persist the order with a pending payment so the client can trigger
+    //    the WeChat Pay handoff in a follow-up call.
     const aggregated = new Map<
       string,
       {
@@ -1385,6 +1436,10 @@ const handlers: Record<string, (event: any) => Promise<ApiResponse> | ApiRespons
       return fail('Order missing payment information')
     }
 
+    // unifiedOrder hands back a prepay package used by the mini program to
+    // open the WeChat Pay sheet. We persist identifiers immediately so the
+    // later confirmation call can correlate the payment provider response to
+    // the same order without re-querying stateful services.
     const now = nowMs()
     const paymentConfig = getPaymentConfig()
     const totalFee = yuanToCents(order.payment.amountYuan)
@@ -1617,6 +1672,9 @@ const handlers: Record<string, (event: any) => Promise<ApiResponse> | ApiRespons
   'v1.store.orders.list': async (event: any) => {
     const { OPENID } = getWX() as any
     if (!OPENID) return fail('Missing OPENID in WX context')
+    // Orders tab in the mini program lets customers audit their purchase
+    // history. Filtering happens client-side, so we allow an optional status to
+    // reduce payload size for long-time customers with many orders.
     const status = typeof event?.status === 'string' ? event.status.trim() : ''
     const rawLimit = Number(event?.limit)
     const limit = Number.isFinite(rawLimit) ? Math.min(Math.max(rawLimit, 1), 100) : 50
@@ -1631,6 +1689,10 @@ const handlers: Record<string, (event: any) => Promise<ApiResponse> | ApiRespons
     }
     return ok({ orders })
   },
+
+  // Admin APIs back the React dashboard used by merchandising and support.
+  // They intentionally reuse the same Zod models so the back office always
+  // operates on validated data before hitting CloudBase.
 
   /**
    * v1.admin.products.list
@@ -1663,6 +1725,8 @@ const handlers: Record<string, (event: any) => Promise<ApiResponse> | ApiRespons
     if (!admin) return fail('Not authenticated')
     const input = zProductInput.safeParse(event?.product)
     if (!input.success) return fail('Invalid product payload', { issues: input.error.issues })
+    // Creating a product from the dashboard seeds it with the current timestamp
+    // so the storefront can surface it immediately among "new arrivals".
     const now = nowMs()
     const next = buildProductFromInput(input.data, now)
     const res = await productsCol().add({ data: next })
@@ -1690,6 +1754,8 @@ const handlers: Record<string, (event: any) => Promise<ApiResponse> | ApiRespons
     if (!existing.success) return fail('Stored product invalid', { issues: existing.error.issues })
 
     const now = nowMs()
+    // Rebuilding via `buildProductFromInput` preserves SKU normalisation and
+    // enforces monotonic `updatedAt` so inventory watchers see the change.
     const next = buildProductFromInput(input.data, now, existing.data)
     await productsCol().where({ _id: productId }).update({ data: next })
     return ok({ product: { ...next, id: productId } })
@@ -1710,6 +1776,8 @@ const handlers: Record<string, (event: any) => Promise<ApiResponse> | ApiRespons
     const existingDoc = existingSnap.data?.[0]
     if (!existingDoc) return fail('Product not found')
 
+    // We hard-delete products for now. Historical orders keep their own copies
+    // of title/price so customer receipts remain untouched.
     await productsCol().where({ _id: productId }).remove()
     return ok({ productId })
   },
@@ -1722,6 +1790,8 @@ const handlers: Record<string, (event: any) => Promise<ApiResponse> | ApiRespons
   'v1.admin.orders.list': async () => {
     const admin = await requireAdminAccess()
     if (!admin) return fail('Not authenticated')
+    // Support staff triage newest orders first, so we default to reverse
+    // chronological ordering and limit the payload to keep the UI responsive.
     const snapshot = await ordersCol().orderBy('createdAt', 'desc').limit(200).get()
     const orders: OrderWithId[] = []
     for (const doc of snapshot.data || []) {
@@ -1752,6 +1822,9 @@ const handlers: Record<string, (event: any) => Promise<ApiResponse> | ApiRespons
       throw error
     }
 
+    // Operations can only move orders along predefined rails. This guards
+    // against accidental regressions (e.g. jumping from shipped back to
+    // pending) which would confuse customer notifications.
     if (!canTransitionOrderStatus(order.status, status)) {
       return fail('Invalid status transition', { current: order.status, next: status })
     }
@@ -1769,6 +1842,8 @@ const handlers: Record<string, (event: any) => Promise<ApiResponse> | ApiRespons
           lastError: undefined,
         })
       } else if (status === 'paid' && order.payment.status !== 'succeeded') {
+        // Manual overrides let support mark an order as paid after verifying
+        // WeChat settlement out-of-band.
         update.payment = buildPaymentUpdate(order.payment, {
           status: 'succeeded',
           paidAt: now,
@@ -1800,6 +1875,8 @@ const handlers: Record<string, (event: any) => Promise<ApiResponse> | ApiRespons
   'v1.admin.users.list': async () => {
     const admin = await requireAdminAccess()
     if (!admin) return fail('Not authenticated')
+    // Used by support to troubleshoot customer issues. We surface the most
+    // recent signups so they can quickly confirm onboarding success.
     const snapshot = await usersCol().orderBy('createdAt', 'desc').limit(200).get()
     const users: UserWithId[] = []
     for (const doc of snapshot.data || []) {
@@ -1818,6 +1895,8 @@ const handlers: Record<string, (event: any) => Promise<ApiResponse> | ApiRespons
   'v1.admin.system.list': async () => {
     const admin = await requireAdminAccess()
     if (!admin) return fail('Not authenticated')
+    // Marketing dashboard expects a denormalised payload to populate tabs for
+    // categories, coupons, and banners without extra round trips.
     const snapshot = await systemCol().orderBy('updatedAt', 'desc').limit(200).get()
     const categories: SystemCategoryWithId[] = []
     const coupons: SystemCouponWithId[] = []
@@ -1873,6 +1952,8 @@ const handlers: Record<string, (event: any) => Promise<ApiResponse> | ApiRespons
       if (!parsedDoc.success || parsedDoc.data.kind !== 'banner') return fail('Banner not found')
       const existing = parsedDoc.data
 
+      // Update path preserves original creation metadata so analytics can track
+      // how long a campaign has been live while still nudging `updatedAt`.
       const banner = zSystemBanner.parse({
         kind: 'banner',
         imageUrl: input.imageUrl,
@@ -1890,6 +1971,8 @@ const handlers: Record<string, (event: any) => Promise<ApiResponse> | ApiRespons
       return ok({ banner: { ...banner, id: input.id } })
     }
 
+    // Insert path creates a fresh campaign ready to schedule. We default to
+    // active so the operator can see it immediately in the admin preview.
     const banner = zSystemBanner.parse({
       kind: 'banner',
       imageUrl: input.imageUrl,
@@ -1925,6 +2008,8 @@ const handlers: Record<string, (event: any) => Promise<ApiResponse> | ApiRespons
     const parsedDoc = parseSystemDocument(doc)
     if (!parsedDoc.success || parsedDoc.data.kind !== 'banner') return fail('Banner not found')
 
+    // Removing clears the slot immediately; landing page fetch ignores missing
+    // banners, so the change reflects in the next customer refresh.
     await systemCol().where({ _id: bannerId }).remove()
     return ok({ bannerId })
   },
@@ -1947,6 +2032,8 @@ const handlers: Record<string, (event: any) => Promise<ApiResponse> | ApiRespons
     const imageUrl = optionalTrimmed(input.imageUrl)
     const description = optionalTrimmed(input.description)
 
+    // Slugs map directly to the `category` field on product documents, so we
+    // validate links before writing to avoid orphaning merchandise.
     if (imageUrl && !isValidUrl(imageUrl)) {
       return fail('Invalid category image URL', { imageUrl })
     }
@@ -1974,6 +2061,8 @@ const handlers: Record<string, (event: any) => Promise<ApiResponse> | ApiRespons
       if (!parsedDoc.success || parsedDoc.data.kind !== 'category') return fail('Category not found')
       const existing = parsedDoc.data
 
+      // We keep createdAt stable so analytics can determine category lifetime,
+      // but bump updatedAt to help cache invalidation in the admin app.
       const category = zSystemCategory.parse({
         kind: 'category',
         name,
@@ -1991,6 +2080,8 @@ const handlers: Record<string, (event: any) => Promise<ApiResponse> | ApiRespons
       return ok({ category: { ...category, id: input.id } })
     }
 
+    // New categories default to active so merchandisers can attach products
+    // immediately. Draft behaviour can be layered on in the admin app.
     const category = zSystemCategory.parse({
       kind: 'category',
       name,
@@ -2037,6 +2128,8 @@ const handlers: Record<string, (event: any) => Promise<ApiResponse> | ApiRespons
       return fail('Category has products')
     }
 
+    // Once a category is detached from products and sub-categories we can
+    // safely remove it. Storefront listings fall back to uncategorised items.
     await systemCol().where({ _id: categoryId }).remove()
     return ok({ categoryId })
   },
@@ -2052,6 +2145,9 @@ const handlers: Record<string, (event: any) => Promise<ApiResponse> | ApiRespons
 
     let ordersForStats: OrderWithId[] = []
     try {
+      // Dashboard data should highlight recent performance. We cap the window
+      // to ~1000 orders to keep latency predictable while still providing
+      // actionable revenue trends for operators.
       ordersForStats = await fetchOrdersForStats(1000)
     } catch (error) {
       return fail((error as Error)?.message || 'Failed to load orders for summary')
