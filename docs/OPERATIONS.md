@@ -30,6 +30,12 @@ Admin
 - Hosting (example): `npx tcb hosting deploy ./admin --envId <env>`
 - Planned: surface order status updates, bulk product tools, and CMS features once corresponding APIs exist.
 
+Manual QA
+- Mini program: exercise search, category browsing, cart, checkout, and profile tabs in WeChat DevTools and on a device. Confirm order counts and payment hand-offs using a staging WeChat Pay merchant account before release.
+- Payments: validate `WECHAT_PAY_*` credentials and asynchronous notify behaviour with Cloud Functions in a staging environment; ensure refunds, cancellations, and partial failures behave as expected.
+- Admin console: smoke-test product CRUD, order status transitions, user listings, banner/category edits, and session expiry handling in the deployed admin build.
+- Deploy pipelines: run `pnpm run deploy:weapp`, `deploy:functions`, and `deploy:admin` in staging to confirm CLI credentials, Vant bundling, and TCB deploy permissions remain valid before production pushes.
+
 Env & secrets
 - Optional: create `.env.local` later if build-time values are truly needed
 - Recommended names:

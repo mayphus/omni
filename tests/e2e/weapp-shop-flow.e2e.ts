@@ -45,6 +45,18 @@ async function waitForPage(miniProgram: any, target: string, timeoutMs = 5_000) 
   throw new Error(`Timed out waiting for page ${target}`)
 }
 
+async function waitForData<T extends Record<string, any>>(page: any, predicate: (data: T) => boolean, timeoutMs = 5_000): Promise<T> {
+  const deadline = Date.now() + timeoutMs
+  while (Date.now() < deadline) {
+    const data = (await page.data()) as T
+    if (predicate(data)) {
+      return data
+    }
+    await wait(100)
+  }
+  throw new Error('Timed out waiting for expected data state')
+}
+
 const SUITE_TITLE = 'weapp shop flow (miniprogram-automator)'
 
 if (!CAN_RUN) {
@@ -196,6 +208,35 @@ if (!CAN_RUN) {
       const order = orders[orders.length - 1]
       expect(order.status).toBe('paid')
       expect(order.items?.[0]?.productId).toBe(productId)
+    }, 120_000)
+
+    it('supports search and profile overview flows', async () => {
+      if (!miniProgram) throw new Error('MiniProgram client unavailable')
+
+      testCloud.setContext({ OPENID: 'e2e-openid', TCB_UUID: 'e2e-uuid' })
+
+      const searchPage = await miniProgram.reLaunch('/pages/search/index')
+      await waitForPage(miniProgram, 'pages/search/index')
+
+      await searchPage.callMethod('onChange', { detail: 'Strawberry' })
+      await searchPage.callMethod('onSearch', { detail: 'Strawberry' })
+
+      const searchData = await waitForData(searchPage, (data: any) => Array.isArray(data.results) && data.results.length > 0)
+      expect(searchData.results[0]?.title || '').toMatch(/Strawberry/i)
+
+      await miniProgram.evaluate(() => {
+        wx.setStorageSync('user', {
+          openid: 'e2e-openid',
+          profile: { nickname: 'E2E Tester', avatarUrl: '' },
+        })
+      })
+
+      await miniProgram.switchTab('/pages/profile/index')
+      const profilePage = await waitForPage(miniProgram, 'pages/profile/index')
+      const profileData = await waitForData(profilePage, (data: any) => Boolean(data.isLoggedIn) && data.orderCounts?.toShip >= 1, 8_000)
+
+      expect(profileData.isLoggedIn).toBe(true)
+      expect(profileData.orderCounts.toShip).toBeGreaterThanOrEqual(1)
     }, 120_000)
   })
 }
