@@ -20,7 +20,9 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run && pnpm run build:all",
     "test:ci": "vitest run --reporter=dot",
-    "verify": "pnpm run typecheck && pnpm run test:ci && pnpm run build:functions && pnpm run build:weapp && pnpm run build:admin",
+    "test:e2e": "vitest run --config vitest.config.e2e.ts",
+    "verify:legacy": "pnpm run typecheck && pnpm run test:ci && pnpm run build:functions && pnpm run build:weapp && pnpm run build:admin",
+    "verify": "node scripts/plan-execute-verify.js",
     "prepare": "husky"
   },
   "devDependencies": {
@@ -37,6 +39,7 @@
     "husky": "^9.1.7",
     "jsdom": "^25.0.1",
     "miniprogram-api-typings": "^4.1.0",
+    "miniprogram-automator": "^0.12.1",
     "miniprogram-ci": "^2.1.26",
     "postcss": "^8.5.6",
     "react": "^18.3.1",

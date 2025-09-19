@@ -3,6 +3,7 @@ import { VITE_TCB_ENV_ID } from './config/cloud'
 import { patchSystemInfo } from './utils/system-info'
 import { initI18n } from './utils/i18n'
 import { login, updateProfile } from './utils/auth'
+import { bootstrapAutomatorBridge } from './utils/automator-bridge'
 
 patchSystemInfo()
 
@@ -25,6 +26,8 @@ async function bootstrapAuth() {
 
 App({
   onLaunch() {
+    const reapplyAutomatorBridge = bootstrapAutomatorBridge()
+    ;(this as any).reapplyAutomatorBridge = reapplyAutomatorBridge
     const locale = initI18n()
     ;(this as any).globalData ||= {}
     ;(this as any).globalData.locale = locale
@@ -32,7 +35,13 @@ App({
       console.error('Please use base library 2.2.3 or above.')
       return
     }
+    reapplyAutomatorBridge?.()
     wx.cloud.init({ env: VITE_TCB_ENV_ID, traceUser: true })
     void bootstrapAuth()
+  },
+
+  onShow() {
+    const reapplyAutomatorBridge = (this as any).reapplyAutomatorBridge as (() => boolean) | undefined
+    reapplyAutomatorBridge?.()
   },
 })

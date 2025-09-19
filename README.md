@@ -41,7 +41,9 @@ Each source package (`src/admin`, `src/functions/*`, `src/shared`, `src/weapp`) 
 - All builds
   - `pnpm run build:all` – build weapp (+npm), functions, and admin
 - Quality
-  - `pnpm run typecheck` / `pnpm run test:ci` / `pnpm run verify`
+  - `pnpm run typecheck` / `pnpm run test:ci`
+  - `pnpm run test:e2e` – mini program plan-to-order flow via `miniprogram-automator` (set `WECHAT_DEVTOOLS_CLI` and `SHOP_FORCE_E2E=1` to run)
+  - `pnpm run verify` – Plan → Execute → Verify pipeline (typecheck → builds → tests incl. E2E)
 
 ## Notes
 
