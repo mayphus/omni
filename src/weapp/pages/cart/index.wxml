@@ -61,10 +61,13 @@
           size="small"
           type="danger"
           block
+          custom-class="cart-swipe__delete"
+          custom-style="height: 100%;"
           data-cart-id="{{ item.id }}"
           bind:tap="onRemoveItem"
         >
-          {{ i18n.removeButton }}
+          <van-icon name="delete" size="32rpx" class="cart-swipe__delete-icon" />
+          <text class="cart-swipe__delete-text">{{ i18n.removeButton }}</text>
         </van-button>
       </view>
     </van-swipe-cell>
