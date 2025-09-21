@@ -29,6 +29,7 @@
       class="cart-swipe"
       wx:for="{{ items }}"
       wx:key="id"
+      right-width="{{ swipeActionWidth }}"
     >
       <view class="cart-item {{ selectedLookup[item.id] ? 'cart-item--active' : '' }}">
         <van-checkbox
@@ -55,7 +56,7 @@
           </view>
         </view>
       </view>
-      <view slot="right">
+      <view slot="right" class="cart-swipe__actions" style="width: {{ swipeActionWidth }}px;">
         <van-button
           size="small"
           type="danger"

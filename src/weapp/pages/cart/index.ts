@@ -1,6 +1,26 @@
 import { loadCart, saveDirectCheckout, updateCartQuantity, removeFromCart, clearCart, type CartItem } from '../../utils/cart'
 import { withI18nPage } from '../../utils/i18n'
 
+const SWIPE_ACTION_WIDTH_RPX = 160
+const DEFAULT_WINDOW_WIDTH = 375
+
+function getSwipeActionWidthPx(): number {
+  const fallback = Math.round((DEFAULT_WINDOW_WIDTH / 750) * SWIPE_ACTION_WIDTH_RPX)
+  if (typeof wx === 'object' && typeof wx.getSystemInfoSync === 'function') {
+    try {
+      const { windowWidth } = wx.getSystemInfoSync()
+      if (typeof windowWidth === 'number' && windowWidth > 0) {
+        return Math.round((windowWidth / 750) * SWIPE_ACTION_WIDTH_RPX)
+      }
+    } catch {
+      // ignore and use fallback width
+    }
+  }
+  return fallback
+}
+
+const SWIPE_ACTION_WIDTH = getSwipeActionWidthPx()
+
 function calculateTotal(items: CartItem[]): number {
   return items.reduce((sum, item) => sum + item.price * item.qty, 0)
 }
@@ -23,6 +43,11 @@ Page(withI18nPage({
     selectedLookup: {} as Record<string, boolean>,
     allSelected: false,
     selectionInitialized: false,
+    swipeActionWidth: SWIPE_ACTION_WIDTH,
+  },
+
+  onLoad() {
+    this.setData({ swipeActionWidth: getSwipeActionWidthPx() })
   },
 
   onShow() {
