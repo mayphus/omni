@@ -15,6 +15,7 @@ function createWeappNpmManager(options = {}) {
   const miniprogramNpmDir = path.join(rootDir, 'weapp', 'miniprogram_npm');
   const vantTargetDir = path.join(miniprogramNpmDir, '@vant', 'weapp');
   const vantSourceDir = path.join(rootDir, 'src', 'weapp', 'node_modules', '@vant', 'weapp', 'dist');
+  const packageJsonPath = path.join(rootDir, 'package.json');
 
   function hasVantComponents() {
     const searchEntry = path.join(vantTargetDir, 'search', 'index.js');
@@ -29,6 +30,21 @@ function createWeappNpmManager(options = {}) {
     return hasVantComponents();
   }
 
+  function hasScript(scriptName) {
+    try {
+      const pkg = JSON.parse(fsModule.readFileSync(packageJsonPath, 'utf8'));
+      return Boolean(pkg?.scripts?.[scriptName]);
+    } catch (error) {
+      logger.warn(`Unable to inspect package.json for ${scriptName}:`, error.message);
+      return false;
+    }
+  }
+
+  function runWeappViteNpm() {
+    logger.log('Rebuilding miniprogram dependencies with weapp-vite npm...');
+    exec('weapp-vite npm', { stdio: 'inherit' });
+  }
+
   function ensureMiniprogramNpm() {
     if (!fsModule.existsSync(miniprogramNpmDir)) {
       fsModule.mkdirSync(miniprogramNpmDir, { recursive: true });
@@ -39,13 +55,31 @@ function createWeappNpmManager(options = {}) {
       return;
     }
 
-    try {
-      logger.log('miniprogram_npm missing components, running build:weapp:npm...');
-      exec('pnpm run build:weapp:npm', { stdio: 'inherit' });
-      if (hasVantComponents()) return;
-      logger.warn('build:weapp:npm completed but Vant components still missing.');
-    } catch (error) {
-      logger.warn('build:weapp:npm failed, attempting to copy Vant components locally.');
+    const canRunScript = hasScript('build:weapp:npm');
+
+    if (canRunScript) {
+      try {
+        logger.log('miniprogram_npm missing components, running build:weapp:npm...');
+        exec('pnpm run build:weapp:npm', { stdio: 'inherit' });
+        if (hasVantComponents()) return;
+        logger.warn('build:weapp:npm completed but Vant components still missing.');
+      } catch (error) {
+        logger.warn('build:weapp:npm failed, attempting to rebuild directly.');
+        try {
+          runWeappViteNpm();
+          if (hasVantComponents()) return;
+        } catch (nestedError) {
+          logger.warn('weapp-vite npm failed, falling back to direct copy.');
+        }
+      }
+    } else {
+      try {
+        runWeappViteNpm();
+        if (hasVantComponents()) return;
+        logger.warn('weapp-vite npm completed but Vant components still missing.');
+      } catch (error) {
+        logger.warn('weapp-vite npm failed, falling back to direct copy.');
+      }
     }
 
     if (!copyVantComponents()) {

@@ -1,11 +1,13 @@
 #!/usr/bin/env node
 const { spawn } = require('node:child_process')
 
-// All build tasks to run in parallel
+// All verification tasks to run in parallel
 const tasks = [
-  { name: 'Functions', command: 'pnpm', args: ['run', 'build:functions'] },
-  { name: 'WeApp', command: 'pnpm', args: ['run', 'build:weapp'] },
-  { name: 'Admin', command: 'pnpm', args: ['run', 'build:admin'] },
+  { name: 'TypeCheck', command: 'pnpm', args: ['run', 'typecheck'] },
+  { name: 'Tests', command: 'pnpm', args: ['run', 'test'] },
+  { name: 'Build Functions', command: 'pnpm', args: ['run', 'build:functions'] },
+  { name: 'Build WeApp', command: 'pnpm', args: ['run', 'build:weapp'] },
+  { name: 'Build Admin', command: 'pnpm', args: ['run', 'build:admin'] },
 ]
 
 // ANSI colors for terminal output
@@ -15,14 +17,13 @@ const colors = {
   red: '\x1b[31m',
   yellow: '\x1b[33m',
   cyan: '\x1b[36m',
-  magenta: '\x1b[35m',
   dim: '\x1b[2m',
 }
 
 // Run a single task and capture its result
 function runTask(task) {
   const startTime = Date.now()
-  console.log(`${colors.cyan}[${task.name}]${colors.reset} Building...`)
+  console.log(`${colors.cyan}[${task.name}]${colors.reset} Starting...`)
 
   return new Promise((resolve) => {
     const child = spawn(task.command, task.args, {
@@ -70,7 +71,7 @@ function runTask(task) {
 }
 
 async function main() {
-  console.log(`${colors.magenta}━━━ Building All Packages (${tasks.length} in parallel) ━━━${colors.reset}\n`)
+  console.log(`${colors.cyan}━━━ Running Verification (${tasks.length} tasks in parallel) ━━━${colors.reset}\n`)
 
   const startTime = Date.now()
 
@@ -82,9 +83,9 @@ async function main() {
   const failed = results.filter(r => !r.success)
 
   // Print summary
-  console.log(`\n${colors.magenta}━━━ Build Summary ━━━${colors.reset}`)
+  console.log(`\n${colors.cyan}━━━ Summary ━━━${colors.reset}`)
   console.log(`Total time: ${totalDuration}s`)
-  console.log(`${colors.green}Built: ${successful.length}/${tasks.length}${colors.reset}`)
+  console.log(`${colors.green}Passed: ${successful.length}/${tasks.length}${colors.reset}`)
 
   if (successful.length > 0) {
     successful.forEach(task => {
@@ -99,7 +100,7 @@ async function main() {
     })
 
     // Show error details for failed tasks
-    console.log(`\n${colors.red}━━━ Build Errors ━━━${colors.reset}`)
+    console.log(`\n${colors.red}━━━ Error Details ━━━${colors.reset}`)
     failed.forEach(task => {
       console.log(`\n${colors.red}[${task.name}]${colors.reset}`)
       console.log(colors.dim + task.output.slice(0, 500) + colors.reset) // Show first 500 chars of error
@@ -110,7 +111,7 @@ async function main() {
 
     process.exit(1)
   } else {
-    console.log(`\n${colors.green}✓ All packages built successfully!${colors.reset}`)
+    console.log(`\n${colors.green}✓ All verification tasks passed!${colors.reset}`)
   }
 }
 

@@ -1,164 +1,122 @@
 #!/usr/bin/env node
 const { spawn } = require('node:child_process')
 
-const defaultTasks = [
-  { label: 'weapp', script: 'deploy:weapp' },
-  { label: 'functions', script: 'deploy:functions' },
-  { label: 'admin', script: 'deploy:admin' },
+// All deploy tasks to run in parallel
+const tasks = [
+  { name: 'Functions', command: 'pnpm', args: ['run', 'deploy:functions'] },
+  { name: 'WeApp', command: 'pnpm', args: ['run', 'deploy:weapp'] },
+  { name: 'Admin', command: 'pnpm', args: ['run', 'deploy:admin'] },
 ]
 
-const reset = '\u001b[0m'
+// ANSI colors for terminal output
 const colors = {
-  weapp: '\u001b[36m',
-  functions: '\u001b[35m',
-  admin: '\u001b[32m',
+  reset: '\x1b[0m',
+  green: '\x1b[32m',
+  red: '\x1b[31m',
+  yellow: '\x1b[33m',
+  cyan: '\x1b[36m',
+  magenta: '\x1b[35m',
+  dim: '\x1b[2m',
 }
 
-function createDeployManager(options = {}) {
-  const {
-    taskList = defaultTasks,
-    spawnFn = spawn,
-    proc = process,
-    logger = console,
-  } = options
+// Run a single task and capture its result
+function runTask(task) {
+  const startTime = Date.now()
+  console.log(`${colors.yellow}[${task.name}]${colors.reset} Deploying...`)
 
-  const isWindows = proc.platform === 'win32'
-  const children = new Map()
-  let shuttingDown = false
-  let exitCode = 0
-  let pending = taskList.length
-
-  function formatLabel(label) {
-    const color = colors[label] || ''
-    return `${color}[${label}]${reset}`
-  }
-
-  function forwardStream(stream, label, printer) {
-    if (!stream) return
-
-    const prefix = formatLabel(label)
-    let buffer = ''
-    stream.setEncoding('utf8')
-
-    stream.on('data', (chunk) => {
-      buffer += chunk
-      let newlineIndex
-      while ((newlineIndex = buffer.indexOf('\n')) !== -1) {
-        const line = buffer.slice(0, newlineIndex).replace(/\r$/, '')
-        buffer = buffer.slice(newlineIndex + 1)
-        printer(`${prefix} ${line}`)
-      }
+  return new Promise((resolve) => {
+    const child = spawn(task.command, task.args, {
+      stdio: 'pipe',
+      env: process.env,
     })
 
-    stream.on('end', () => {
-      if (buffer.length > 0) {
-        printer(`${prefix} ${buffer.replace(/\r$/, '')}`)
-      }
-    })
-  }
+    let output = ''
 
-  function finishIfDone() {
-    if (pending === 0) {
-      proc.exit(exitCode)
-    }
-  }
-
-  function shutdown(signal, code = exitCode || 1) {
-    if (shuttingDown) return
-    shuttingDown = true
-    exitCode = code
-    for (const child of children.values()) {
-      if (!child.killed) {
-        child.kill(signal || 'SIGTERM')
-      }
-    }
-  }
-
-  function runTask(task) {
-    const child = spawnFn('pnpm', ['run', task.script], {
-      stdio: ['inherit', 'pipe', 'pipe'],
-      shell: isWindows,
-      env: proc.env,
+    child.stdout.on('data', (data) => {
+      output += data.toString()
     })
 
-    children.set(task.label, child)
+    child.stderr.on('data', (data) => {
+      output += data.toString()
+    })
 
-    forwardStream(child.stdout, task.label, logger.log)
-    forwardStream(child.stderr, task.label, logger.error)
+    child.on('exit', (code) => {
+      const duration = ((Date.now() - startTime) / 1000).toFixed(1)
+      const status = code === 0 ? 'deployed' : 'failed'
+      const color = code === 0 ? colors.green : colors.red
+      const icon = code === 0 ? '✓' : '✗'
 
-    child.on('exit', (code, signal) => {
-      children.delete(task.label)
-      pending -= 1
+      console.log(`${color}[${task.name}] ${icon} ${status} (${duration}s)${colors.reset}`)
 
-      if (signal && shuttingDown) {
-        finishIfDone()
-        return
-      }
-
-      if (code === 0) {
-        logger.log(`${formatLabel(task.label)} completed successfully`)
-        finishIfDone()
-        return
-      }
-
-      const finalCode = code ?? 1
-      logger.error(`${formatLabel(task.label)} failed with code ${finalCode}${signal ? ` (${signal})` : ''}`)
-      exitCode = finalCode
-      shutdown('SIGTERM', exitCode)
-      finishIfDone()
+      resolve({
+        name: task.name,
+        success: code === 0,
+        duration,
+        output: code !== 0 ? output : '', // Only keep output for failures
+      })
     })
 
     child.on('error', (error) => {
-      children.delete(task.label)
-      pending -= 1
-      logger.error(`${formatLabel(task.label)} failed to start:`, error)
-      exitCode = exitCode || 1
-      shutdown('SIGTERM', exitCode)
-      finishIfDone()
+      const duration = ((Date.now() - startTime) / 1000).toFixed(1)
+      console.log(`${colors.red}[${task.name}] ✗ error (${duration}s)${colors.reset}`)
+      resolve({
+        name: task.name,
+        success: false,
+        duration,
+        output: error.toString(),
+      })
+    })
+  })
+}
+
+async function main() {
+  console.log(`${colors.yellow}━━━ Deploying All Services (${tasks.length} in parallel) ━━━${colors.reset}\n`)
+  console.log(`${colors.dim}This will build and deploy all services to production.${colors.reset}\n`)
+
+  const startTime = Date.now()
+
+  // Run all tasks in parallel
+  const results = await Promise.all(tasks.map(runTask))
+
+  const totalDuration = ((Date.now() - startTime) / 1000).toFixed(1)
+  const successful = results.filter(r => r.success)
+  const failed = results.filter(r => !r.success)
+
+  // Print summary
+  console.log(`\n${colors.yellow}━━━ Deployment Summary ━━━${colors.reset}`)
+  console.log(`Total time: ${totalDuration}s`)
+  console.log(`${colors.green}Deployed: ${successful.length}/${tasks.length}${colors.reset}`)
+
+  if (successful.length > 0) {
+    successful.forEach(task => {
+      console.log(`  ${colors.green}✓${colors.reset} ${task.name} ${colors.dim}(${task.duration}s)${colors.reset}`)
     })
   }
 
-  function runAll() {
-    proc.on('SIGINT', () => {
-      logger.log('Received SIGINT, terminating deploy tasks...')
-      exitCode = exitCode || 130
-      shutdown('SIGINT', exitCode)
+  if (failed.length > 0) {
+    console.log(`${colors.red}Failed: ${failed.length}/${tasks.length}${colors.reset}`)
+    failed.forEach(task => {
+      console.log(`  ${colors.red}✗${colors.reset} ${task.name} ${colors.dim}(${task.duration}s)${colors.reset}`)
     })
 
-    proc.on('SIGTERM', () => {
-      exitCode = exitCode || 143
-      shutdown('SIGTERM', exitCode)
+    // Show error details for failed tasks
+    console.log(`\n${colors.red}━━━ Deployment Errors ━━━${colors.reset}`)
+    failed.forEach(task => {
+      console.log(`\n${colors.red}[${task.name}]${colors.reset}`)
+      console.log(colors.dim + task.output.slice(0, 500) + colors.reset) // Show first 500 chars of error
+      if (task.output.length > 500) {
+        console.log(colors.dim + '... (truncated)' + colors.reset)
+      }
     })
 
-    for (const task of taskList) {
-      runTask(task)
-    }
-  }
-
-  return {
-    formatLabel,
-    forwardStream,
-    runTask,
-    runAll,
-    shutdown,
-    finishIfDone,
-    state: () => ({ children, shuttingDown, exitCode, pending }),
-    tasks: taskList,
+    console.log(`\n${colors.red}⚠ Deployment failed! Some services were not deployed.${colors.reset}`)
+    process.exit(1)
+  } else {
+    console.log(`\n${colors.green}✓ All services deployed successfully!${colors.reset}`)
   }
 }
 
-const manager = createDeployManager()
-
-if (require.main === module) {
-  manager.runAll()
-}
-
-module.exports = {
-  createDeployManager,
-  formatLabel: manager.formatLabel,
-  forwardStream: manager.forwardStream,
-  runTask: manager.runTask,
-  runAll: manager.runAll,
-  shutdown: manager.shutdown,
-  tasks: manager.tasks,
-}
+main().catch(error => {
+  console.error(`${colors.red}Unexpected error:${colors.reset}`, error)
+  process.exit(1)
+})
