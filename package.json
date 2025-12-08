@@ -21,7 +21,7 @@
     "prepare": "husky"
   },
   "devDependencies": {
-    "@cloudbase/cli": "^2.9.5",
+    "@cloudbase/cli": "^2.11.3",
     "@testing-library/jest-dom": "^6.4.2",
     "@testing-library/react": "^14.3.1",
     "@testing-library/user-event": "^14.5.2",
@@ -30,7 +30,7 @@
     "@types/react-dom": "^18.3.5",
     "@vitejs/plugin-react": "^5.0.2",
     "autoprefixer": "^10.4.21",
-    "esbuild": "^0.25.9",
+    "esbuild": "^0.25.10",
     "husky": "^9.1.7",
     "jsdom": "^25.0.1",
     "miniprogram-api-typings": "^4.1.0",
