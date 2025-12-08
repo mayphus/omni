@@ -1,70 +1,85 @@
-# Children’s Dream Planet
+# Children’s Dream Planet (Tongmeng Plant)
 
- Fresh scaffold for a WeChat Mini Program + CloudBase functions + Admin console.
+A WeChat Mini Program solution featuring a customer-facing shop, a cloud-based backend, and an admin management console.
 
-## Language
+## Overview
 
-- Development language: English only (code, comments, commits, docs).
-- UI copy: English for now. i18n can be introduced later; the app’s Chinese name may be used in UX/marketing when localization is enabled.
+This repository is a monorepo containing three main components:
+*   **WeApp (`src/weapp`)**: The WeChat Mini Program frontend for customers to browse products, manage carts, and place orders. Built with `weapp-vite`, React, and Vant Weapp.
+*   **Functions (`src/functions`)**: CloudBase (TCB) cloud functions acting as the backend API. The main `shop` function handles authentication, order processing, and payment integration.
+*   **Admin (`src/admin`)**: A web-based administration console for managing products, orders, and viewing analytics. Built with Vite and React.
 
-## Structure
+## Project Structure
 
+```bash
+├── src
+│   ├── weapp/           # Mini Program source (React + Vant)
+│   ├── functions/       # Cloud functions (Node.js)
+│   ├── admin/           # Admin dashboard (React + Vite)
+│   ├── shared/          # Shared types and utilities
+│   └── types/           # Global type definitions
+├── weapp/               # Compiled Mini Program (for DevTools)
+├── functions/           # Compiled cloud functions
+├── admin/               # Compiled admin app
+└── scripts/             # Build and deployment scripts
 ```
-src/
-  weapp/           # authoring source → build to ./weapp
-  functions/       # function source → build to ./functions
-  admin/           # web console source → build to ./admin
-  shared/          # cross‑runtime types + Zod schemas (imported by all)
-  types/           # ambient .d.ts only (e.g., weapp API typings)
 
-weapp/             # built mini app for DevTools
-functions/         # built cloud function(s)
-admin/             # built admin web app
-archive/           # optional: previous codebase snapshots (if present)
-```
+## Prerequisites
 
-Each source package (`src/admin`, `src/functions/*`, `src/shared`, `src/weapp`) owns its runtime dependencies. Run `pnpm install` from the repo root so pnpm can link all workspaces correctly before building.
+*   Node.js 18+
+*   pnpm
+*   WeChat DevTools (for Mini Program development)
+*   CloudBase (TCB) account
 
-## Commands
+## Getting Started
 
-- WeApp
-  - `pnpm run dev:weapp` – author with weapp‑vite; open via DevTools. Note: dev does not clean `weapp/`, preserving `weapp/miniprogram_npm`. Run `pnpm run build:weapp:npm` once before preview.
-  - `pnpm run build:weapp` – build to `./weapp`
-  - `pnpm run build:weapp:npm` – trigger DevTools NPM pack (Vant, etc.)
-  - `pnpm run deploy:weapp` – build + npm pack + upload via miniprogram‑ci
-- Functions
-  - `pnpm run build:functions` – build `shop` to `./functions/shop` (CJS, Node 18)
-  - Note: a watch/dev task is not implemented yet.
-- Admin
-  - `pnpm run dev:admin` – Vite dev (Hello World)
-  - `pnpm run build:admin` – build to `./admin`
-- All builds
-  - `pnpm run build:all` – build weapp (+npm), functions, and admin
-- Quality
-  - `pnpm run typecheck` / `pnpm run test:ci`
-  - `pnpm run test:e2e` – mini program plan-to-order flow via `miniprogram-automator` (set `WECHAT_DEVTOOLS_CLI` and `SHOP_FORCE_E2E=1` to run)
-  - `pnpm run verify` – Plan → Execute → Verify pipeline (typecheck → builds → tests incl. E2E)
+1.  **Install Dependencies**
+    ```bash
+    pnpm install
+    ```
 
-## Notes
+2.  **Environment Setup**
+    *   Copy `.env.example` to `.env.local` and fill in your credentials.
+    *   **Note**: Never commit `.env.local` or private keys to version control.
 
-- Cloud runtime: Node.js 18.15 (Node 20 unsupported for functions)
-- Miniprogram UI: Vant Weapp (integrate as needed)
-- Keep things minimal; add only when required
+3.  **Development**
 
-## Current status
+    *   **Mini Program**:
+        ```bash
+        pnpm run dev:weapp
+        ```
+        Then open the `weapp/` directory in WeChat DevTools. 
+        *Tip: Run `pnpm run build:weapp:npm` once to ensure npm dependencies (like Vant) are correctly packed.*
 
-- **WeApp** – storefront with search, categories, cart, and checkout powered by WeChat Pay. Build with `pnpm run build:weapp`, run `pnpm run build:weapp:npm`, then open via WeChat DevTools.
-- **Cloud function (`shop`)** – action router covering auth, catalogue queries, order creation, WeChat Pay preparation/confirmation, and admin order/product/system endpoints. Build with `pnpm run build:functions`; deploy via `pnpm run deploy:functions` (requires TCB CLI auth).
-- **Admin console** – Vite + React dashboard for catalogue management, analytics, and order lifecycle controls. Run `pnpm run dev:admin` or build with `pnpm run build:admin`.
+    *   **Admin Console**:
+        ```bash
+        pnpm run dev:admin
+        ```
+        Access the admin panel locally at `http://localhost:5173` (or the port shown in your terminal).
 
-## Environment
+4.  **Building**
 
-- Vite/weapp-vite load `.env`, `.env.[mode]`, and `.env.local` automatically.
-- Only variables prefixed with `VITE_` are exposed to client bundles (admin + weapp).
-- Keep secrets out of client bundles; use `VITE_*` for non-sensitive flags and labels (e.g., `VITE_APP_NAME`).
-- Put local secrets in `.env.local` (git-ignored). See `.env.example` for expected names.
+    *   **Build All**:
+        ```bash
+        pnpm run build:all
+        ```
+    *   **Individual builds**: `pnpm run build:weapp`, `pnpm run build:functions`, `pnpm run build:admin`.
 
-## Commit hooks
+## Deployment
 
-- Pre-commit: runs `typecheck` + `test:ci` (see `.husky/pre-commit`).
-- Pre-push: runs `verify` (typecheck, tests, and builds) — see `.husky/pre-push`.
+Deployment scripts are located in `package.json`:
+
+*   `pnpm run deploy:weapp`: Deploys the Mini Program (requires CI keys configured).
+*   `pnpm run deploy:functions`: Deploys cloud functions to CloudBase.
+*   `pnpm run deploy:admin`: Deploys the admin console to static hosting.
+
+## Testing
+
+*   **Unit Tests**: `pnpm test` (Vitest)
+*   **E2E Tests**: `pnpm run test:e2e` (Miniprogram Automator)
+*   **Type Check**: `pnpm run typecheck`
+*   **Verify**: `pnpm run verify` (Runs all checks and builds)
+
+## License
+
+MIT
