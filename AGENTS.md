@@ -65,6 +65,6 @@ tests/        # Vitest unit/integration tests
 ## Security & Configuration Tips
 
 - Never commit secrets. Use `.env.local`; note `VITE_*` variables are public.
-- Store keys outside the repo (e.g., `~/.config/tongmeng-plant/keys`).
+- Store keys outside the repo (e.g., `~/.config/omni/keys`).
 - CloudBase: configure environment via console/CI; avoid storing credentials in code.
 - WeChat DevTools: enable “Use npm modules” and run Tools → “Build NPM”.

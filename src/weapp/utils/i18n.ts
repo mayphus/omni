@@ -1,4 +1,4 @@
-const STORAGE_KEY = 'tongmeng-plant:locale'
+const STORAGE_KEY = 'omni:locale'
 const I18N_UNSUB_FIELD = '__i18nUnsub__'
 
 type QuickCategoryItem = { icon: string; text: string }
@@ -270,13 +270,13 @@ const MESSAGES: Record<Locale, I18nMessages> = {
       heroBanners: [
         {
           id: 'welcome',
-          image: 'https://fastly.picsum.photos/seed/tongmeng-shop-1/900/480.jpg?hmac=NkbSY57I45b48bY8AEQmoeyoGxjJ7gP5cX4KletntuA',
+          image: 'https://fastly.picsum.photos/seed/omni-shop-1/900/480.jpg?hmac=NkbSY57I45b48bY8AEQmoeyoGxjJ7gP5cX4KletntuA',
           title: 'Grand opening soon',
           caption: 'Fresh picks for families are on the way.',
         },
         {
           id: 'quality',
-          image: 'https://fastly.picsum.photos/seed/tongmeng-shop-2/900/480.jpg?hmac=mRh40S2mP1Ab3WBu45fSR0bRyvMXd_Nv27c1sa-UuwQ',
+          image: 'https://fastly.picsum.photos/seed/omni-shop-2/900/480.jpg?hmac=mRh40S2mP1Ab3WBu45fSR0bRyvMXd_Nv27c1sa-UuwQ',
           title: 'Quality assured',
           caption: 'We are finalising suppliers to guarantee great value.',
         },
@@ -549,14 +549,14 @@ const MESSAGES: Record<Locale, I18nMessages> = {
     },
     about: {
       tagline: 'Our story',
-      title: 'About Tongmeng Plant',
+      title: 'About Omni',
       subtitle: 'We build digital retail experiences that feel familiar, trusted, and ready for everyday life in China.',
       sections: [
         {
           key: 'mission',
           title: 'Mission',
           paragraphs: [
-            'Tongmeng Plant exists to make curated, family-friendly commerce effortless. We connect local suppliers with community shoppers through experiences that highlight quality, value, and service.',
+            'Omni exists to make curated, family-friendly commerce effortless. We connect local suppliers with community shoppers through experiences that highlight quality, value, and service.',
           ],
         },
         {
@@ -610,7 +610,7 @@ const MESSAGES: Record<Locale, I18nMessages> = {
           {
             key: 'support',
             label: 'Customer service',
-            value: 'support@tongmeng-plant.com',
+            value: 'support@omni.com',
             description: 'Email us anytime — we reply within 1 business day.',
           },
           {
@@ -622,7 +622,7 @@ const MESSAGES: Record<Locale, I18nMessages> = {
           {
             key: 'address',
             label: 'Office',
-            value: 'Tongmeng Industrial Park, Shenzhen',
+            value: 'Omni Industrial Park, Shenzhen',
           },
         ],
       },
@@ -697,13 +697,13 @@ const MESSAGES: Record<Locale, I18nMessages> = {
       heroBanners: [
         {
           id: 'welcome',
-          image: 'https://fastly.picsum.photos/seed/tongmeng-shop-1/900/480.jpg?hmac=NkbSY57I45b48bY8AEQmoeyoGxjJ7gP5cX4KletntuA',
+          image: 'https://fastly.picsum.photos/seed/omni-shop-1/900/480.jpg?hmac=NkbSY57I45b48bY8AEQmoeyoGxjJ7gP5cX4KletntuA',
           title: '商城即将开业',
           caption: '精选好物正在路上，敬请期待。',
         },
         {
           id: 'quality',
-          image: 'https://fastly.picsum.photos/seed/tongmeng-shop-2/900/480.jpg?hmac=mRh40S2mP1Ab3WBu45fSR0bRyvMXd_Nv27c1sa-UuwQ',
+          image: 'https://fastly.picsum.photos/seed/omni-shop-2/900/480.jpg?hmac=mRh40S2mP1Ab3WBu45fSR0bRyvMXd_Nv27c1sa-UuwQ',
           title: '严格甄选',
           caption: '供应链验收中，保障品质与价值。',
         },
@@ -1018,7 +1018,7 @@ const MESSAGES: Record<Locale, I18nMessages> = {
           {
             key: 'support',
             label: '客服邮箱',
-            value: 'support@tongmeng-plant.com',
+            value: 'support@omni.com',
             description: '工作日24小时内回复。',
           },
           {

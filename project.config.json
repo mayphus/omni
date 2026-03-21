@@ -3,7 +3,7 @@
     "cloudfunctionRoot": "functions/",
     "compileType": "miniprogram",
     "appid": "wx________________",
-    "projectname": "tongmeng-plant",
+    "projectname": "omni",
     "setting": {
         "urlCheck": true,
         "es6": true,

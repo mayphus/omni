@@ -13,7 +13,7 @@ import {
   type CartItem,
 } from '../../src/weapp/utils/cart'
 
-const STORAGE_KEY = 'tongmeng-plant:cart'
+const STORAGE_KEY = 'omni:cart'
 const storage = new Map<string, any>()
 
 beforeAll(() => {

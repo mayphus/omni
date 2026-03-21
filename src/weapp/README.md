@@ -5,7 +5,7 @@
 - Language: English only for now (i18n can be added later).
 - Cloud: Enable `wx.cloud`, call CloudBase functions as needed.
 
-Dependencies live in `src/weapp/package.json`; pnpm links them when you run `pnpm install` at the repo root. If you tweak the list and want to reinstall just this package, use `pnpm install --filter @tongmeng/weapp`.
+Dependencies live in `src/weapp/package.json`; pnpm links them when you run `pnpm install` at the repo root. If you tweak the list and want to reinstall just this package, use `pnpm install --filter @omni/weapp`.
 
 Vue Mini
 - Runtime: `@vue-mini/core` is integrated. Use `definePage()`/`ref()` in page TS.

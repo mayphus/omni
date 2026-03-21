@@ -8,8 +8,8 @@ export type CartItem = {
   qty: number
 }
 
-const STORAGE_KEY = 'tongmeng-plant:cart'
-const DIRECT_CHECKOUT_KEY = 'tongmeng-plant:checkout:direct'
+const STORAGE_KEY = 'omni:cart'
+const DIRECT_CHECKOUT_KEY = 'omni:checkout:direct'
 
 export function getCartItemId(productId: string, skuId?: string): string {
   return skuId ? `${productId}__${skuId}` : productId

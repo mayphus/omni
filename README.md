@@ -1,4 +1,4 @@
-# Children’s Dream Planet (Tongmeng Plant) 🌍
+# Omni / 极物 (Ji Wu) 🌍
 
 ![Node.js](https://img.shields.io/badge/Node.js-18%2B-green)
 ![pnpm](https://img.shields.io/badge/pnpm-strict-orange)
@@ -22,7 +22,7 @@ This repository is structured as a **TypeScript Monorepo**, ensuring high code s
 ## 🏗️ Project Structure
 
 ```text
-tongmeng-plant/
+omni/
 ├── src/
 │   ├── weapp/           # Mini Program source code (React + Vant)
 │   ├── functions/       # Cloud functions (Node.js 18 CJS)
@@ -57,7 +57,7 @@ cp .env.example .env.local
 ```
 Fill in `.env.local` with your TCB and WeChat credentials.  
 > [!WARNING]
-> Never commit `.env.local` or private key files (`.private-wx.key`, `.private-tcb.key`) to version control. Keep your keys secure (e.g., in `~/.config/tongmeng-plant/keys`).
+> Never commit `.env.local` or private key files (`.private-wx.key`, `.private-tcb.key`) to version control. Keep your keys secure (e.g., in `~/.config/omni/keys`).
 
 ### 3. Development Workflows
 

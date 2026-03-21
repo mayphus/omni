@@ -1,4 +1,4 @@
-# Children’s Dream Planet (Tongmeng Plant) 🌍
+# Omni / 极物 (Ji Wu) 🌍
 
 ![Node.js](https://img.shields.io/badge/Node.js-18%2B-green)
 ![pnpm](https://img.shields.io/badge/pnpm-strict-orange)
@@ -22,7 +22,7 @@
 ## 🏗️ 项目结构
 
 ```text
-tongmeng-plant/
+omni/
 ├── src/
 │   ├── weapp/           # 小程序源码 (React + Vant)
 │   ├── functions/       # 云函数 (Node.js 18 CJS)
@@ -57,7 +57,7 @@ cp .env.example .env.local
 ```
 在 `.env.local` 中填入你的 TCB 和微信相关凭证。
 > [!WARNING]
-> 切勿将 `.env.local` 或私钥文件（`.private-wx.key`, `.private-tcb.key`）提交到版本控制系统中。请妥善保管你的密钥（例如存放在 `~/.config/tongmeng-plant/keys`）。
+> 切勿将 `.env.local` 或私钥文件（`.private-wx.key`, `.private-tcb.key`）提交到版本控制系统中。请妥善保管你的密钥（例如存放在 `~/.config/omni/keys`）。
 
 ### 3. 本地开发
 
