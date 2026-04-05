@@ -1,4 +1,4 @@
 #!/usr/bin/env sh
-# Run verification before committing
+# Run full verification before pushing
 set -e
 pnpm run verify

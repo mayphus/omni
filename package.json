@@ -19,8 +19,7 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run",
     "test:e2e": "vitest run --config vitest.config.e2e.ts",
-    "verify": "node scripts/verify.js",
-    "prepare": "husky"
+    "verify": "node scripts/verify.js"
   },
   "devDependencies": {
     "@cloudbase/cli": "^2.9.5",
@@ -35,7 +34,6 @@
     "dotenv": "^17.4.0",
     "esbuild": "^0.25.9",
     "husky": "^9.1.7",
-    "jsdom": "^25.0.1",
     "miniprogram-api-typings": "^4.1.0",
     "miniprogram-automator": "^0.12.1",
     "miniprogram-ci": "^2.1.26",

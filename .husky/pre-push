@@ -1,3 +1,0 @@
-#!/usr/bin/env sh
-# Fast sanity: run tests + builds before pushing (no husky bootstrap)
-pnpm run verify
