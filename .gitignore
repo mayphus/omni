@@ -27,6 +27,7 @@ temp/
 compiled-result.json
 qrcode*.png
 qrcode*.jpg
+preview.jpg
 
 ## Env & secrets (keep .env.example tracked)
 .env
