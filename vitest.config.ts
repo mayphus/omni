@@ -7,6 +7,8 @@ export default defineConfig({
       '@': path.resolve(__dirname, 'src'),
       '@shared': path.resolve(__dirname, 'src/shared'),
       'vite/index.js': 'vite/dist/node/index.js',
+      'react': path.resolve(__dirname, 'node_modules/react'),
+      'react-dom': path.resolve(__dirname, 'node_modules/react-dom'),
     },
   },
   test: {
@@ -15,9 +17,6 @@ export default defineConfig({
     environmentMatchGlobs: [['tests/admin/**', 'jsdom']],
     setupFiles: ['tests/setup/test-env.ts'],
     exclude: ['node_modules/**', 'weapp/**', 'admin/**', 'dist/**'],
-    deps: {
-      inline: [/react/, /react-dom/],
-    },
     coverage: {
       reporter: ['text', 'html'],
       include: ['src/**/*.{ts,tsx}'],

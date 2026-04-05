@@ -1,0 +1,41 @@
+{:source-paths ["src/cljs"]
+ :builds
+ {:weapp-app
+  {:target :browser
+   :output-dir "weapp"
+   :asset-path "/"
+   :modules {:app {:entries [omni.weapp.app]}}}
+
+  :weapp-index
+  {:target :browser
+   :output-dir "weapp"
+   :asset-path "/"
+   :modules {:index {:entries [omni.weapp.pages.index]
+                     :output-name "pages/index/index.js"}}}
+
+  :weapp-category
+  {:target :browser
+   :output-dir "weapp"
+   :asset-path "/"
+   :modules {:category {:entries [omni.weapp.pages.category]
+                        :output-name "pages/category/index.js"}}}
+
+  :weapp-cart
+  {:target :browser
+   :output-dir "weapp"
+   :asset-path "/"
+   :modules {:cart {:entries [omni.weapp.pages.cart]
+                    :output-name "pages/cart/index.js"}}}
+
+  :weapp-profile
+  {:target :browser
+   :output-dir "weapp"
+   :asset-path "/"
+   :modules {:profile {:entries [omni.weapp.pages.profile]
+                       :output-name "pages/profile/index.js"}}}
+
+  :function-shop
+  {:target :node-library
+   :output-to "functions/shop/index.js"
+   :output-dir "functions/shop"
+   :exports {:main omni.functions.shop/main}}}}
