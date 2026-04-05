@@ -4,6 +4,7 @@ Thumbs.db
 
 ## Node
 node_modules/
+.pnpm-store/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
@@ -22,6 +23,10 @@ temp/
 /functions/
 /weapp/
 /miniprogram_npm/
+.shadow-cljs/
+
+# Ignore root-level auto-generated 32-char hash folders
+????????????????????????????????/
 
 ## WeChat DevTools / CI artifacts
 compiled-result.json
