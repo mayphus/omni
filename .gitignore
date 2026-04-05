@@ -45,3 +45,4 @@ project.private.config.json
 
 ## Coverage
 coverage/
+private.*.key
