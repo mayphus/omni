@@ -10,7 +10,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const envConfig = dotenv.parse(fs.readFileSync(path.join(__dirname, '.env.local')));
 
 const project = new ci.Project({
-  appid: envConfig.VITE_WECHAT_APP_ID || 'wxc83ef584aa609be0',
+  appid: envConfig.WECHAT_APP_ID || envConfig.VITE_WECHAT_APP_ID || 'wxc83ef584aa609be0',
   type: 'miniProgram',
   projectPath: path.join(__dirname, 'weapp'),
   privateKeyPath: path.join(__dirname, envConfig.WECHAT_PRIVATE_KEY_PATH || '.private-wx.key'),
@@ -22,7 +22,7 @@ const previewResult = await ci.preview({
   desc: 'ClojureScript version preview',
   setting: {
     es6: true,
-    minify: true,
+    minify: false,
   },
   qrcodeFormat: 'image',
   qrcodeOutputDest: path.join(__dirname, 'preview.jpg'),
