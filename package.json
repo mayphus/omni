@@ -4,9 +4,9 @@
   "version": "0.2.0",
   "description": "Children's Dream Planet: monorepo with weapp + functions + admin",
   "scripts": {
-    "dev:admin": "vite --config vite.config.main.ts --mode admin",
+    "dev:admin": "shadow-cljs watch admin-app",
     "dev:weapp": "shadow-cljs watch weapp-app weapp-index weapp-category weapp-cart weapp-profile",
-    "build:admin": "vite build --config vite.config.main.ts --mode admin",
+    "build:admin": "shadow-cljs release admin-app",
     "build:functions": "shadow-cljs release function-shop",
     "build:weapp": "shadow-cljs release weapp-app weapp-index weapp-category weapp-cart weapp-profile && npm run postbuild:weapp",
     "postbuild:weapp": "bb --classpath src/cljs scripts/postbuild.bb",
