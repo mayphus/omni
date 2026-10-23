@@ -22,7 +22,7 @@
     "verify": "node scripts/verify.js"
   },
   "devDependencies": {
-    "@cloudbase/cli": "^2.9.5",
+    "@cloudbase/cli": "^2.12.10",
     "@testing-library/jest-dom": "^6.4.2",
     "@testing-library/react": "^14.3.1",
     "@testing-library/user-event": "^14.5.2",
@@ -43,8 +43,8 @@
     "shadow-cljs": "^2.28.21",
     "tailwindcss": "^3.4.17",
     "typescript": "^6.0.2",
-    "vite": "^7.1.5",
-    "vitest": "^2.1.9",
+    "vite": "^7.3.7",
+    "vitest": "^5.0.5",
     "weapp-vite": "^5.1.7",
     "wx-server-sdk": "^3.0.1"
   },
